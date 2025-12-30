@@ -28,6 +28,9 @@
             <li class="nav-item">
                 <button class="nav-link" id="repos-tab" data-bs-toggle="tab" data-bs-target="#repos" type="button">仓库管理</button>
             </li>
+            <li class="nav-item">
+                <button class="nav-link" id="settings-tab" data-bs-toggle="tab" data-bs-target="#settings" type="button">设置</button>
+            </li>
         </ul>
 
         <div class="tab-content pt-3" id="myTabContent">
@@ -93,6 +96,26 @@
                     </thead>
                     <tbody id="repo-list"></tbody>
                 </table>
+            </div>
+
+            <!-- Settings Tab -->
+            <div class="tab-pane fade" id="settings" role="tabpanel">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">系统配置</h5>
+                        <div class="form-check form-switch mt-3">
+                            <input class="form-check-input" type="checkbox" id="debugModeSwitch" onchange="toggleDebugMode()">
+                            <label class="form-check-label" for="debugModeSwitch">开启调试模式 (Debug Mode)</label>
+                        </div>
+                        <div class="form-text mt-2">开启后，系统将在后台日志中输出详细的 Git 命令执行信息。</div>
+                    </div>
+                </div>
+                <div class="card mt-3">
+                     <div class="card-body">
+                        <h5 class="card-title">API 文档</h5>
+                        <p>查看在线 Swagger 文档：<a href="/swagger.html" target="_blank">Swagger UI</a></p>
+                     </div>
+                </div>
             </div>
         </div>
     </div>
@@ -269,7 +292,33 @@
             loadHistory();
             loadRepos();
             loadTasks();
+            loadConfig();
         });
+
+        async function loadConfig() {
+            try {
+                const res = await fetch(`${API_BASE}/config`);
+                const data = await res.json();
+                document.getElementById('debugModeSwitch').checked = data.debug_mode;
+            } catch (e) {
+                console.error("Failed to load config", e);
+            }
+        }
+
+        async function toggleDebugMode() {
+            const enabled = document.getElementById('debugModeSwitch').checked;
+            try {
+                await fetch(`${API_BASE}/config`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({debug_mode: enabled})
+                });
+            } catch (e) {
+                alert("设置失败");
+                // Revert
+                document.getElementById('debugModeSwitch').checked = !enabled;
+            }
+        }
 
         async function loadHistory() {
             const res = await fetch(`${API_BASE}/sync/history`);

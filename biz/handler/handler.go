@@ -2,21 +2,29 @@ package handler
 
 import (
 	"context"
-	"git-sync-tool/biz/dal"
-	"git-sync-tool/biz/model"
-	"git-sync-tool/biz/service"
+	"github.com/yi-nology/git-sync-tool/biz/dal"
+	"github.com/yi-nology/git-sync-tool/biz/model"
+	"github.com/yi-nology/git-sync-tool/biz/service"
 	"strconv"
 
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
 )
 
-// Repo Handlers
+type RegisterRepoReq struct {
+	Name string `json:"name"`
+	Path string `json:"path"`
+}
+
+// @Summary Register a new repository
+// @Tags Repositories
+// @Accept json
+// @Produce json
+// @Param request body RegisterRepoReq true "Repo info"
+// @Success 200 {object} model.Repo
+// @Router /api/repos [post]
 func RegisterRepo(ctx context.Context, c *app.RequestContext) {
-	var req struct {
-		Name string `json:"name"`
-		Path string `json:"path"`
-	}
+	var req RegisterRepoReq
 	if err := c.BindAndValidate(&req); err != nil {
 		c.JSON(consts.StatusBadRequest, map[string]string{"error": err.Error()})
 		return
@@ -40,13 +48,24 @@ func RegisterRepo(ctx context.Context, c *app.RequestContext) {
 	c.JSON(consts.StatusOK, repo)
 }
 
+// @Summary List registered repositories
+// @Tags Repositories
+// @Produce json
+// @Success 200 {array} model.Repo
+// @Router /api/repos [get]
 func ListRepos(ctx context.Context, c *app.RequestContext) {
 	var repos []model.Repo
 	dal.DB.Find(&repos)
 	c.JSON(consts.StatusOK, repos)
 }
 
-// Task Handlers
+// @Summary Create a sync task
+// @Tags Tasks
+// @Accept json
+// @Produce json
+// @Param request body model.SyncTask true "Task info"
+// @Success 200 {object} model.SyncTask
+// @Router /api/sync/tasks [post]
 func CreateTask(ctx context.Context, c *app.RequestContext) {
 	var req model.SyncTask
 	if err := c.BindAndValidate(&req); err != nil {
@@ -63,12 +82,23 @@ func CreateTask(ctx context.Context, c *app.RequestContext) {
 	c.JSON(consts.StatusOK, req)
 }
 
+// @Summary List sync tasks
+// @Tags Tasks
+// @Produce json
+// @Success 200 {array} model.SyncTask
+// @Router /api/sync/tasks [get]
 func ListTasks(ctx context.Context, c *app.RequestContext) {
 	var tasks []model.SyncTask
 	dal.DB.Preload("SourceRepo").Preload("TargetRepo").Find(&tasks)
 	c.JSON(consts.StatusOK, tasks)
 }
 
+// @Summary Get a sync task
+// @Tags Tasks
+// @Param id path int true "Task ID"
+// @Produce json
+// @Success 200 {object} model.SyncTask
+// @Router /api/sync/tasks/{id} [get]
 func GetTask(ctx context.Context, c *app.RequestContext) {
 	idStr := c.Param("id")
 	id, _ := strconv.Atoi(idStr)
@@ -81,6 +111,13 @@ func GetTask(ctx context.Context, c *app.RequestContext) {
 	c.JSON(consts.StatusOK, task)
 }
 
+// @Summary Update a sync task
+// @Tags Tasks
+// @Param id path int true "Task ID"
+// @Param request body model.SyncTask true "Task info"
+// @Produce json
+// @Success 200 {object} model.SyncTask
+// @Router /api/sync/tasks/{id} [put]
 func UpdateTask(ctx context.Context, c *app.RequestContext) {
 	idStr := c.Param("id")
 	id, _ := strconv.Atoi(idStr)
@@ -114,10 +151,19 @@ func UpdateTask(ctx context.Context, c *app.RequestContext) {
 	c.JSON(consts.StatusOK, task)
 }
 
+type RunSyncReq struct {
+	TaskID uint `json:"task_id"`
+}
+
+// @Summary Trigger a sync task manually
+// @Tags Sync
+// @Accept json
+// @Produce json
+// @Param request body RunSyncReq true "Task ID"
+// @Success 200 {object} map[string]string
+// @Router /api/sync/run [post]
 func RunSync(ctx context.Context, c *app.RequestContext) {
-	var req struct {
-		TaskID uint `json:"task_id"`
-	}
+	var req RunSyncReq
 	if err := c.BindAndValidate(&req); err != nil {
 		c.JSON(consts.StatusBadRequest, map[string]string{"error": err.Error()})
 		return
@@ -131,6 +177,11 @@ func RunSync(ctx context.Context, c *app.RequestContext) {
 	c.JSON(consts.StatusOK, map[string]string{"status": "started"})
 }
 
+// @Summary Get sync execution history
+// @Tags History
+// @Produce json
+// @Success 200 {array} model.SyncRun
+// @Router /api/sync/history [get]
 func ListHistory(ctx context.Context, c *app.RequestContext) {
 	var runs []model.SyncRun
 	dal.DB.Order("start_time desc").Limit(50).Preload("Task").Find(&runs)

@@ -5,7 +5,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
-	"git-sync-tool/biz/config"
+	"github.com/yi-nology/git-sync-tool/biz/config"
 	"net/http"
 	"strings"
 

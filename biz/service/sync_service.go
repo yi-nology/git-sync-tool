@@ -2,8 +2,8 @@ package service
 
 import (
 	"fmt"
-	"git-sync-tool/biz/dal"
-	"git-sync-tool/biz/model"
+	"github.com/yi-nology/git-sync-tool/biz/dal"
+	"github.com/yi-nology/git-sync-tool/biz/model"
 	"strings"
 	"time"
 )

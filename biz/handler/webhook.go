@@ -2,7 +2,7 @@ package handler
 
 import (
 	"context"
-	"git-sync-tool/biz/service"
+	"github.com/yi-nology/git-sync-tool/biz/service"
 	"log"
 	"net/http"
 
@@ -13,6 +13,14 @@ type WebhookRequest struct {
 	TaskID uint `json:"task_id"`
 }
 
+// @Summary Trigger sync via Webhook
+// @Tags Webhook
+// @Param X-Hub-Signature-256 header string true "HMAC-SHA256 signature"
+// @Param request body WebhookRequest true "Webhook payload"
+// @Accept json
+// @Produce json
+// @Success 200 {object} map[string]interface{}
+// @Router /api/webhooks/task-sync [post]
 func HandleWebhookTrigger(ctx context.Context, c *app.RequestContext) {
 	var req WebhookRequest
 	if err := c.BindAndValidate(&req); err != nil {

@@ -2,15 +2,27 @@ package main
 
 import (
 	"context"
-	"git-sync-tool/biz/config"
-	"git-sync-tool/biz/dal"
-	"git-sync-tool/biz/handler"
-	"git-sync-tool/biz/middleware"
-	"git-sync-tool/biz/service"
+
+	"github.com/yi-nology/git-sync-tool/biz/config"
+	"github.com/yi-nology/git-sync-tool/biz/dal"
+	"github.com/yi-nology/git-sync-tool/biz/handler"
+	"github.com/yi-nology/git-sync-tool/biz/middleware"
+	"github.com/yi-nology/git-sync-tool/biz/service"
+
+	_ "github.com/yi-nology/git-sync-tool/docs"
 
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/app/server"
+	// "github.com/hertz-contrib/swagger"
+	// swaggerFiles "github.com/swaggo/files"
 )
+
+// @title Git Sync Tool API
+// @version 1.0
+// @description API documentation for Git Sync Tool
+
+// @host localhost:8080
+// @BasePath /
 
 func main() {
 	// 0. Init Config
@@ -29,6 +41,9 @@ func main() {
 	h.POST("/api/repos", handler.RegisterRepo)
 	h.GET("/api/repos", handler.ListRepos)
 
+	h.GET("/api/config", handler.GetConfig)
+	h.POST("/api/config", handler.UpdateConfig)
+
 	h.POST("/api/sync/tasks", handler.CreateTask)
 	h.GET("/api/sync/tasks", handler.ListTasks)
 	h.GET("/api/sync/tasks/:id", handler.GetTask)
@@ -38,6 +53,10 @@ func main() {
 
 	// Webhook
 	h.POST("/api/webhooks/task-sync", middleware.WebhookAuth(), handler.HandleWebhookTrigger)
+
+	// Swagger JSON
+	h.StaticFile("/docs/swagger.json", "./docs/swagger.json")
+	h.Static("/docs", "./docs")
 
 	// 5. Static Files (Frontend)
 	h.Static("/", "./public")

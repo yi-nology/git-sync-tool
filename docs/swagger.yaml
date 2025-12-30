@@ -1,0 +1,308 @@
+basePath: /
+definitions:
+  handler.ConfigReq:
+    properties:
+      debug_mode:
+        type: boolean
+    type: object
+  handler.RegisterRepoReq:
+    properties:
+      name:
+        type: string
+      path:
+        type: string
+    type: object
+  handler.RunSyncReq:
+    properties:
+      task_id:
+        type: integer
+    type: object
+  handler.WebhookRequest:
+    properties:
+      task_id:
+        type: integer
+    type: object
+  model.Repo:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      path:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  model.SyncRun:
+    properties:
+      commit_range:
+        type: string
+      details:
+        description: Execution logs
+        type: string
+      end_time:
+        type: string
+      error_message:
+        type: string
+      id:
+        type: integer
+      start_time:
+        type: string
+      status:
+        description: success, failed, conflict
+        type: string
+      task_id:
+        type: integer
+    type: object
+  model.SyncTask:
+    properties:
+      created_at:
+        type: string
+      cron:
+        description: e.g. "0 2 * * *"
+        type: string
+      enabled:
+        type: boolean
+      id:
+        type: integer
+      push_options:
+        description: e.g. "--force --no-verify"
+        type: string
+      source_branch:
+        type: string
+      source_remote:
+        type: string
+      source_repo:
+        allOf:
+        - $ref: '#/definitions/model.Repo'
+        description: Associations
+      source_repo_id:
+        type: integer
+      target_branch:
+        type: string
+      target_remote:
+        type: string
+      target_repo:
+        $ref: '#/definitions/model.Repo'
+      target_repo_id:
+        type: integer
+      updated_at:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: API documentation for Git Sync Tool
+  title: Git Sync Tool API
+  version: "1.0"
+paths:
+  /api/config:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get global configuration
+      tags:
+      - Config
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Config info
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.ConfigReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Update global configuration
+      tags:
+      - Config
+  /api/repos:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Repo'
+            type: array
+      summary: List registered repositories
+      tags:
+      - Repositories
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Repo info
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.RegisterRepoReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Repo'
+      summary: Register a new repository
+      tags:
+      - Repositories
+  /api/sync/history:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.SyncRun'
+            type: array
+      summary: Get sync execution history
+      tags:
+      - History
+  /api/sync/run:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Task ID
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.RunSyncReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Trigger a sync task manually
+      tags:
+      - Sync
+  /api/sync/tasks:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.SyncTask'
+            type: array
+      summary: List sync tasks
+      tags:
+      - Tasks
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Task info
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.SyncTask'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SyncTask'
+      summary: Create a sync task
+      tags:
+      - Tasks
+  /api/sync/tasks/{id}:
+    get:
+      parameters:
+      - description: Task ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SyncTask'
+      summary: Get a sync task
+      tags:
+      - Tasks
+    put:
+      parameters:
+      - description: Task ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Task info
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.SyncTask'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SyncTask'
+      summary: Update a sync task
+      tags:
+      - Tasks
+  /api/webhooks/task-sync:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: HMAC-SHA256 signature
+        in: header
+        name: X-Hub-Signature-256
+        required: true
+        type: string
+      - description: Webhook payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.WebhookRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Trigger sync via Webhook
+      tags:
+      - Webhook
+swagger: "2.0"

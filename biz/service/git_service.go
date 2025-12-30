@@ -2,6 +2,8 @@ package service
 
 import (
 	"fmt"
+	"github.com/yi-nology/git-sync-tool/biz/config"
+	"log"
 	"os/exec"
 	"strings"
 )
@@ -13,6 +15,9 @@ func NewGitService() *GitService {
 }
 
 func (s *GitService) RunCommand(dir string, args ...string) (string, error) {
+	if config.DebugMode {
+		log.Printf("[DEBUG] Executing in %s: git %s", dir, strings.Join(args, " "))
+	}
 	cmd := exec.Command("git", args...)
 	cmd.Dir = dir
 	out, err := cmd.CombinedOutput()

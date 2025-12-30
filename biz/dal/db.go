@@ -1,7 +1,7 @@
 package dal
 
 import (
-	"git-sync-tool/biz/model"
+	"github.com/yi-nology/git-sync-tool/biz/model"
 	"log"
 
 	"gorm.io/driver/sqlite"
