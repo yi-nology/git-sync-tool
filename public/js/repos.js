@@ -14,9 +14,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function loadRepos() {
     try {
+        const tbody = document.getElementById('repo-list');
+        if (!tbody) return; // Exit if not on repos page
+
         const data = await request('/repos');
         allRepos = data;
-        const tbody = document.getElementById('repo-list');
         tbody.innerHTML = '';
 
         if (!data || data.length === 0) {
@@ -34,11 +36,7 @@ async function loadRepos() {
                 <td><span class="text-break small">${repo.remote_url || '-'}</span></td>
                 <td>
                     <div class="btn-group btn-group-sm">
-                        <button class="btn btn-outline-secondary" onclick="openRepoDetailModal(${repo.id})" title="详情"><i class="bi bi-info-circle"></i></button>
-                        <button class="btn btn-outline-primary" onclick="openEditRepoModal(${repo.id})" title="编辑"><i class="bi bi-pencil"></i></button>
-                        <a class="btn btn-outline-success" href="branches.html?repo_key=${repo.key}" title="分支管理"><i class="bi bi-diagram-3"></i></a>
-                        <a class="btn btn-outline-dark" href="repo_sync.html?repo_key=${repo.key}" title="同步配置"><i class="bi bi-arrow-repeat"></i></a>
-                        <button class="btn btn-outline-info" onclick="openRepoHistoryModal('${repo.key}')" title="同步历史"><i class="bi bi-clock-history"></i></button>
+                        <a class="btn btn-outline-success" href="project.html?repo_key=${repo.key}" title="项目"><i class="bi bi-kanban"></i></a>
                         <button class="btn btn-outline-danger" onclick="deleteRepo('${repo.key}')" title="删除"><i class="bi bi-trash"></i></button>
                     </div>
                 </td>
@@ -50,128 +48,9 @@ async function loadRepos() {
     }
 }
 
-async function openRepoDetailModal(id) {
-    const repo = allRepos.find(r => r.id === id);
-    if (!repo) return;
-    
-    document.getElementById('detailName').innerText = repo.name;
-    document.getElementById('detailSource').innerText = repo.config_source;
-    document.getElementById('detailPath').innerText = repo.path;
-    
-    document.getElementById('detailRemotesList').innerHTML = '<tr><td colspan="4" class="text-center text-muted">加载中...</td></tr>';
-    document.getElementById('detailBranchesList').innerHTML = '<span class="text-muted">加载中...</span>';
-    
-    new bootstrap.Modal(document.getElementById('repoDetailModal')).show();
-    
-    try {
-        const config = await request('/repos/scan', {
-            method: 'POST',
-            body: { path: repo.path }
-        });
-        
-        // Remotes
-        const tbody = document.getElementById('detailRemotesList');
-        tbody.innerHTML = '';
-        if (!config.remotes || config.remotes.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">无远程仓库配置</td></tr>';
-        } else {
-            config.remotes.forEach(r => {
-                tbody.innerHTML += `
-                    <tr>
-                        <td>${r.name}</td>
-                        <td class="small text-break">${r.fetch_url}</td>
-                        <td class="small text-break">${r.push_url || '-'}</td>
-                        <td>${r.is_mirror ? '<i class="bi bi-check text-success"></i>' : '-'}</td>
-                    </tr>
-                `;
-            });
-        }
-        
-        // Branches
-        const branchContainer = document.getElementById('detailBranchesList');
-        branchContainer.innerHTML = '';
-        if (!config.branches || config.branches.length === 0) {
-            branchContainer.innerText = '无分支';
-        } else {
-            config.branches.forEach(b => {
-                const badge = document.createElement('span');
-                badge.className = 'badge bg-light text-dark border';
-                badge.innerText = b.name;
-                if (b.is_head) badge.classList.add('bg-success', 'text-white');
-                branchContainer.appendChild(badge);
-            });
-        }
-    } catch (e) {
-        document.getElementById('detailRemotesList').innerHTML = '<tr><td colspan="4" class="text-center text-danger">加载失败</td></tr>';
-        document.getElementById('detailBranchesList').innerHTML = '<span class="text-danger">加载失败</span>';
-    }
-}
+// Removed openRepoDetailModal
 
-async function openRepoHistoryModal(repoKey) {
-    new bootstrap.Modal(document.getElementById('repoHistoryModal')).show();
-    reloadHistoryTable(repoKey);
-}
-
-async function deleteHistory(id, repoKey) {
-    if (!confirm("确定删除这条历史记录吗？")) return;
-    
-    try {
-        await request(`/sync/history/${id}`, { method: 'DELETE' });
-        showToast('历史记录已删除', 'success');
-        reloadHistoryTable(repoKey);
-    } catch (e) {
-        // Handled by request
-    }
-}
-
-async function reloadHistoryTable(repoKey) {
-    const tbody = document.getElementById('repoHistoryList');
-    tbody.innerHTML = '<tr><td colspan="6" class="text-center">加载中...</td></tr>';
-    
-    try {
-        const history = await request(`/sync/history?repo_key=${repoKey}`);
-        
-        tbody.innerHTML = '';
-        if (!history || history.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">暂无同步记录</td></tr>';
-            return;
-        }
-        
-        history.forEach(h => {
-            const duration = h.end_time ? (new Date(h.end_time) - new Date(h.start_time)) + 'ms' : '-';
-            let taskInfo = '-';
-            // Backend returns 'task' (lowercase)
-            const task = h.task || h.Task; 
-            if (task) {
-                taskInfo = `${task.source_remote}/${task.source_branch} -> ${task.target_remote}`;
-            }
-            
-            const tr = document.createElement('tr');
-            
-            // Use dataset for log details to avoid quoting issues
-            tr.innerHTML = `
-                <td>${new Date(h.start_time).toLocaleString()}</td>
-                <td class="small">${taskInfo}</td>
-                <td><span class="badge bg-${getStatusColor(h.status)}">${h.status}</span></td>
-                <td>${duration}</td>
-                <td><button class="btn btn-xs btn-link p-0 log-btn">日志</button></td>
-                <td>
-                    <button class="btn btn-xs btn-outline-danger" onclick="deleteHistory(${h.id}, '${repoKey}')" title="删除记录">
-                        <i class="bi bi-trash"></i>
-                    </button>
-                </td>
-            `;
-            
-            // Attach event listener safely
-            const logBtn = tr.querySelector('.log-btn');
-            logBtn.onclick = () => showLog(h.details || "");
-            
-            tbody.appendChild(tr);
-        });
-    } catch (e) {
-        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">加载错误</td></tr>';
-    }
-}
+// Removed openRepoHistoryModal, deleteHistory, reloadHistoryTable
 
 function openAddRepoModal() {
     document.getElementById('addRepoForm').reset();
@@ -813,6 +692,10 @@ async function deleteRepo(key) {
     } catch (e) {
         // handled by request
     }
+}
+
+function openRepo(key) {
+    window.location.href = `project.html?repo_key=${key}`;
 }
 
 // Global functions for window access if needed (usually modules handle this better)

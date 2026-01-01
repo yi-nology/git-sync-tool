@@ -26,8 +26,8 @@ func (s *GitService) RunCommand(dir string, args ...string) (string, error) {
 	}
 	cmd := exec.Command("git", args...)
 	cmd.Dir = dir
-	// Prevent password prompts
-	cmd.Env = append(os.Environ(), "GIT_TERMINAL_PROMPT=0")
+	// Prevent password prompts and force English output
+	cmd.Env = append(os.Environ(), "GIT_TERMINAL_PROMPT=0", "LC_ALL=C")
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		return string(out), fmt.Errorf("git command failed: %s, output: %s", err, string(out))

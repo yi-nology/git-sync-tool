@@ -28,7 +28,22 @@ async function checkUncommittedChanges() {
         const status = res.status;
         const badge = document.getElementById('submit-badge');
         
-        if (!status.includes('nothing to commit, working tree clean')) {
+        // Parse current branch from status (Support English and Chinese)
+        let currentBranch = null;
+        const matchEn = status.match(/On branch (.+)/);
+        const matchZh = status.match(/位于分支 (.+)/);
+        
+        if (matchEn) {
+            currentBranch = matchEn[1].trim();
+        } else if (matchZh) {
+            currentBranch = matchZh[1].trim();
+        }
+
+        // Check for clean status (English or Chinese)
+        const isClean = status.includes('nothing to commit') || status.includes('无文件要提交') || status.includes('working tree clean');
+
+        // Only show badge if viewing the current branch AND there are changes
+        if (currentBranch === branchName && !isClean) {
             badge.style.display = 'block';
             showToast('检测到未提交的变更，请及时提交', 'info');
         } else {

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>工程项目详情 - Git Manage Service</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        html, body { height: 100%; overflow: hidden; }
+        .main-container {
+            height: calc(100vh - 56px); /* Adjust for navbar height */
+            display: flex;
+        }
+        .sidebar {
+            width: 260px;
+            background-color: #fff;
+            border-right: 1px solid #dee2e6;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        .content-area {
+            flex: 1;
+            height: 100%;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            background-color: #f8f9fa;
+        }
+        .nav-link {
+            color: #495057;
+            border-radius: 0.25rem;
+            margin: 0 0.5rem;
+        }
+        .nav-link:hover {
+            background-color: #e9ecef;
+        }
+        .nav-link.active {
+            background-color: #e9ecef;
+            color: #0d6efd;
+            font-weight: 600;
+        }
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        .sidebar-header {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #dee2e6;
+            background-color: #f8f9fa;
+        }
+        .breadcrumb-bar {
+            background-color: #fff;
+            border-bottom: 1px solid #dee2e6;
+            padding: 0.75rem 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <div id="navbar-placeholder"></div>
+
+    <div class="main-container">
+        <!-- Left Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h5 class="mb-0 text-truncate fw-bold" id="sidebarRepoName">项目详情</h5>
+            </div>
+            <div class="list-group list-group-flush mt-3 gap-1">
+                <a href="javascript:void(0)" class="list-group-item list-group-item-action border-0 px-3 py-2 nav-link" data-module="info" onclick="switchModule('info')">
+                    <i class="bi bi-info-circle me-2"></i> 项目详情
+                </a>
+                <a href="javascript:void(0)" class="list-group-item list-group-item-action border-0 px-3 py-2 nav-link" data-module="branch" onclick="switchModule('branch')">
+                    <i class="bi bi-git me-2"></i> 分支信息
+                </a>
+                <a href="javascript:void(0)" class="list-group-item list-group-item-action border-0 px-3 py-2 nav-link" data-module="sync" onclick="switchModule('sync')">
+                    <i class="bi bi-arrow-repeat me-2"></i> 多仓同步
+                </a>
+            </div>
+            <div class="mt-auto p-3 border-top bg-light">
+                <a href="repos.html" class="btn btn-outline-secondary w-100 btn-sm">
+                    <i class="bi bi-arrow-left"></i> 返回列表
+                </a>
+            </div>
+        </div>
+
+        <!-- Right Content -->
+        <div class="content-area">
+            <!-- Breadcrumb Header -->
+            <div class="breadcrumb-bar d-flex align-items-center justify-content-between">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-0 small">
+                        <li class="breadcrumb-item"><a href="/" class="text-decoration-none text-muted">首页</a></li>
+                        <li class="breadcrumb-item"><a href="repos.html" class="text-decoration-none text-muted">仓库列表</a></li>
+                        <li class="breadcrumb-item active fw-bold" id="breadcrumbCurrent">项目详情</li>
+                    </ol>
+                </nav>
+            </div>
+            
+            <!-- Dynamic Content -->
+            <div class="flex-grow-1 position-relative p-0">
+                <iframe id="contentFrame" name="contentFrame"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/request.js"></script>
+    <script src="js/toast.js"></script>
+    <script src="js/navbar.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const repoKey = urlParams.get('repo_key');
+        let currentRepo = null;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (!repoKey) {
+                alert("缺少 repo_key 参数");
+                window.location.href = 'repos.html';
+                return;
+            }
+
+            await loadRepoInfo();
+            
+            // Handle browser back/forward
+            window.addEventListener('popstate', (event) => {
+                const module = event.state ? event.state.module : 'info';
+                activateModule(module, false);
+            });
+
+            // Initial load
+            const initialModule = urlParams.get('module') || 'info';
+            activateModule(initialModule, true);
+        });
+
+        async function loadRepoInfo() {
+            try {
+                const repo = await request(`/repos/${repoKey}`);
+                if (repo) {
+                    currentRepo = repo;
+                    document.getElementById('sidebarRepoName').innerText = repo.name;
+                    document.title = `${repo.name} - 项目详情`;
+                }
+            } catch (e) {
+                console.error("Failed to load repo info", e);
+            }
+        }
+
+        function switchModule(module) {
+            activateModule(module, true);
+        }
+
+        function activateModule(module, pushState) {
+            // Update active state in sidebar
+            document.querySelectorAll('.list-group-item').forEach(el => {
+                el.classList.remove('active');
+                if (el.dataset.module === module) {
+                    el.classList.add('active');
+                }
+            });
+
+            // Update Breadcrumb
+            const titles = {
+                'info': '项目详情',
+                'branch': '分支信息',
+                'sync': '多仓同步'
+            };
+            document.getElementById('breadcrumbCurrent').innerText = titles[module] || '详情';
+
+            // Load Content
+            const iframe = document.getElementById('contentFrame');
+            let src = '';
+            
+            switch(module) {
+                case 'info':
+                    src = `repo_info.html?repo_key=${repoKey}`;
+                    break;
+                case 'branch':
+                    src = `branches.html?repo_key=${repoKey}&hide_nav=true`;
+                    break;
+                case 'sync':
+                    src = `repo_sync.html?repo_key=${repoKey}&hide_nav=true`;
+                    break;
+            }
+
+            // Always set src for now to ensure it loads. Optimizations can be added later if flickering is an issue.
+            // Using replace to avoid adding iframe internal navigation to history stack if possible, but assignment is safer.
+            if (!iframe.getAttribute('src') || iframe.getAttribute('src') !== src) {
+                 iframe.src = src;
+            }
+
+            // Update URL
+            if (pushState) {
+                const newUrl = `${window.location.pathname}?repo_key=${repoKey}&module=${module}`;
+                history.pushState({ module: module }, '', newUrl);
+            }
+        }
+    </script>
+</body>
+</html>

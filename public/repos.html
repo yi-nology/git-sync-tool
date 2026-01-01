@@ -426,79 +426,10 @@
     </div>
 
     <!-- Repo Detail Modal -->
-    <div class="modal fade" id="repoDetailModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">仓库详情</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <strong>名称:</strong> <span id="detailName"></span>
-                        </div>
-                        <div class="col-md-6">
-                            <strong>配置来源:</strong> <span id="detailSource"></span>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <strong>本地路径:</strong> <code id="detailPath"></code>
-                    </div>
-
-                    <ul class="nav nav-tabs mb-3" id="detailTabs" role="tablist">
-                        <li class="nav-item">
-                            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#detail-remotes" type="button">Remotes</button>
-                        </li>
-                        <li class="nav-item">
-                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#detail-branches" type="button">Branches</button>
-                        </li>
-                    </ul>
-                    
-                    <div class="tab-content">
-                        <div class="tab-pane fade show active" id="detail-remotes">
-                            <table class="table table-sm table-striped">
-                                <thead><tr><th>Name</th><th>Fetch URL</th><th>Push URL</th><th>Mirror</th></tr></thead>
-                                <tbody id="detailRemotesList"></tbody>
-                            </table>
-                        </div>
-                        <div class="tab-pane fade" id="detail-branches">
-                             <div id="detailBranchesList" class="d-flex flex-wrap gap-2"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- Removed -->
 
     <!-- Repo History Modal -->
-    <div class="modal fade" id="repoHistoryModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">同步历史</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <table class="table table-sm table-hover">
-                        <thead>
-                            <tr>
-                                <th>时间</th>
-                                <th>任务</th>
-                                <th>状态</th>
-                                <th>耗时</th>
-                                <th>详情</th>
-                                <th>操作</th>
-                            </tr>
-                        </thead>
-                        <tbody id="repoHistoryList">
-                             <tr><td colspan="6" class="text-center">加载中...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- Removed -->
     
     <!-- Log Modal (Reused or New) -->
     <div class="modal fade" id="logModal" tabindex="-1">

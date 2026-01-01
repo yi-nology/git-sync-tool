@@ -17,14 +17,14 @@ async function loadRepoInfo() {
         const repo = await request(`/repos/${repoKey}`);
         if (repo) {
             currentRepo = repo;
-            document.getElementById('repo-title').innerText = `${repo.name} - 分支管理`;
+            // document.getElementById('repo-title').innerText = `${repo.name} - 分支管理`;
             document.title = `${repo.name} - 分支管理`;
         } else {
-            document.getElementById('repo-title').innerText = "仓库未找到";
+            // document.getElementById('repo-title').innerText = "仓库未找到";
         }
     } catch (e) {
         console.error(e);
-        document.getElementById('repo-title').innerText = "仓库加载失败";
+        // document.getElementById('repo-title').innerText = "仓库加载失败";
     }
 }
 

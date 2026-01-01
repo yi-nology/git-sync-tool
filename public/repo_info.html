@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>仓库详情</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        body { padding: 20px; background-color: #fff; }
+        .card { box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075); border: none; }
+        .list-group-item-action { cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4 class="mb-0">基本信息</h4>
+            <button class="btn btn-primary" onclick="openEditCurrentRepo()">
+                <i class="bi bi-pencil-square"></i> 编辑仓库
+            </button>
+        </div>
+        
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="row mb-3">
+                    <label class="col-sm-2 col-form-label fw-bold">仓库名称</label>
+                    <div class="col-sm-10">
+                        <input type="text" readonly class="form-control-plaintext" id="repoName" value="加载中...">
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <label class="col-sm-2 col-form-label fw-bold">本地路径</label>
+                    <div class="col-sm-10">
+                        <input type="text" readonly class="form-control-plaintext font-monospace" id="repoPath" value="...">
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <label class="col-sm-2 col-form-label fw-bold">Repo Key</label>
+                    <div class="col-sm-10">
+                        <div class="input-group">
+                            <input type="text" readonly class="form-control font-monospace bg-light" id="repoKey">
+                            <button class="btn btn-outline-secondary" onclick="copyKey()"><i class="bi bi-copy"></i></button>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <label class="col-sm-2 col-form-label fw-bold">配置来源</label>
+                    <div class="col-sm-10">
+                        <input type="text" readonly class="form-control-plaintext" id="repoSource" value="...">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h4 class="mb-4">远程配置</h4>
+        <div class="card">
+            <div class="card-body">
+                <div id="remoteList">加载中...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Repo Modal -->
+    <div class="modal fade" id="editRepoModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">编辑仓库</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <ul class="nav nav-tabs mb-3" id="editRepoTabs" role="tablist">
+                        <li class="nav-item">
+                            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#edit-repo-basic" type="button">基本信息</button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#edit-repo-remote" type="button">远程与认证</button>
+                        </li>
+                    </ul>
+                    <form id="editRepoForm">
+                        <input type="hidden" name="id">
+                        <div class="tab-content">
+                            <!-- Basic Info -->
+                            <div class="tab-pane fade show active" id="edit-repo-basic">
+                                <div class="mb-3">
+                                    <label class="form-label">名称</label>
+                                    <input type="text" class="form-control" name="name" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">本地路径</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" name="path" id="editLocalPathInput" placeholder="/path/to/repo" required>
+                                        <button class="btn btn-outline-secondary" type="button" onclick="openFileBrowser('edit')">浏览...</button>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">配置来源</label>
+                                    <select class="form-select" name="config_source">
+                                        <option value="local">本地配置文件 (.git/config)</option>
+                                        <option value="database">数据库 (使用下方配置)</option>
+                                    </select>
+                                    <div class="form-text">决定同步任务使用本地 git 配置还是数据库中存储的远程地址与凭证。</div>
+                                </div>
+                            </div>
+                            
+                            <!-- Remote & Auth -->
+                            <div class="tab-pane fade" id="edit-repo-remote">
+                                <!-- Scan Results for Edit -->
+                                <div id="editScanResultArea" class="border p-3 rounded bg-light mb-3">
+                                    <h6 class="border-bottom pb-2 mb-3">解析结果</h6>
+                                    
+                                    <!-- Remotes Table -->
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <label class="form-label fw-bold mb-0">远程仓库 (Remotes)</label>
+                                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="addRemoteRow({}, 'editRemotesList')">+ 新增</button>
+                                        </div>
+                                        <table class="table table-sm table-bordered bg-white" id="editRemotesTable">
+                                            <thead>
+                                                <tr>
+                                                    <th style="width: 20%">Name</th>
+                                                    <th>URL</th>
+                                                    <th style="width: 10%">Mirror</th>
+                                                    <th style="width: 20%">操作</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="editRemotesList">
+                                                <!-- Dynamic Rows -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    
+                                    <!-- Tracking Branches (Read-only) -->
+                                    <div class="mb-2">
+                                        <label class="form-label fw-bold">分支追踪</label>
+                                        <div id="editTrackingBranches" class="text-muted small"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" onclick="updateRepo()">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- File Browser Modal -->
+    <div class="modal fade" id="fileBrowserModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">选择目录</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-2">
+                        <div class="input-group">
+                             <button class="btn btn-outline-secondary" onclick="loadDirs(currentParentPath)"><i class="bi bi-arrow-up"></i> 上一级</button>
+                             <input type="text" class="form-control" id="currentPathDisplay" readonly>
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                         <input type="text" class="form-control" id="fileSearchInput" placeholder="搜索当前目录..." oninput="searchDirs()">
+                    </div>
+                    <div class="list-group" id="dirList" style="max-height: 400px; overflow-y: auto;">
+                        <!-- Dirs loaded here -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" onclick="selectCurrentDir()">选择当前目录</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Remote Auth Modal -->
+    <div class="modal fade" id="remoteAuthModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">配置认证: <span id="authRemoteName"></span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="authRemoteRowId">
+                    <div class="mb-3">
+                        <label class="form-label">认证方式</label>
+                        <select class="form-select" id="remoteAuthType" onchange="toggleRemoteAuthFields()">
+                            <option value="none">无 (None)</option>
+                            <option value="ssh">SSH 密钥</option>
+                            <option value="http">用户名/密码 (HTTP/HTTPS)</option>
+                        </select>
+                    </div>
+                    
+                    <div id="remote-auth-ssh" class="d-none">
+                        <div class="mb-3">
+                            <label class="form-label">SSH 密钥</label>
+                            <div class="input-group">
+                                <select class="form-select" id="remoteSshKeySelect" onchange="document.getElementById('remoteAuthKey').value=this.value">
+                                    <option value="">手动输入路径...</option>
+                                </select>
+                                <input type="text" class="form-control" id="remoteAuthKey" placeholder="~/.ssh/id_rsa">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">密钥密码 (Passphrase)</label>
+                            <input type="password" class="form-control" id="remoteAuthSecretSsh">
+                        </div>
+                    </div>
+                    
+                    <div id="remote-auth-http" class="d-none">
+                        <div class="mb-3">
+                            <label class="form-label">用户名</label>
+                            <input type="text" class="form-control" id="remoteAuthUser">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">密码 / Token</label>
+                            <input type="password" class="form-control" id="remoteAuthSecretHttp">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" onclick="saveRemoteAuth()">确定</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Execute Sync Modal (Used by addRemoteRow logic, needs to be present to avoid errors) -->
+    <div class="modal fade" id="executeSyncModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">执行同步</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="execSyncRepoId">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">源 (Source)</label>
+                            <select class="form-select mb-2" id="execSourceSelect" onchange="updateExecSyncUI()"></select>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text">分支</span>
+                                <input type="text" class="form-control" id="execSourceBranch" value="main">
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">目标 (Target)</label>
+                            <select class="form-select mb-2" id="execTargetSelect" onchange="updateExecSyncUI()"></select>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text">分支</span>
+                                <input type="text" class="form-control" id="execTargetBranch" value="main">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="alert alert-info py-2 small" id="execSyncHint"></div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="execForce">
+                            <label class="form-check-label">强制执行 (--force)</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" onclick="submitExecuteSync()">执行</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/request.js"></script>
+    <script src="js/toast.js"></script>
+    <script src="js/common.js"></script>
+    <!-- Include repos.js for edit logic -->
+    <script src="js/repos.js"></script>
+    
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const repoKey = urlParams.get('repo_key');
+        let currentRepo = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initToastContainer();
+            loadData();
+        });
+
+        async function loadData() {
+            try {
+                const repo = await request(`/repos/${repoKey}`);
+                if (!repo) {
+                    showToast('仓库不存在', 'error');
+                    return;
+                }
+                
+                currentRepo = repo;
+                // Mock allRepos for repos.js logic
+                allRepos = [repo];
+                
+                document.getElementById('repoName').value = repo.name;
+                document.getElementById('repoPath').value = repo.path;
+                document.getElementById('repoKey').value = repo.key;
+                document.getElementById('repoSource').value = repo.config_source === 'database' ? '数据库' : '本地配置文件';
+
+                const config = await request('/repos/scan', {
+                    method: 'POST',
+                    body: { path: repo.path }
+                });
+
+                const remotes = config.remotes || [];
+                const list = document.getElementById('remoteList');
+                if (remotes.length === 0) {
+                    list.innerHTML = '<div class="text-muted">无远程仓库配置</div>';
+                } else {
+                    list.innerHTML = `
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Remote Name</th>
+                                    <th>Fetch URL</th>
+                                    <th>Push URL</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${remotes.map(r => `
+                                    <tr>
+                                        <td class="fw-bold">${r.name}</td>
+                                        <td class="font-monospace small text-break">${r.fetch_url}</td>
+                                        <td class="font-monospace small text-break">${r.push_url || '-'}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                }
+
+            } catch (e) {
+                document.body.innerHTML = `<div class="alert alert-danger">加载失败: ${e.message}</div>`;
+            }
+        }
+
+        function copyKey() {
+            const el = document.getElementById('repoKey');
+            el.select();
+            document.execCommand('copy');
+            showToast('已复制 Repo Key', 'success');
+        }
+        
+        function openEditCurrentRepo() {
+            if (currentRepo) {
+                openEditRepoModal(currentRepo.id);
+            }
+        }
+        
+        // Override loadRepos from repos.js to do nothing or reload current
+        // Actually repos.js loadRepos checks for #repo-list, which doesn't exist here, so it's safe.
+        // We can optionally hook into updateRepo success to reload current page data.
+        
+        // Hooking into updateRepo success via overriding showToast? No, too hacky.
+        // repos.js calls loadRepos() after update.
+        // We can define loadRepos locally to reload our data!
+        // This will override the global loadRepos function from repos.js if defined after?
+        // JS functions are hoisted or overwritten.
+        
+        // Let's redefine loadRepos to reload our view
+        window.loadRepos = async function() {
+            await loadData();
+        };
+        
+    </script>
+</body>
+</html>
