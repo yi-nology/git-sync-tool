@@ -5,8 +5,9 @@ document.addEventListener("DOMContentLoaded", function() {
     const navItems = [
         { name: "首页", link: "index.html", active: page === "index.html" || page === "" },
         { name: "仓库管理", link: "repos.html", active: page === "repos.html" },
-        { name: "设置", link: "settings.html", active: page === "settings.html" },
-        { name: "度量", link: "stats.html", active: page === "stats.html" }
+        { name: "度量", link: "stats.html", active: page === "stats.html" },
+        { name: "审计日志", link: "audit.html", active: page === "audit.html" },
+        { name: "设置", link: "settings.html", active: page === "settings.html" }
     ];
 
     let navHtml = `

@@ -34,6 +34,7 @@ func main() {
 	// 2. Init Cron
 	service.InitCronService()
 	service.InitStatsService()
+	service.InitAuditService()
 	utils.InitEncryption()
 
 	// 3. Init Server
@@ -75,6 +76,9 @@ func main() {
 
 	// Webhook
 	h.POST("/api/webhooks/trigger", handler.HandleWebhookTrigger)
+
+	// Audit Routes
+	h.GET("/api/audit/logs", handler.ListAuditLogs)
 
 	// Swagger JSON
 	h.StaticFile("/docs/swagger.json", "./docs/swagger.json")

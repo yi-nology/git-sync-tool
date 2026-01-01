@@ -101,6 +101,7 @@ func RegisterRepo(ctx context.Context, c *app.RequestContext) {
 		response.InternalServerError(c, err.Error())
 		return
 	}
+	service.AuditSvc.Log(c, "CREATE", "repo:"+repo.Key, map[string]string{"name": repo.Name, "path": repo.Path})
 	response.Success(c, repo)
 }
 
@@ -358,6 +359,7 @@ func UpdateRepo(ctx context.Context, c *app.RequestContext) {
 		response.InternalServerError(c, err.Error())
 		return
 	}
+	service.AuditSvc.Log(c, "UPDATE", "repo:"+repo.Key, map[string]string{"name": repo.Name})
 	response.Success(c, repo)
 }
 
@@ -389,6 +391,7 @@ func DeleteRepo(ctx context.Context, c *app.RequestContext) {
 		response.InternalServerError(c, err.Error())
 		return
 	}
+	service.AuditSvc.Log(c, "DELETE", "repo:"+repo.Key, nil)
 	response.Success(c, map[string]string{"message": "deleted"})
 }
 
@@ -415,6 +418,7 @@ func CreateTask(ctx context.Context, c *app.RequestContext) {
 	}
 
 	service.CronSvc.UpdateTask(req)
+	service.AuditSvc.Log(c, "CREATE", "task:"+req.Key, req)
 	response.Success(c, req)
 }
 
@@ -504,6 +508,7 @@ func UpdateTask(ctx context.Context, c *app.RequestContext) {
 
 	dal.DB.Save(&task)
 	service.CronSvc.UpdateTask(task)
+	service.AuditSvc.Log(c, "UPDATE", "task:"+task.Key, task)
 
 	response.Success(c, task)
 }
@@ -525,6 +530,7 @@ func DeleteTask(ctx context.Context, c *app.RequestContext) {
 
 	dal.DB.Delete(&task)
 	service.CronSvc.RemoveTask(task.ID)
+	service.AuditSvc.Log(c, "DELETE", "task:"+task.Key, nil)
 
 	response.Success(c, map[string]string{"message": "deleted"})
 }
@@ -552,6 +558,7 @@ func RunSync(ctx context.Context, c *app.RequestContext) {
 		svc.RunTask(req.TaskID)
 	}()
 
+	service.AuditSvc.Log(c, "SYNC", "task_id:"+strconv.Itoa(int(req.TaskID)), nil)
 	response.Success(c, map[string]string{"status": "started"})
 }
 
@@ -603,6 +610,7 @@ func ExecuteSync(ctx context.Context, c *app.RequestContext) {
 		svc.ExecuteSync(&task)
 	}()
 
+	service.AuditSvc.Log(c, "SYNC_ADHOC", "task:"+task.Key, task)
 	response.Success(c, map[string]string{"status": "started", "task_key": task.Key})
 }
 
