@@ -89,6 +89,10 @@ async function loadBranches() {
     }
 }
 
+function openComparePage() {
+    window.location.href = `compare.html?repo_id=${repoId}`;
+}
+
 function openCreateModal() {
     document.getElementById('createForm').reset();
     new bootstrap.Modal(document.getElementById('createModal')).show();

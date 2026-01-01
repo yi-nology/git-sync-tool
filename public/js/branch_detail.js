@@ -106,6 +106,12 @@ function refreshData() {
     loadData();
 }
 
+function openCompare() {
+    // Navigate to compare page, pre-setting the source branch as current branch
+    // Target defaults to main/master handled by compare.js logic
+    window.location.href = `compare.html?repo_id=${repoId}&source=${encodeURIComponent(branchName)}`;
+}
+
 async function deleteCurrentBranch() {
     if (!confirm(`确定要删除分支 "${branchName}" 吗？此操作不可撤销！`)) return;
     

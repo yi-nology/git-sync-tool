@@ -54,6 +54,13 @@ func main() {
 	h.DELETE("/api/repos/:id/branches/:name", handler.DeleteBranch)
 	h.PUT("/api/repos/:id/branches/:name", handler.UpdateBranch)
 
+	// Merge Routes
+	h.GET("/api/repos/:id/compare", handler.CompareBranches)
+	h.GET("/api/repos/:id/diff", handler.GetDiffContent)
+	h.GET("/api/repos/:id/merge/check", handler.MergeCheck)
+	h.POST("/api/repos/:id/merge", handler.ExecuteMerge)
+	h.GET("/api/repos/:id/patch", handler.GetPatch)
+
 	h.GET("/api/tasks/:id", handler.GetCloneTask) // New Task Endpoint
 
 	h.GET("/api/config", handler.GetConfig)
