@@ -3,7 +3,6 @@ package handler
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/cloudwego/hertz/pkg/app"
@@ -15,15 +14,18 @@ import (
 )
 
 // @Summary Compare two branches
+// @Description Compare two branches and return diff statistics and file list.
 // @Tags Merge
-// @Param id path int true "Repo ID"
+// @Param key path string true "Repo Key"
 // @Param base query string true "Base Branch"
 // @Param target query string true "Target Branch"
-// @Success 200 {object} response.Response
-// @Router /api/repos/{id}/compare [get]
+// @Success 200 {object} response.Response{data=map[string]interface{}} "Map with 'stat' and 'files'"
+// @Failure 400 {object} response.Response "Bad Request - Missing params"
+// @Failure 404 {object} response.Response "Repo not found"
+// @Failure 500 {object} response.Response "Internal Server Error"
+// @Router /api/repos/{key}/compare [get]
 func CompareBranches(ctx context.Context, c *app.RequestContext) {
-	idStr := c.Param("id")
-	id, _ := strconv.Atoi(idStr)
+	key := c.Param("key")
 	base := c.Query("base")
 	target := c.Query("target")
 
@@ -33,19 +35,19 @@ func CompareBranches(ctx context.Context, c *app.RequestContext) {
 	}
 
 	var repo model.Repo
-	if err := dal.DB.First(&repo, id).Error; err != nil {
+	if err := dal.DB.Where("key = ?", key).First(&repo).Error; err != nil {
 		response.NotFound(c, "repo not found")
 		return
 	}
 
 	gitSvc := service.NewGitService()
-	
+
 	stat, err := gitSvc.GetDiffStat(repo.Path, base, target)
 	if err != nil {
 		response.InternalServerError(c, err.Error())
 		return
 	}
-	
+
 	files, err := gitSvc.GetDiffFiles(repo.Path, base, target)
 	if err != nil {
 		response.InternalServerError(c, err.Error())
@@ -59,22 +61,24 @@ func CompareBranches(ctx context.Context, c *app.RequestContext) {
 }
 
 // @Summary Get raw diff content
+// @Description Get the raw diff content between two branches, optionally for a specific file.
 // @Tags Merge
-// @Param id path int true "Repo ID"
+// @Param key path string true "Repo Key"
 // @Param base query string true "Base Branch"
 // @Param target query string true "Target Branch"
 // @Param file query string false "Specific File"
-// @Success 200 {object} response.Response
-// @Router /api/repos/{id}/diff [get]
+// @Success 200 {object} response.Response{data=map[string]string} "Map with 'diff'"
+// @Failure 404 {object} response.Response "Repo not found"
+// @Failure 500 {object} response.Response "Internal Server Error"
+// @Router /api/repos/{key}/diff [get]
 func GetDiffContent(ctx context.Context, c *app.RequestContext) {
-	idStr := c.Param("id")
-	id, _ := strconv.Atoi(idStr)
+	key := c.Param("key")
 	base := c.Query("base")
 	target := c.Query("target")
 	file := c.Query("file")
 
 	var repo model.Repo
-	if err := dal.DB.First(&repo, id).Error; err != nil {
+	if err := dal.DB.Where("key = ?", key).First(&repo).Error; err != nil {
 		response.NotFound(c, "repo not found")
 		return
 	}
@@ -85,25 +89,27 @@ func GetDiffContent(ctx context.Context, c *app.RequestContext) {
 		response.InternalServerError(c, err.Error())
 		return
 	}
-	
+
 	response.Success(c, map[string]string{"diff": content})
 }
 
 // @Summary Dry run merge to check conflicts
+// @Description Perform a dry run of a merge to check for conflicts without modifying the repository.
 // @Tags Merge
-// @Param id path int true "Repo ID"
+// @Param key path string true "Repo Key"
 // @Param base query string true "Base Branch"
 // @Param target query string true "Target Branch"
-// @Success 200 {object} response.Response
-// @Router /api/repos/{id}/merge/check [get]
+// @Success 200 {object} response.Response "Success status, does not mean no conflict, check data"
+// @Failure 404 {object} response.Response "Repo not found"
+// @Failure 500 {object} response.Response "Internal Server Error"
+// @Router /api/repos/{key}/merge/check [get]
 func MergeCheck(ctx context.Context, c *app.RequestContext) {
-	idStr := c.Param("id")
-	id, _ := strconv.Atoi(idStr)
-	base := c.Query("base")   // Source (feature)
+	key := c.Param("key")
+	base := c.Query("base")     // Source (feature)
 	target := c.Query("target") // Destination (main)
 
 	var repo model.Repo
-	if err := dal.DB.First(&repo, id).Error; err != nil {
+	if err := dal.DB.Where("key = ?", key).First(&repo).Error; err != nil {
 		response.NotFound(c, "repo not found")
 		return
 	}
@@ -114,7 +120,7 @@ func MergeCheck(ctx context.Context, c *app.RequestContext) {
 		response.InternalServerError(c, err.Error())
 		return
 	}
-	
+
 	response.Success(c, result)
 }
 
@@ -127,14 +133,13 @@ type MergeReq struct {
 
 // @Summary Execute merge
 // @Tags Merge
-// @Param id path int true "Repo ID"
+// @Param key path string true "Repo Key"
 // @Param request body MergeReq true "Merge Info"
 // @Success 200 {object} response.Response
-// @Router /api/repos/{id}/merge [post]
+// @Router /api/repos/{key}/merge [post]
 func ExecuteMerge(ctx context.Context, c *app.RequestContext) {
-	idStr := c.Param("id")
-	id, _ := strconv.Atoi(idStr)
-	
+	key := c.Param("key")
+
 	var req MergeReq
 	if err := c.BindAndValidate(&req); err != nil {
 		response.BadRequest(c, err.Error())
@@ -142,13 +147,13 @@ func ExecuteMerge(ctx context.Context, c *app.RequestContext) {
 	}
 
 	var repo model.Repo
-	if err := dal.DB.First(&repo, id).Error; err != nil {
+	if err := dal.DB.Where("key = ?", key).First(&repo).Error; err != nil {
 		response.NotFound(c, "repo not found")
 		return
 	}
 
 	gitSvc := service.NewGitService()
-	
+
 	// Double check conflicts
 	check, err := gitSvc.MergeDryRun(repo.Path, req.Source, req.Target)
 	if err != nil {
@@ -159,23 +164,23 @@ func ExecuteMerge(ctx context.Context, c *app.RequestContext) {
 		// Generate conflict report URL
 		mergeID := uuid.New().String()
 		// Use a static HTML page that takes params to show the report
-		reportURL := fmt.Sprintf("/merge_report.html?repo_id=%d&source=%s&target=%s&merge_id=%s", id, req.Source, req.Target, mergeID)
-		
+		reportURL := fmt.Sprintf("/merge_report.html?repo_key=%s&source=%s&target=%s&merge_id=%s", repo.Key, req.Source, req.Target, mergeID)
+
 		// Log conflict
 		service.AuditSvc.Log(c, "MERGE_CONFLICT", "repo:"+repo.Key, map[string]interface{}{
-			"source": req.Source,
-			"target": req.Target,
+			"source":    req.Source,
+			"target":    req.Target,
 			"conflicts": check.Conflicts,
-			"merge_id": mergeID,
+			"merge_id":  mergeID,
 		})
-		
+
 		c.JSON(200, response.Response{
-			Code: 409, // Conflict
+			Code:    409, // Conflict
 			Message: "Merge conflict detected",
 			Data: map[string]interface{}{
-				"conflicts": check.Conflicts,
+				"conflicts":  check.Conflicts,
 				"report_url": reportURL,
-				"merge_id": mergeID,
+				"merge_id":   mergeID,
 			},
 		})
 		return
@@ -186,30 +191,29 @@ func ExecuteMerge(ctx context.Context, c *app.RequestContext) {
 		response.InternalServerError(c, "Merge execution failed: "+err.Error())
 		return
 	}
-	
+
 	service.AuditSvc.Log(c, "MERGE_SUCCESS", "repo:"+repo.Key, map[string]string{
 		"source": req.Source,
 		"target": req.Target,
 	})
-	
+
 	response.Success(c, map[string]string{"status": "merged"})
 }
 
 // @Summary Download patch
 // @Tags Merge
-// @Param id path int true "Repo ID"
+// @Param key path string true "Repo Key"
 // @Param base query string true "Base"
 // @Param target query string true "Target"
 // @Success 200 {file} octet-stream
-// @Router /api/repos/{id}/patch [get]
+// @Router /api/repos/{key}/patch [get]
 func GetPatch(ctx context.Context, c *app.RequestContext) {
-	idStr := c.Param("id")
-	id, _ := strconv.Atoi(idStr)
+	key := c.Param("key")
 	base := c.Query("base")
 	target := c.Query("target")
 
 	var repo model.Repo
-	if err := dal.DB.First(&repo, id).Error; err != nil {
+	if err := dal.DB.Where("key = ?", key).First(&repo).Error; err != nil {
 		response.NotFound(c, "repo not found")
 		return
 	}

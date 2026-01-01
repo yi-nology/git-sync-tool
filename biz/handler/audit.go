@@ -10,6 +10,7 @@ import (
 )
 
 // @Summary List audit logs
+// @Description Retrieve a list of system audit logs, ordered by creation time (descending).
 // @Tags Audit
 // @Produce json
 // @Success 200 {object} response.Response{data=[]model.AuditLog}

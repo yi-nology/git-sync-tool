@@ -1,26 +1,162 @@
 basePath: /
 definitions:
+  handler.CloneRepoReq:
+    properties:
+      auth_key:
+        type: string
+      auth_secret:
+        type: string
+      auth_type:
+        type: string
+      config_source:
+        type: string
+      local_path:
+        type: string
+      remote_url:
+        type: string
+    type: object
   handler.ConfigReq:
     properties:
       debug_mode:
         type: boolean
     type: object
-  handler.RegisterRepoReq:
+  handler.DirItem:
     properties:
       name:
         type: string
       path:
         type: string
     type: object
+  handler.ExecuteSyncReq:
+    properties:
+      push_options:
+        type: string
+      repo_key:
+        type: string
+      source_branch:
+        type: string
+      source_remote:
+        description: '"local", "origin", etc'
+        type: string
+      target_branch:
+        type: string
+      target_remote:
+        type: string
+    type: object
+  handler.ListDirsResp:
+    properties:
+      current:
+        type: string
+      dirs:
+        items:
+          $ref: '#/definitions/handler.DirItem'
+        type: array
+      parent:
+        type: string
+    type: object
+  handler.MergeReq:
+    properties:
+      message:
+        type: string
+      source:
+        type: string
+      strategy:
+        description: Not implemented yet
+        type: string
+      target:
+        type: string
+    type: object
+  handler.PushBranchReq:
+    properties:
+      remotes:
+        description: List of remote names
+        items:
+          type: string
+        type: array
+    type: object
+  handler.RegisterRepoReq:
+    properties:
+      auth_key:
+        type: string
+      auth_secret:
+        type: string
+      auth_type:
+        type: string
+      config_source:
+        type: string
+      name:
+        type: string
+      path:
+        type: string
+      remote_auths:
+        additionalProperties:
+          $ref: '#/definitions/model.AuthInfo'
+        description: Optional auth per remote
+        type: object
+      remote_url:
+        type: string
+      remotes:
+        description: Optional list of remotes to sync
+        items:
+          $ref: '#/definitions/model.GitRemote'
+        type: array
+    type: object
   handler.RunSyncReq:
     properties:
-      task_id:
-        type: integer
+      task_key:
+        type: string
     type: object
-  handler.WebhookRequest:
+  handler.SSHKey:
     properties:
-      task_id:
+      name:
+        type: string
+      path:
+        type: string
+    type: object
+  handler.ScanRepoReq:
+    properties:
+      path:
+        type: string
+    type: object
+  handler.TestConnectionReq:
+    properties:
+      url:
+        type: string
+    type: object
+  model.AuditLog:
+    properties:
+      action:
+        description: CREATE, UPDATE, DELETE, SYNC, etc.
+        type: string
+      created_at:
+        type: string
+      details:
+        description: JSON payload of changes or details
+        type: string
+      id:
         type: integer
+      ip_address:
+        type: string
+      operator:
+        description: User ID or IP (since we don't have full auth yet)
+        type: string
+      target:
+        description: repo:1, task:abc, etc.
+        type: string
+      user_agent:
+        type: string
+    type: object
+  model.AuthInfo:
+    properties:
+      key:
+        description: SSH Key Path or Username
+        type: string
+      secret:
+        description: Passphrase or Password (Encrypted in DB)
+        type: string
+      type:
+        description: ssh, http, none
+        type: string
     type: object
   model.AuthorStat:
     properties:
@@ -55,15 +191,88 @@ definitions:
       timestamp:
         type: integer
     type: object
+  model.CreateBranchReq:
+    properties:
+      base_ref:
+        type: string
+      name:
+        description: Removed binding:"required" as hertz might handle it differently
+          or I'll validate manually
+        type: string
+    type: object
+  model.GitBranch:
+    properties:
+      merge:
+        description: refs/heads/xxx
+        type: string
+      name:
+        type: string
+      remote:
+        type: string
+      upstream_ref:
+        description: e.g. origin/main
+        type: string
+    type: object
+  model.GitRemote:
+    properties:
+      fetch_specs:
+        items:
+          type: string
+        type: array
+      fetch_url:
+        type: string
+      is_mirror:
+        type: boolean
+      name:
+        type: string
+      push_specs:
+        items:
+          type: string
+        type: array
+      push_url:
+        type: string
+    type: object
+  model.GitRepoConfig:
+    properties:
+      branches:
+        items:
+          $ref: '#/definitions/model.GitBranch'
+        type: array
+      remotes:
+        items:
+          $ref: '#/definitions/model.GitRemote'
+        type: array
+    type: object
   model.Repo:
     properties:
+      auth_key:
+        description: SSH Key Path or Username
+        type: string
+      auth_secret:
+        description: Passphrase or Password (Encrypted in DB)
+        type: string
+      auth_type:
+        description: ssh, http, none
+        type: string
+      config_source:
+        description: local, database
+        type: string
       created_at:
         type: string
       id:
         type: integer
+      key:
+        type: string
       name:
         type: string
       path:
+        type: string
+      remote_auths:
+        additionalProperties:
+          $ref: '#/definitions/model.AuthInfo'
+        description: Memory & API
+        type: object
+      remote_url:
         type: string
       updated_at:
         type: string
@@ -95,8 +304,12 @@ definitions:
       status:
         description: success, failed, conflict
         type: string
-      task_id:
-        type: integer
+      task:
+        allOf:
+        - $ref: '#/definitions/model.SyncTask'
+        description: Associations
+      task_key:
+        type: string
     type: object
   model.SyncTask:
     properties:
@@ -109,6 +322,8 @@ definitions:
         type: boolean
       id:
         type: integer
+      key:
+        type: string
       push_options:
         description: e.g. "--force --no-verify"
         type: string
@@ -120,26 +335,93 @@ definitions:
         allOf:
         - $ref: '#/definitions/model.Repo'
         description: Associations
-      source_repo_id:
-        type: integer
+      source_repo_key:
+        type: string
       target_branch:
         type: string
       target_remote:
         type: string
       target_repo:
         $ref: '#/definitions/model.Repo'
-      target_repo_id:
-        type: integer
+      target_repo_key:
+        type: string
       updated_at:
         type: string
+      webhook_token:
+        description: For webhook triggering
+        type: string
     type: object
+  model.UpdateBranchReq:
+    properties:
+      desc:
+        description: Description is not native to git branch, maybe store in config
+          or ignore for now? Requirement said "Modify branch name and description".
+          Git doesn't strictly support branch description except via `git branch --edit-description`
+          which opens an editor. `git config branch.<name>.description` works.
+        type: string
+      new_name:
+        type: string
+    type: object
+  response.Response:
+    properties:
+      code:
+        type: integer
+      data: {}
+      message:
+        type: string
+    type: object
+  service.Task:
+    properties:
+      error:
+        type: string
+      id:
+        type: string
+      progress:
+        items:
+          type: string
+        type: array
+      status:
+        description: running, success, failed
+        type: string
+    type: object
+externalDocs:
+  description: OpenAPI
+  url: https://swagger.io/resources/open-api/
 host: localhost:8080
 info:
-  contact: {}
-  description: API documentation for Branch Management Tool
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: API documentation for Branch Management Tool.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
   title: Branch Management Tool API
-  version: "1.0"
+  version: "1.1"
 paths:
+  /api/audit/logs:
+    get:
+      description: Retrieve a list of system audit logs, ordered by creation time
+        (descending).
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/model.AuditLog'
+                  type: array
+              type: object
+      summary: List audit logs
+      tags:
+      - Audit
   /api/config:
     get:
       produces:
@@ -156,6 +438,7 @@ paths:
     post:
       consumes:
       - application/json
+      description: Update global system configuration settings.
       parameters:
       - description: Config info
         in: body
@@ -167,30 +450,75 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Updated config
           schema:
             additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
             type: object
       summary: Update global configuration
       tags:
       - Config
+  /api/git/test-connection:
+    post:
+      description: Test if a remote git URL is accessible.
+      parameters:
+      - description: Connection info
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.TestConnectionReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Status success or failed
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  additionalProperties:
+                    type: string
+                  type: object
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Test remote connection
+      tags:
+      - System
   /api/repos:
     get:
+      description: Get a list of all registered repositories in the system.
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/model.Repo'
-            type: array
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/model.Repo'
+                  type: array
+              type: object
       summary: List registered repositories
       tags:
       - Repositories
     post:
       consumes:
       - application/json
+      description: Register a new git repository by path. If the repository does not
+        exist in the database, it will be added.
       parameters:
       - description: Repo info
         in: body
@@ -204,21 +532,55 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/model.Repo'
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.Repo'
+              type: object
+        "400":
+          description: Bad Request - Invalid input or path
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
       summary: Register a new repository
       tags:
       - Repositories
-  /api/stats/analyze:
-    get:
+  /api/repos/{key}:
+    delete:
+      description: Delete a repository from the system. This does not delete the files
+        from disk, only the registration.
       parameters:
-      - description: Repo ID
-        in: query
-        name: repo_id
+      - description: Repo Key
+        in: path
+        name: key
         required: true
-        type: integer
-      - description: Branch Name
-        in: query
-        name: branch
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Cannot delete if used in sync tasks
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Repo not found
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Delete a repository
+      tags:
+      - Repositories
+    get:
+      description: Get details of a specific repository by its unique key.
+      parameters:
+      - description: Repo Key
+        in: path
+        name: key
         required: true
         type: string
       produces:
@@ -227,38 +589,578 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/model.StatsResponse'
-      summary: Get code statistics for a branch
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.Repo'
+              type: object
+        "404":
+          description: Repo not found
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Get a repository by Key
       tags:
-      - Stats
-  /api/stats/branches:
-    get:
+      - Repositories
+    put:
+      consumes:
+      - application/json
       parameters:
-      - description: Repo ID
-        in: query
-        name: repo_id
+      - description: Repo Key
+        in: path
+        name: key
         required: true
-        type: integer
+        type: string
+      - description: Repo info
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.RegisterRepoReq'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            items:
-              type: string
-            type: array
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.Repo'
+              type: object
+      summary: Update a repository
+      tags:
+      - Repositories
+  /api/repos/{key}/branches:
+    get:
+      description: List branches for a repository with pagination and filtering. Includes
+        ahead/behind sync status if available.
+      parameters:
+      - description: Repo Key
+        in: path
+        name: key
+        required: true
+        type: string
+      - description: Page number (default 1)
+        in: query
+        name: page
+        type: integer
+      - description: Page size (default 100)
+        in: query
+        name: page_size
+        type: integer
+      - description: Search keyword (name or author)
+        in: query
+        name: keyword
+        type: string
+      responses:
+        "200":
+          description: Map containing 'total' and 'list' of BranchInfo
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  additionalProperties: true
+                  type: object
+              type: object
+        "404":
+          description: Repo not found
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: List branches
+      tags:
+      - Branches
+    post:
+      parameters:
+      - description: Repo Key
+        in: path
+        name: key
+        required: true
+        type: string
+      - description: Create info
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.CreateBranchReq'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Create a branch
+      tags:
+      - Branches
+  /api/repos/{key}/branches/{name}:
+    delete:
+      parameters:
+      - description: Repo Key
+        in: path
+        name: key
+        required: true
+        type: string
+      - description: Branch Name
+        in: path
+        name: name
+        required: true
+        type: string
+      - description: Force delete
+        in: query
+        name: force
+        type: boolean
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Delete a branch
+      tags:
+      - Branches
+    put:
+      description: Rename a branch or update its description.
+      parameters:
+      - description: Repo Key
+        in: path
+        name: key
+        required: true
+        type: string
+      - description: Current Branch Name
+        in: path
+        name: name
+        required: true
+        type: string
+      - description: Update info
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.UpdateBranchReq'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Repo not found
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Update a branch (Rename/Desc)
+      tags:
+      - Branches
+  /api/repos/{key}/branches/{name}/pull:
+    post:
+      description: Pull changes from the configured upstream remote for a specific
+        branch.
+      parameters:
+      - description: Repo Key
+        in: path
+        name: key
+        required: true
+        type: string
+      - description: Branch Name
+        in: path
+        name: name
+        required: true
+        type: string
+      responses:
+        "200":
+          description: Status synced
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request - No upstream or not current branch
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Repo not found
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Pull/Sync branch from upstream
+      tags:
+      - Branches
+  /api/repos/{key}/branches/{name}/push:
+    post:
+      parameters:
+      - description: Repo Key
+        in: path
+        name: key
+        required: true
+        type: string
+      - description: Branch Name
+        in: path
+        name: name
+        required: true
+        type: string
+      - description: Remotes
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.PushBranchReq'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Push branch to remotes
+      tags:
+      - Branches
+  /api/repos/{key}/compare:
+    get:
+      description: Compare two branches and return diff statistics and file list.
+      parameters:
+      - description: Repo Key
+        in: path
+        name: key
+        required: true
+        type: string
+      - description: Base Branch
+        in: query
+        name: base
+        required: true
+        type: string
+      - description: Target Branch
+        in: query
+        name: target
+        required: true
+        type: string
+      responses:
+        "200":
+          description: Map with 'stat' and 'files'
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  additionalProperties: true
+                  type: object
+              type: object
+        "400":
+          description: Bad Request - Missing params
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Repo not found
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Compare two branches
+      tags:
+      - Merge
+  /api/repos/{key}/diff:
+    get:
+      description: Get the raw diff content between two branches, optionally for a
+        specific file.
+      parameters:
+      - description: Repo Key
+        in: path
+        name: key
+        required: true
+        type: string
+      - description: Base Branch
+        in: query
+        name: base
+        required: true
+        type: string
+      - description: Target Branch
+        in: query
+        name: target
+        required: true
+        type: string
+      - description: Specific File
+        in: query
+        name: file
+        type: string
+      responses:
+        "200":
+          description: Map with 'diff'
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  additionalProperties:
+                    type: string
+                  type: object
+              type: object
+        "404":
+          description: Repo not found
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Get raw diff content
+      tags:
+      - Merge
+  /api/repos/{key}/merge:
+    post:
+      parameters:
+      - description: Repo Key
+        in: path
+        name: key
+        required: true
+        type: string
+      - description: Merge Info
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.MergeReq'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Execute merge
+      tags:
+      - Merge
+  /api/repos/{key}/merge/check:
+    get:
+      description: Perform a dry run of a merge to check for conflicts without modifying
+        the repository.
+      parameters:
+      - description: Repo Key
+        in: path
+        name: key
+        required: true
+        type: string
+      - description: Base Branch
+        in: query
+        name: base
+        required: true
+        type: string
+      - description: Target Branch
+        in: query
+        name: target
+        required: true
+        type: string
+      responses:
+        "200":
+          description: Success status, does not mean no conflict, check data
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Repo not found
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Dry run merge to check conflicts
+      tags:
+      - Merge
+  /api/repos/{key}/patch:
+    get:
+      parameters:
+      - description: Repo Key
+        in: path
+        name: key
+        required: true
+        type: string
+      - description: Base
+        in: query
+        name: base
+        required: true
+        type: string
+      - description: Target
+        in: query
+        name: target
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: file
+      summary: Download patch
+      tags:
+      - Merge
+  /api/repos/clone:
+    post:
+      consumes:
+      - application/json
+      description: Clone a remote git repository to a local path asynchronously. Returns
+        a task ID to track progress.
+      parameters:
+      - description: Clone info
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.CloneRepoReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Returns task_id
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  additionalProperties:
+                    type: string
+                  type: object
+              type: object
+        "400":
+          description: Bad Request - Directory exists or invalid input
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Clone a remote repository
+      tags:
+      - Repositories
+  /api/repos/scan:
+    post:
+      consumes:
+      - application/json
+      description: Scan a local directory to check if it's a valid git repository
+        and retrieve its configuration.
+      parameters:
+      - description: Scan info
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.ScanRepoReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.GitRepoConfig'
+              type: object
+        "400":
+          description: Bad Request - Invalid path
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Scan a local repository
+      tags:
+      - Repositories
+  /api/stats/analyze:
+    get:
+      description: Analyze code statistics (author contributions, file types, etc.)
+        for a branch.
+      parameters:
+      - description: Repo Key
+        in: query
+        name: repo_key
+        required: true
+        type: string
+      - description: Branch Name
+        in: query
+        name: branch
+        required: true
+        type: string
+      - description: Since (YYYY-MM-DD)
+        in: query
+        name: since
+        type: string
+      - description: Until (YYYY-MM-DD)
+        in: query
+        name: until
+        type: string
+      - description: Filter by Author Name or Email
+        in: query
+        name: author
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.StatsResponse'
+              type: object
+        "404":
+          description: Repo not found
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Get code statistics for a branch
+      tags:
+      - Stats
+  /api/stats/branches:
+    get:
+      description: List branches for statistics (simplified list).
+      parameters:
+      - description: Repo Key
+        in: query
+        name: repo_key
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  items:
+                    type: string
+                  type: array
+              type: object
+        "404":
+          description: Repo not found
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
       summary: List branches for a repository
       tags:
       - Stats
   /api/stats/commits:
     get:
       parameters:
-      - description: Repo ID
+      - description: Repo Key
         in: query
-        name: repo_id
+        name: repo_key
         required: true
-        type: integer
+        type: string
       - description: Branch Name
         in: query
         name: branch
@@ -278,24 +1180,37 @@ paths:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/model.Commit'
-            type: array
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/model.Commit'
+                  type: array
+              type: object
       summary: Get commit history for a branch
       tags:
       - Stats
   /api/stats/export/csv:
     get:
       parameters:
-      - description: Repo ID
+      - description: Repo Key
         in: query
-        name: repo_id
+        name: repo_key
         required: true
-        type: integer
+        type: string
       - description: Branch Name
         in: query
         name: branch
         required: true
+        type: string
+      - description: Since (YYYY-MM-DD)
+        in: query
+        name: since
+        type: string
+      - description: Until (YYYY-MM-DD)
+        in: query
+        name: until
         type: string
       produces:
       - text/csv
@@ -303,26 +1218,82 @@ paths:
       summary: Export statistics as CSV
       tags:
       - Stats
-  /api/sync/history:
-    get:
+  /api/sync/execute:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Sync info
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.ExecuteSyncReq'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/model.SyncRun'
-            type: array
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  additionalProperties:
+                    type: string
+                  type: object
+              type: object
+      summary: Execute an ad-hoc sync
+      tags:
+      - Sync
+  /api/sync/history:
+    get:
+      description: Get the history of sync executions, optionally filtered by repository.
+      parameters:
+      - description: Repo Key
+        in: query
+        name: repo_key
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/model.SyncRun'
+                  type: array
+              type: object
       summary: Get sync execution history
+      tags:
+      - History
+  /api/sync/history/{id}:
+    delete:
+      parameters:
+      - description: History ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Delete a sync history record
       tags:
       - History
   /api/sync/run:
     post:
       consumes:
       - application/json
+      description: Manually trigger a configured sync task to run immediately.
       parameters:
-      - description: Task ID
+      - description: Task Key
         in: body
         name: request
         required: true
@@ -332,16 +1303,185 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Status started
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
       summary: Trigger a sync task manually
       tags:
       - Sync
   /api/sync/tasks:
     get:
+      description: List all sync tasks, optionally filtered by repository key.
+      parameters:
+      - description: Repo Key
+        in: query
+        name: repo_key
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/model.SyncTask'
+                  type: array
+              type: object
+      summary: List sync tasks for a repo
+      tags:
+      - Tasks
+    post:
+      consumes:
+      - application/json
+      description: Create a new automated synchronization task between two repositories
+        or branches.
+      parameters:
+      - description: Task info
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.SyncTask'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.SyncTask'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Create a sync task
+      tags:
+      - Tasks
+  /api/sync/tasks/{key}:
+    delete:
+      description: Delete a sync task.
+      parameters:
+      - description: Task Key
+        in: path
+        name: key
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Task not found
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Delete a sync task
+      tags:
+      - Tasks
+    get:
+      description: Get details of a specific sync task by its unique key.
+      parameters:
+      - description: Task Key
+        in: path
+        name: key
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.SyncTask'
+              type: object
+        "404":
+          description: Task not found
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Get a sync task
+      tags:
+      - Tasks
+    put:
+      description: Update configuration of an existing sync task.
+      parameters:
+      - description: Task Key
+        in: path
+        name: key
+        required: true
+        type: string
+      - description: Task info
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.SyncTask'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.SyncTask'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Task not found
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Update a sync task
+      tags:
+      - Tasks
+  /api/system/dirs:
+    get:
+      parameters:
+      - description: Current path
+        in: query
+        name: path
+        type: string
+      - description: Search term
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.ListDirsResp'
+      summary: List directories for file browser
+      tags:
+      - System
+  /api/system/ssh-keys:
+    get:
+      description: List public SSH keys available in the user's home .ssh directory.
       produces:
       - application/json
       responses:
@@ -349,97 +1489,83 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/model.SyncTask'
+              $ref: '#/definitions/handler.SSHKey'
             type: array
-      summary: List sync tasks
-      tags:
-      - Tasks
-    post:
-      consumes:
-      - application/json
-      parameters:
-      - description: Task info
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/model.SyncTask'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
+        "500":
+          description: Internal Server Error
           schema:
-            $ref: '#/definitions/model.SyncTask'
-      summary: Create a sync task
+            additionalProperties:
+              type: string
+            type: object
+      summary: List available SSH keys
       tags:
-      - Tasks
-  /api/sync/tasks/{id}:
+      - System
+  /api/tasks/{id}:
     get:
+      description: Get the status and logs of a background clone task.
       parameters:
       - description: Task ID
         in: path
         name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/model.SyncTask'
-      summary: Get a sync task
-      tags:
-      - Tasks
-    put:
-      parameters:
-      - description: Task ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      - description: Task info
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/model.SyncTask'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/model.SyncTask'
-      summary: Update a sync task
-      tags:
-      - Tasks
-  /api/webhooks/task-sync:
-    post:
-      consumes:
-      - application/json
-      parameters:
-      - description: HMAC-SHA256 signature
-        in: header
-        name: X-Hub-Signature-256
         required: true
         type: string
-      - description: Webhook payload
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/handler.WebhookRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            additionalProperties: true
-            type: object
-      summary: Trigger sync via Webhook
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/service.Task'
+              type: object
+        "404":
+          description: Task not found
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Get clone task status
+      tags:
+      - Repositories
+  /api/webhooks/trigger:
+    post:
+      description: Trigger a specific sync task using a secure token. Useful for external
+        integrations (e.g., GitHub Webhooks).
+      parameters:
+      - description: Webhook Token
+        in: query
+        name: token
+        required: true
+        type: string
+      responses:
+        "200":
+          description: Status triggered
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  additionalProperties:
+                    type: string
+                  type: object
+              type: object
+        "400":
+          description: Missing token
+          schema:
+            $ref: '#/definitions/response.Response'
+        "403":
+          description: Task is disabled
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Invalid token or task not found
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Trigger a sync task via Webhook
       tags:
       - Webhook
+securityDefinitions:
+  BasicAuth:
+    type: basic
 swagger: "2.0"

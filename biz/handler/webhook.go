@@ -12,9 +12,13 @@ import (
 )
 
 // @Summary Trigger a sync task via Webhook
+// @Description Trigger a specific sync task using a secure token. Useful for external integrations (e.g., GitHub Webhooks).
 // @Tags Webhook
 // @Param token query string true "Webhook Token"
-// @Success 200 {object} response.Response{data=map[string]string}
+// @Success 200 {object} response.Response{data=map[string]string} "Status triggered"
+// @Failure 400 {object} response.Response "Missing token"
+// @Failure 404 {object} response.Response "Invalid token or task not found"
+// @Failure 403 {object} response.Response "Task is disabled"
 // @Router /api/webhooks/trigger [post]
 func HandleWebhookTrigger(ctx context.Context, c *app.RequestContext) {
 	token := c.Query("token")

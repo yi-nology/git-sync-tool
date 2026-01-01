@@ -1,17 +1,17 @@
 const urlParams = new URLSearchParams(window.location.search);
-const repoId = urlParams.get('repo_id');
+const repoKey = urlParams.get('repo_key');
 const branchName = urlParams.get('branch');
 
 document.addEventListener('DOMContentLoaded', () => {
     initToastContainer();
-    if (!repoId || !branchName) {
+    if (!repoKey || !branchName) {
         showToast("缺少参数", "error");
         return;
     }
     
     document.getElementById('branch-title').innerHTML = `<i class="bi bi-git"></i> ${branchName}`;
     document.getElementById('branch-name-crumb').innerText = branchName;
-    document.getElementById('repo-link').href = `branches.html?repo_id=${repoId}`;
+    document.getElementById('repo-link').href = `branches.html?repo_key=${repoKey}`;
 
     loadData();
 });
@@ -23,7 +23,7 @@ async function loadData() {
 
 async function loadStats() {
     try {
-        const data = await request(`/stats/analyze?repo_id=${repoId}&branch=${encodeURIComponent(branchName)}`);
+        const data = await request(`/stats/analyze?repo_key=${repoKey}&branch=${encodeURIComponent(branchName)}`);
         
         document.getElementById('stat-lines').innerText = data.total_lines.toLocaleString();
         document.getElementById('stat-authors').innerText = data.authors.length;
@@ -65,7 +65,7 @@ async function loadCommits() {
     try {
         // Fetch last 100 commits? API doesn't support limit yet, fetches all. 
         // This might be slow for huge repos.
-        const commits = await request(`/stats/commits?repo_id=${repoId}&branch=${encodeURIComponent(branchName)}`);
+        const commits = await request(`/stats/commits?repo_key=${repoKey}&branch=${encodeURIComponent(branchName)}`);
         
         document.getElementById('stat-commits').innerText = commits.length.toLocaleString();
 
@@ -109,19 +109,19 @@ function refreshData() {
 function openCompare() {
     // Navigate to compare page, pre-setting the source branch as current branch
     // Target defaults to main/master handled by compare.js logic
-    window.location.href = `compare.html?repo_id=${repoId}&source=${encodeURIComponent(branchName)}`;
+    window.location.href = `compare.html?repo_key=${repoKey}&source=${encodeURIComponent(branchName)}`;
 }
 
 async function deleteCurrentBranch() {
     if (!confirm(`确定要删除分支 "${branchName}" 吗？此操作不可撤销！`)) return;
     
     try {
-        await request(`/repos/${repoId}/branches/${encodeURIComponent(branchName)}?force=true`, {
+        await request(`/repos/${repoKey}/branches/${encodeURIComponent(branchName)}?force=true`, {
             method: 'DELETE'
         });
         showToast("删除成功", "success");
         setTimeout(() => {
-            window.location.href = `branches.html?repo_id=${repoId}`;
+            window.location.href = `branches.html?repo_key=${repoKey}`;
         }, 1000);
     } catch (e) {
         // handled

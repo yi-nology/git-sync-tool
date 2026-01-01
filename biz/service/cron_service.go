@@ -80,9 +80,10 @@ func (s *CronService) RemoveTask(taskID uint) {
 
 func (s *CronService) addTask(task model.SyncTask) {
 	taskID := task.ID
+	taskKey := task.Key
 	entryID, err := s.cron.AddFunc(task.Cron, func() {
-		log.Printf("Executing Cron Task %d", taskID)
-		err := s.syncSvc.RunTask(taskID)
+		log.Printf("Executing Cron Task %d (Key: %s)", taskID, taskKey)
+		err := s.syncSvc.RunTask(taskKey)
 		if err != nil {
 			log.Printf("Cron Task %d failed: %v", taskID, err)
 		}

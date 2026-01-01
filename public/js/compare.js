@@ -1,22 +1,22 @@
 const urlParams = new URLSearchParams(window.location.search);
-const repoId = urlParams.get('repo_id');
+const repoKey = urlParams.get('repo_key');
 let currentDiffView = 'side-by-side';
 let currentFile = null;
 let currentDiffData = null;
 
 document.addEventListener('DOMContentLoaded', () => {
     initToastContainer();
-    if (!repoId) {
-        showToast("缺少 repo_id 参数", "error");
+    if (!repoKey) {
+        showToast("缺少 repo_key 参数", "error");
         return;
     }
-    document.getElementById('repo-link').href = `branches.html?repo_id=${repoId}`;
+    document.getElementById('repo-link').href = `branches.html?repo_key=${repoKey}`;
     loadBranches();
 });
 
 async function loadBranches() {
     try {
-        const res = await request(`/repos/${repoId}/branches?page_size=1000`);
+        const res = await request(`/repos/${repoKey}/branches?page_size=1000`);
         const branches = res.list || [];
         
         const srcSelect = document.getElementById('sourceBranch');
@@ -82,7 +82,7 @@ async function checkDiff(force = false) {
         // My API uses `git diff base target`.
         // So I should pass base=target, target=source to see changes introduced by source.
         
-        const res = await request(`/repos/${repoId}/compare?base=${encodeURIComponent(target)}&target=${encodeURIComponent(source)}`);
+        const res = await request(`/repos/${repoKey}/compare?base=${encodeURIComponent(target)}&target=${encodeURIComponent(source)}`);
         
         // Render Stats
         document.getElementById('stat-files').innerText = res.stat.FilesChanged;
@@ -140,7 +140,7 @@ async function loadFileDiff(filePath) {
     // Better to store ID, but for now ok.
     
     try {
-        const res = await request(`/repos/${repoId}/diff?base=${encodeURIComponent(target)}&target=${encodeURIComponent(source)}&file=${encodeURIComponent(filePath)}`);
+        const res = await request(`/repos/${repoKey}/diff?base=${encodeURIComponent(target)}&target=${encodeURIComponent(source)}&file=${encodeURIComponent(filePath)}`);
         
         const diffString = res.diff;
         if (!diffString) {
@@ -178,7 +178,7 @@ function downloadPatch() {
     const target = document.getElementById('targetBranch').value;
     if (!source || !target) return;
     
-    window.open(`/api/repos/${repoId}/patch?base=${encodeURIComponent(target)}&target=${encodeURIComponent(source)}`, '_blank');
+    window.open(`/api/repos/${repoKey}/patch?base=${encodeURIComponent(target)}&target=${encodeURIComponent(source)}`, '_blank');
 }
 
 // Merge Logic
@@ -203,7 +203,7 @@ async function openMergeModal() {
     
     // Perform Dry Run
     try {
-        const res = await request(`/repos/${repoId}/merge/check?base=${encodeURIComponent(source)}&target=${encodeURIComponent(target)}`);
+        const res = await request(`/repos/${repoKey}/merge/check?base=${encodeURIComponent(source)}&target=${encodeURIComponent(target)}`);
         
         document.getElementById('mergeCheckResult').classList.add('d-none');
         
@@ -249,7 +249,7 @@ async function submitMerge() {
     btn.innerText = "合并中...";
     
     try {
-        const res = await request(`/repos/${repoId}/merge`, {
+        const res = await request(`/repos/${repoKey}/merge`, {
             method: 'POST',
             body: { source, target, message }
         });

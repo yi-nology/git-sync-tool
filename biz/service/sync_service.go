@@ -19,9 +19,9 @@ func NewSyncService() *SyncService {
 	}
 }
 
-func (s *SyncService) RunTask(taskID uint) error {
+func (s *SyncService) RunTask(taskKey string) error {
 	var task model.SyncTask
-	if err := dal.DB.Preload("SourceRepo").Preload("TargetRepo").First(&task, taskID).Error; err != nil {
+	if err := dal.DB.Preload("SourceRepo").Preload("TargetRepo").Where("key = ?", taskKey).First(&task).Error; err != nil {
 		return err
 	}
 	return s.ExecuteSync(&task)

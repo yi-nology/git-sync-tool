@@ -29,11 +29,14 @@ type RegisterRepoReq struct {
 }
 
 // @Summary Register a new repository
+// @Description Register a new git repository by path. If the repository does not exist in the database, it will be added.
 // @Tags Repositories
 // @Accept json
 // @Produce json
 // @Param request body RegisterRepoReq true "Repo info"
 // @Success 200 {object} response.Response{data=model.Repo}
+// @Failure 400 {object} response.Response "Bad Request - Invalid input or path"
+// @Failure 500 {object} response.Response "Internal Server Error"
 // @Router /api/repos [post]
 func RegisterRepo(ctx context.Context, c *app.RequestContext) {
 	var req RegisterRepoReq
@@ -110,11 +113,14 @@ type ScanRepoReq struct {
 }
 
 // @Summary Scan a local repository
+// @Description Scan a local directory to check if it's a valid git repository and retrieve its configuration.
 // @Tags Repositories
 // @Accept json
 // @Produce json
 // @Param request body ScanRepoReq true "Scan info"
 // @Success 200 {object} response.Response{data=model.GitRepoConfig}
+// @Failure 400 {object} response.Response "Bad Request - Invalid path"
+// @Failure 500 {object} response.Response "Internal Server Error"
 // @Router /api/repos/scan [post]
 func ScanRepo(ctx context.Context, c *app.RequestContext) {
 	var req ScanRepoReq
@@ -148,11 +154,13 @@ type CloneRepoReq struct {
 }
 
 // @Summary Clone a remote repository
+// @Description Clone a remote git repository to a local path asynchronously. Returns a task ID to track progress.
 // @Tags Repositories
 // @Accept json
 // @Produce json
 // @Param request body CloneRepoReq true "Clone info"
-// @Success 200 {object} response.Response{data=map[string]string}
+// @Success 200 {object} response.Response{data=map[string]string} "Returns task_id"
+// @Failure 400 {object} response.Response "Bad Request - Directory exists or invalid input"
 // @Router /api/repos/clone [post]
 func CloneRepo(ctx context.Context, c *app.RequestContext) {
 	var req CloneRepoReq
@@ -217,10 +225,12 @@ func CloneRepo(ctx context.Context, c *app.RequestContext) {
 }
 
 // @Summary Get clone task status
+// @Description Get the status and logs of a background clone task.
 // @Tags Repositories
 // @Param id path string true "Task ID"
 // @Produce json
 // @Success 200 {object} response.Response{data=service.Task}
+// @Failure 404 {object} response.Response "Task not found"
 // @Router /api/tasks/{id} [get]
 func GetCloneTask(ctx context.Context, c *app.RequestContext) {
 	id := c.Param("id")
@@ -237,10 +247,12 @@ type TestConnectionReq struct {
 }
 
 // @Summary Test remote connection
+// @Description Test if a remote git URL is accessible.
 // @Tags System
 // @Param request body TestConnectionReq true "Connection info"
 // @Produce json
-// @Success 200 {object} response.Response{data=map[string]string}
+// @Success 200 {object} response.Response{data=map[string]string} "Status success or failed"
+// @Failure 400 {object} response.Response "Bad Request"
 // @Router /api/git/test-connection [post]
 func TestConnection(ctx context.Context, c *app.RequestContext) {
 	var req TestConnectionReq
@@ -265,6 +277,7 @@ func TestConnection(ctx context.Context, c *app.RequestContext) {
 }
 
 // @Summary List registered repositories
+// @Description Get a list of all registered repositories in the system.
 // @Tags Repositories
 // @Produce json
 // @Success 200 {object} response.Response{data=[]model.Repo}
@@ -275,17 +288,34 @@ func ListRepos(ctx context.Context, c *app.RequestContext) {
 	response.Success(c, repos)
 }
 
+// @Summary Get a repository by Key
+// @Description Get details of a specific repository by its unique key.
+// @Tags Repositories
+// @Param key path string true "Repo Key"
+// @Produce json
+// @Success 200 {object} response.Response{data=model.Repo}
+// @Failure 404 {object} response.Response "Repo not found"
+// @Router /api/repos/{key} [get]
+func GetRepo(ctx context.Context, c *app.RequestContext) {
+	key := c.Param("key")
+	var repo model.Repo
+	if err := dal.DB.Where("key = ?", key).First(&repo).Error; err != nil {
+		response.NotFound(c, "repo not found")
+		return
+	}
+	response.Success(c, repo)
+}
+
 // @Summary Update a repository
 // @Tags Repositories
 // @Accept json
 // @Produce json
-// @Param id path int true "Repo ID"
+// @Param key path string true "Repo Key"
 // @Param request body RegisterRepoReq true "Repo info"
 // @Success 200 {object} response.Response{data=model.Repo}
-// @Router /api/repos/{id} [put]
+// @Router /api/repos/{key} [put]
 func UpdateRepo(ctx context.Context, c *app.RequestContext) {
-	idStr := c.Param("id")
-	id, _ := strconv.Atoi(idStr)
+	key := c.Param("key")
 
 	var req RegisterRepoReq
 	if err := c.BindAndValidate(&req); err != nil {
@@ -294,7 +324,7 @@ func UpdateRepo(ctx context.Context, c *app.RequestContext) {
 	}
 
 	var repo model.Repo
-	if err := dal.DB.First(&repo, id).Error; err != nil {
+	if err := dal.DB.Where("key = ?", key).First(&repo).Error; err != nil {
 		response.NotFound(c, "repo not found")
 		return
 	}
@@ -364,17 +394,19 @@ func UpdateRepo(ctx context.Context, c *app.RequestContext) {
 }
 
 // @Summary Delete a repository
+// @Description Delete a repository from the system. This does not delete the files from disk, only the registration.
 // @Tags Repositories
-// @Param id path int true "Repo ID"
+// @Param key path string true "Repo Key"
 // @Success 200 {object} response.Response
-// @Router /api/repos/{id} [delete]
+// @Failure 404 {object} response.Response "Repo not found"
+// @Failure 400 {object} response.Response "Cannot delete if used in sync tasks"
+// @Router /api/repos/{key} [delete]
 func DeleteRepo(ctx context.Context, c *app.RequestContext) {
-	idStr := c.Param("id")
-	id, _ := strconv.Atoi(idStr)
+	key := c.Param("key")
 
 	// Check if used in SyncTask
 	var repo model.Repo
-	if err := dal.DB.First(&repo, id).Error; err != nil {
+	if err := dal.DB.Where("key = ?", key).First(&repo).Error; err != nil {
 		response.NotFound(c, "repo not found")
 		return
 	}
@@ -396,11 +428,14 @@ func DeleteRepo(ctx context.Context, c *app.RequestContext) {
 }
 
 // @Summary Create a sync task
+// @Description Create a new automated synchronization task between two repositories or branches.
 // @Tags Tasks
 // @Accept json
 // @Produce json
 // @Param request body model.SyncTask true "Task info"
 // @Success 200 {object} response.Response{data=model.SyncTask}
+// @Failure 400 {object} response.Response "Bad Request"
+// @Failure 500 {object} response.Response "Internal Server Error"
 // @Router /api/sync/tasks [post]
 func CreateTask(ctx context.Context, c *app.RequestContext) {
 	var req model.SyncTask
@@ -423,14 +458,13 @@ func CreateTask(ctx context.Context, c *app.RequestContext) {
 }
 
 // @Summary List sync tasks for a repo
+// @Description List all sync tasks, optionally filtered by repository key.
 // @Tags Tasks
-// @Param repo_id query int false "Repo ID"
 // @Param repo_key query string false "Repo Key"
 // @Produce json
 // @Success 200 {object} response.Response{data=[]model.SyncTask}
 // @Router /api/sync/tasks [get]
 func ListTasks(ctx context.Context, c *app.RequestContext) {
-	repoIDStr := c.Query("repo_id")
 	repoKey := c.Query("repo_key")
 	var tasks []model.SyncTask
 
@@ -438,12 +472,6 @@ func ListTasks(ctx context.Context, c *app.RequestContext) {
 
 	if repoKey != "" {
 		db = db.Where("source_repo_key = ? OR target_repo_key = ?", repoKey, repoKey)
-	} else if repoIDStr != "" {
-		repoID, _ := strconv.Atoi(repoIDStr)
-		var repo model.Repo
-		if err := dal.DB.First(&repo, repoID).Error; err == nil {
-			db = db.Where("source_repo_key = ? OR target_repo_key = ?", repo.Key, repo.Key)
-		}
 	}
 
 	db.Find(&tasks)
@@ -451,17 +479,18 @@ func ListTasks(ctx context.Context, c *app.RequestContext) {
 }
 
 // @Summary Get a sync task
+// @Description Get details of a specific sync task by its unique key.
 // @Tags Tasks
-// @Param id path int true "Task ID"
+// @Param key path string true "Task Key"
 // @Produce json
 // @Success 200 {object} response.Response{data=model.SyncTask}
-// @Router /api/sync/tasks/{id} [get]
+// @Failure 404 {object} response.Response "Task not found"
+// @Router /api/sync/tasks/{key} [get]
 func GetTask(ctx context.Context, c *app.RequestContext) {
-	idStr := c.Param("id")
-	id, _ := strconv.Atoi(idStr)
+	key := c.Param("key")
 
 	var task model.SyncTask
-	if err := dal.DB.Preload("SourceRepo").Preload("TargetRepo").First(&task, id).Error; err != nil {
+	if err := dal.DB.Preload("SourceRepo").Preload("TargetRepo").Where("key = ?", key).First(&task).Error; err != nil {
 		response.NotFound(c, "task not found")
 		return
 	}
@@ -469,15 +498,17 @@ func GetTask(ctx context.Context, c *app.RequestContext) {
 }
 
 // @Summary Update a sync task
+// @Description Update configuration of an existing sync task.
 // @Tags Tasks
-// @Param id path int true "Task ID"
+// @Param key path string true "Task Key"
 // @Param request body model.SyncTask true "Task info"
 // @Produce json
 // @Success 200 {object} response.Response{data=model.SyncTask}
-// @Router /api/sync/tasks/{id} [put]
+// @Failure 404 {object} response.Response "Task not found"
+// @Failure 400 {object} response.Response "Bad Request"
+// @Router /api/sync/tasks/{key} [put]
 func UpdateTask(ctx context.Context, c *app.RequestContext) {
-	idStr := c.Param("id")
-	id, _ := strconv.Atoi(idStr)
+	key := c.Param("key")
 
 	var req model.SyncTask
 	if err := c.BindAndValidate(&req); err != nil {
@@ -486,7 +517,7 @@ func UpdateTask(ctx context.Context, c *app.RequestContext) {
 	}
 
 	var task model.SyncTask
-	if err := dal.DB.First(&task, id).Error; err != nil {
+	if err := dal.DB.Where("key = ?", key).First(&task).Error; err != nil {
 		response.NotFound(c, "task not found")
 		return
 	}
@@ -514,16 +545,17 @@ func UpdateTask(ctx context.Context, c *app.RequestContext) {
 }
 
 // @Summary Delete a sync task
+// @Description Delete a sync task.
 // @Tags Tasks
-// @Param id path int true "Task ID"
+// @Param key path string true "Task Key"
 // @Success 200 {object} response.Response
-// @Router /api/sync/tasks/{id} [delete]
+// @Failure 404 {object} response.Response "Task not found"
+// @Router /api/sync/tasks/{key} [delete]
 func DeleteTask(ctx context.Context, c *app.RequestContext) {
-	idStr := c.Param("id")
-	id, _ := strconv.Atoi(idStr)
+	key := c.Param("key")
 
 	var task model.SyncTask
-	if err := dal.DB.First(&task, id).Error; err != nil {
+	if err := dal.DB.Where("key = ?", key).First(&task).Error; err != nil {
 		response.NotFound(c, "task not found")
 		return
 	}
@@ -536,15 +568,17 @@ func DeleteTask(ctx context.Context, c *app.RequestContext) {
 }
 
 type RunSyncReq struct {
-	TaskID uint `json:"task_id"`
+	TaskKey string `json:"task_key"`
 }
 
 // @Summary Trigger a sync task manually
+// @Description Manually trigger a configured sync task to run immediately.
 // @Tags Sync
 // @Accept json
 // @Produce json
-// @Param request body RunSyncReq true "Task ID"
-// @Success 200 {object} response.Response
+// @Param request body RunSyncReq true "Task Key"
+// @Success 200 {object} response.Response "Status started"
+// @Failure 400 {object} response.Response "Bad Request"
 // @Router /api/sync/run [post]
 func RunSync(ctx context.Context, c *app.RequestContext) {
 	var req RunSyncReq
@@ -555,15 +589,15 @@ func RunSync(ctx context.Context, c *app.RequestContext) {
 
 	go func() {
 		svc := service.NewSyncService()
-		svc.RunTask(req.TaskID)
+		svc.RunTask(req.TaskKey)
 	}()
 
-	service.AuditSvc.Log(c, "SYNC", "task_id:"+strconv.Itoa(int(req.TaskID)), nil)
+	service.AuditSvc.Log(c, "SYNC", "task_key:"+req.TaskKey, nil)
 	response.Success(c, map[string]string{"status": "started"})
 }
 
 type ExecuteSyncReq struct {
-	RepoID       uint   `json:"repo_id"`
+	RepoKey      string `json:"repo_key"`
 	SourceRemote string `json:"source_remote"` // "local", "origin", etc
 	SourceBranch string `json:"source_branch"`
 	TargetRemote string `json:"target_remote"`
@@ -586,7 +620,7 @@ func ExecuteSync(ctx context.Context, c *app.RequestContext) {
 	}
 
 	var repo model.Repo
-	if err := dal.DB.First(&repo, req.RepoID).Error; err != nil {
+	if err := dal.DB.Where("key = ?", req.RepoKey).First(&repo).Error; err != nil {
 		response.NotFound(c, "repo not found")
 		return
 	}
@@ -615,6 +649,7 @@ func ExecuteSync(ctx context.Context, c *app.RequestContext) {
 }
 
 // @Summary Get sync execution history
+// @Description Get the history of sync executions, optionally filtered by repository.
 // @Tags History
 // @Param repo_key query string false "Repo Key"
 // @Produce json

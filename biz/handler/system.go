@@ -94,9 +94,11 @@ type SSHKey struct {
 }
 
 // @Summary List available SSH keys
+// @Description List public SSH keys available in the user's home .ssh directory.
 // @Tags System
 // @Produce json
 // @Success 200 {array} SSHKey
+// @Failure 500 {object} map[string]string "Internal Server Error"
 // @Router /api/system/ssh-keys [get]
 func ListSSHKeys(ctx context.Context, c *app.RequestContext) {
 	home, err := os.UserHomeDir()

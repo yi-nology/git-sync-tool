@@ -18,11 +18,24 @@ import (
 )
 
 // @title Branch Management Tool API
-// @version 1.0
-// @description API documentation for Branch Management Tool
+// @version 1.1
+// @description API documentation for Branch Management Tool.
+// @termsOfService http://swagger.io/terms/
+
+// @contact.name API Support
+// @contact.url http://www.swagger.io/support
+// @contact.email support@swagger.io
+
+// @license.name Apache 2.0
+// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
 
 // @host localhost:8080
 // @BasePath /
+
+// @securityDefinitions.basic BasicAuth
+
+// @externalDocs.description  OpenAPI
+// @externalDocs.url          https://swagger.io/resources/open-api/
 
 func main() {
 	// 0. Init Config
@@ -45,23 +58,28 @@ func main() {
 	h.POST("/api/repos/scan", handler.ScanRepo) // New Scan Endpoint
 	h.POST("/api/repos/clone", handler.CloneRepo)
 	h.GET("/api/repos", handler.ListRepos)
-	h.PUT("/api/repos/:id", handler.UpdateRepo)
-	h.DELETE("/api/repos/:id", handler.DeleteRepo)
+	h.GET("/api/repos/:key", handler.GetRepo)
+	h.PUT("/api/repos/:key", handler.UpdateRepo)
+	h.DELETE("/api/repos/:key", handler.DeleteRepo)
 
 	// Branch Routes
-	h.GET("/api/repos/:id/branches", handler.ListRepoBranches)
-	h.POST("/api/repos/:id/branches", handler.CreateBranch)
-	h.DELETE("/api/repos/:id/branches/:name", handler.DeleteBranch)
-	h.PUT("/api/repos/:id/branches/:name", handler.UpdateBranch)
-	h.POST("/api/repos/:id/branches/:name/push", handler.PushBranch)
-	h.POST("/api/repos/:id/branches/:name/pull", handler.PullBranch)
+	h.GET("/api/repos/:key/branches", handler.ListRepoBranches)
+	h.POST("/api/repos/:key/branches", handler.CreateBranch)
+	h.DELETE("/api/repos/:key/branches/:name", handler.DeleteBranch)
+	h.PUT("/api/repos/:key/branches/:name", handler.UpdateBranch)
+	h.POST("/api/repos/:key/branches/:name/push", handler.PushBranch)
+	h.POST("/api/repos/:key/branches/:name/pull", handler.PullBranch)
+
+	// Workspace/Submit Routes
+	h.GET("/api/repos/:key/status", handler.GetRepoStatus)
+	h.POST("/api/repos/:key/submit", handler.SubmitChanges)
 
 	// Merge Routes
-	h.GET("/api/repos/:id/compare", handler.CompareBranches)
-	h.GET("/api/repos/:id/diff", handler.GetDiffContent)
-	h.GET("/api/repos/:id/merge/check", handler.MergeCheck)
-	h.POST("/api/repos/:id/merge", handler.ExecuteMerge)
-	h.GET("/api/repos/:id/patch", handler.GetPatch)
+	h.GET("/api/repos/:key/compare", handler.CompareBranches)
+	h.GET("/api/repos/:key/diff", handler.GetDiffContent)
+	h.GET("/api/repos/:key/merge/check", handler.MergeCheck)
+	h.POST("/api/repos/:key/merge", handler.ExecuteMerge)
+	h.GET("/api/repos/:key/patch", handler.GetPatch)
 
 	h.GET("/api/tasks/:id", handler.GetCloneTask) // New Task Endpoint
 
@@ -75,9 +93,9 @@ func main() {
 
 	h.POST("/api/sync/tasks", handler.CreateTask)
 	h.GET("/api/sync/tasks", handler.ListTasks)
-	h.GET("/api/sync/tasks/:id", handler.GetTask)
-	h.PUT("/api/sync/tasks/:id", handler.UpdateTask)
-	h.DELETE("/api/sync/tasks/:id", handler.DeleteTask)
+	h.GET("/api/sync/tasks/:key", handler.GetTask)
+	h.PUT("/api/sync/tasks/:key", handler.UpdateTask)
+	h.DELETE("/api/sync/tasks/:key", handler.DeleteTask)
 	h.POST("/api/sync/run", handler.RunSync)
 	h.POST("/api/sync/execute", handler.ExecuteSync) // New Ad-hoc Sync
 	h.GET("/api/sync/history", handler.ListHistory)

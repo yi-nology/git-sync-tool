@@ -1,12 +1,12 @@
 const urlParams = new URLSearchParams(window.location.search);
-const repoId = urlParams.get('repo_id');
+const repoKey = urlParams.get('repo_key');
 const source = urlParams.get('source');
 const target = urlParams.get('target');
 const mergeId = urlParams.get('merge_id');
 
 document.addEventListener('DOMContentLoaded', () => {
     initToastContainer();
-    if (!repoId || !source || !target) {
+    if (!repoKey || !source || !target) {
         showToast("缺少必要参数", "error");
         return;
     }
@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
 async function loadRepoInfo() {
     try {
         const repos = await request('/repos');
-        const repo = repos.find(r => r.id == repoId);
+        const repo = repos.find(r => r.key === repoKey);
         if (repo) {
             document.getElementById('repo-path').innerText = `cd ${repo.path}`;
         }
@@ -34,7 +34,7 @@ async function loadRepoInfo() {
 async function loadConflicts() {
     try {
         // Re-run the dry run check to get conflict list
-        const res = await request(`/repos/${repoId}/merge/check?base=${encodeURIComponent(source)}&target=${encodeURIComponent(target)}`);
+        const res = await request(`/repos/${repoKey}/merge/check?base=${encodeURIComponent(source)}&target=${encodeURIComponent(target)}`);
         
         const list = document.getElementById('conflict-list');
         list.innerHTML = '';

@@ -1,14 +1,58 @@
 {
     "swagger": "2.0",
     "info": {
-        "description": "API documentation for Branch Management Tool",
+        "description": "API documentation for Branch Management Tool.",
         "title": "Branch Management Tool API",
-        "contact": {},
-        "version": "1.0"
+        "termsOfService": "http://swagger.io/terms/",
+        "contact": {
+            "name": "API Support",
+            "url": "http://www.swagger.io/support",
+            "email": "support@swagger.io"
+        },
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        },
+        "version": "1.1"
     },
     "host": "localhost:8080",
     "basePath": "/",
     "paths": {
+        "/api/audit/logs": {
+            "get": {
+                "description": "Retrieve a list of system audit logs, ordered by creation time (descending).",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Audit"
+                ],
+                "summary": "List audit logs",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/model.AuditLog"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/api/config": {
             "get": {
                 "produces": [
@@ -29,6 +73,7 @@
                 }
             },
             "post": {
+                "description": "Update global system configuration settings.",
                 "consumes": [
                     "application/json"
                 ],
@@ -52,10 +97,71 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Updated config",
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/git/test-connection": {
+            "post": {
+                "description": "Test if a remote git URL is accessible.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "System"
+                ],
+                "summary": "Test remote connection",
+                "parameters": [
+                    {
+                        "description": "Connection info",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.TestConnectionReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Status success or failed",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "additionalProperties": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
                         }
                     }
                 }
@@ -63,6 +169,7 @@
         },
         "/api/repos": {
             "get": {
+                "description": "Get a list of all registered repositories in the system.",
                 "produces": [
                     "application/json"
                 ],
@@ -74,15 +181,28 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/model.Repo"
-                            }
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/model.Repo"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     }
                 }
             },
             "post": {
+                "description": "Register a new git repository by path. If the repository does not exist in the database, it will be added.",
                 "consumes": [
                     "application/json"
                 ],
@@ -108,7 +228,835 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/model.Repo"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/model.Repo"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request - Invalid input or path",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/repos/clone": {
+            "post": {
+                "description": "Clone a remote git repository to a local path asynchronously. Returns a task ID to track progress.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Repositories"
+                ],
+                "summary": "Clone a remote repository",
+                "parameters": [
+                    {
+                        "description": "Clone info",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.CloneRepoReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Returns task_id",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "additionalProperties": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request - Directory exists or invalid input",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/repos/scan": {
+            "post": {
+                "description": "Scan a local directory to check if it's a valid git repository and retrieve its configuration.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Repositories"
+                ],
+                "summary": "Scan a local repository",
+                "parameters": [
+                    {
+                        "description": "Scan info",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.ScanRepoReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/model.GitRepoConfig"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request - Invalid path",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/repos/{key}": {
+            "get": {
+                "description": "Get details of a specific repository by its unique key.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Repositories"
+                ],
+                "summary": "Get a repository by Key",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Repo Key",
+                        "name": "key",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/model.Repo"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Repo not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Repositories"
+                ],
+                "summary": "Update a repository",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Repo Key",
+                        "name": "key",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Repo info",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.RegisterRepoReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/model.Repo"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete a repository from the system. This does not delete the files from disk, only the registration.",
+                "tags": [
+                    "Repositories"
+                ],
+                "summary": "Delete a repository",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Repo Key",
+                        "name": "key",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Cannot delete if used in sync tasks",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Repo not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/repos/{key}/branches": {
+            "get": {
+                "description": "List branches for a repository with pagination and filtering. Includes ahead/behind sync status if available.",
+                "tags": [
+                    "Branches"
+                ],
+                "summary": "List branches",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Repo Key",
+                        "name": "key",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page number (default 1)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size (default 100)",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search keyword (name or author)",
+                        "name": "keyword",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Map containing 'total' and 'list' of BranchInfo",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "additionalProperties": true
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Repo not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Branches"
+                ],
+                "summary": "Create a branch",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Repo Key",
+                        "name": "key",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Create info",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.CreateBranchReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/repos/{key}/branches/{name}": {
+            "put": {
+                "description": "Rename a branch or update its description.",
+                "tags": [
+                    "Branches"
+                ],
+                "summary": "Update a branch (Rename/Desc)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Repo Key",
+                        "name": "key",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Current Branch Name",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Update info",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.UpdateBranchReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Repo not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Branches"
+                ],
+                "summary": "Delete a branch",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Repo Key",
+                        "name": "key",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Branch Name",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Force delete",
+                        "name": "force",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/repos/{key}/branches/{name}/pull": {
+            "post": {
+                "description": "Pull changes from the configured upstream remote for a specific branch.",
+                "tags": [
+                    "Branches"
+                ],
+                "summary": "Pull/Sync branch from upstream",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Repo Key",
+                        "name": "key",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Branch Name",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Status synced",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request - No upstream or not current branch",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Repo not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/repos/{key}/branches/{name}/push": {
+            "post": {
+                "tags": [
+                    "Branches"
+                ],
+                "summary": "Push branch to remotes",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Repo Key",
+                        "name": "key",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Branch Name",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Remotes",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.PushBranchReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/repos/{key}/compare": {
+            "get": {
+                "description": "Compare two branches and return diff statistics and file list.",
+                "tags": [
+                    "Merge"
+                ],
+                "summary": "Compare two branches",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Repo Key",
+                        "name": "key",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Base Branch",
+                        "name": "base",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Target Branch",
+                        "name": "target",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Map with 'stat' and 'files'",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "additionalProperties": true
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request - Missing params",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Repo not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/repos/{key}/diff": {
+            "get": {
+                "description": "Get the raw diff content between two branches, optionally for a specific file.",
+                "tags": [
+                    "Merge"
+                ],
+                "summary": "Get raw diff content",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Repo Key",
+                        "name": "key",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Base Branch",
+                        "name": "base",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Target Branch",
+                        "name": "target",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Specific File",
+                        "name": "file",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Map with 'diff'",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "additionalProperties": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Repo not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/repos/{key}/merge": {
+            "post": {
+                "tags": [
+                    "Merge"
+                ],
+                "summary": "Execute merge",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Repo Key",
+                        "name": "key",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Merge Info",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.MergeReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/repos/{key}/merge/check": {
+            "get": {
+                "description": "Perform a dry run of a merge to check for conflicts without modifying the repository.",
+                "tags": [
+                    "Merge"
+                ],
+                "summary": "Dry run merge to check conflicts",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Repo Key",
+                        "name": "key",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Base Branch",
+                        "name": "base",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Target Branch",
+                        "name": "target",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success status, does not mean no conflict, check data",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Repo not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/repos/{key}/patch": {
+            "get": {
+                "tags": [
+                    "Merge"
+                ],
+                "summary": "Download patch",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Repo Key",
+                        "name": "key",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Base",
+                        "name": "base",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Target",
+                        "name": "target",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "file"
                         }
                     }
                 }
@@ -116,6 +1064,7 @@
         },
         "/api/stats/analyze": {
             "get": {
+                "description": "Analyze code statistics (author contributions, file types, etc.) for a branch.",
                 "produces": [
                     "application/json"
                 ],
@@ -125,9 +1074,9 @@
                 "summary": "Get code statistics for a branch",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "Repo ID",
-                        "name": "repo_id",
+                        "type": "string",
+                        "description": "Repo Key",
+                        "name": "repo_key",
                         "in": "query",
                         "required": true
                     },
@@ -137,13 +1086,55 @@
                         "name": "branch",
                         "in": "query",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Since (YYYY-MM-DD)",
+                        "name": "since",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Until (YYYY-MM-DD)",
+                        "name": "until",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by Author Name or Email",
+                        "name": "author",
+                        "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/model.StatsResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/model.StatsResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Repo not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
                         }
                     }
                 }
@@ -151,6 +1142,7 @@
         },
         "/api/stats/branches": {
             "get": {
+                "description": "List branches for statistics (simplified list).",
                 "produces": [
                     "application/json"
                 ],
@@ -160,9 +1152,9 @@
                 "summary": "List branches for a repository",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "Repo ID",
-                        "name": "repo_id",
+                        "type": "string",
+                        "description": "Repo Key",
+                        "name": "repo_key",
                         "in": "query",
                         "required": true
                     }
@@ -171,10 +1163,34 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "type": "string"
-                            }
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Repo not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
                         }
                     }
                 }
@@ -191,9 +1207,9 @@
                 "summary": "Get commit history for a branch",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "Repo ID",
-                        "name": "repo_id",
+                        "type": "string",
+                        "description": "Repo Key",
+                        "name": "repo_key",
                         "in": "query",
                         "required": true
                     },
@@ -221,10 +1237,22 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/model.Commit"
-                            }
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/model.Commit"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     }
                 }
@@ -241,9 +1269,9 @@
                 "summary": "Export statistics as CSV",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "Repo ID",
-                        "name": "repo_id",
+                        "type": "string",
+                        "description": "Repo Key",
+                        "name": "repo_key",
                         "in": "query",
                         "required": true
                     },
@@ -253,13 +1281,74 @@
                         "name": "branch",
                         "in": "query",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Since (YYYY-MM-DD)",
+                        "name": "since",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Until (YYYY-MM-DD)",
+                        "name": "until",
+                        "in": "query"
                     }
                 ],
                 "responses": {}
             }
         },
+        "/api/sync/execute": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Sync"
+                ],
+                "summary": "Execute an ad-hoc sync",
+                "parameters": [
+                    {
+                        "description": "Sync info",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.ExecuteSyncReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "additionalProperties": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/api/sync/history": {
             "get": {
+                "description": "Get the history of sync executions, optionally filtered by repository.",
                 "produces": [
                     "application/json"
                 ],
@@ -267,14 +1356,59 @@
                     "History"
                 ],
                 "summary": "Get sync execution history",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Repo Key",
+                        "name": "repo_key",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/model.SyncRun"
-                            }
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/model.SyncRun"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/api/sync/history/{id}": {
+            "delete": {
+                "tags": [
+                    "History"
+                ],
+                "summary": "Delete a sync history record",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "History ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
                         }
                     }
                 }
@@ -282,6 +1416,7 @@
         },
         "/api/sync/run": {
             "post": {
+                "description": "Manually trigger a configured sync task to run immediately.",
                 "consumes": [
                     "application/json"
                 ],
@@ -294,7 +1429,7 @@
                 "summary": "Trigger a sync task manually",
                 "parameters": [
                     {
-                        "description": "Task ID",
+                        "description": "Task Key",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -305,12 +1440,15 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Status started",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
                         }
                     }
                 }
@@ -318,26 +1456,48 @@
         },
         "/api/sync/tasks": {
             "get": {
+                "description": "List all sync tasks, optionally filtered by repository key.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "Tasks"
                 ],
-                "summary": "List sync tasks",
+                "summary": "List sync tasks for a repo",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Repo Key",
+                        "name": "repo_key",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/model.SyncTask"
-                            }
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/model.SyncTask"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     }
                 }
             },
             "post": {
+                "description": "Create a new automated synchronization task between two repositories or branches.",
                 "consumes": [
                     "application/json"
                 ],
@@ -363,14 +1523,39 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/model.SyncTask"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/model.SyncTask"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
                         }
                     }
                 }
             }
         },
-        "/api/sync/tasks/{id}": {
+        "/api/sync/tasks/{key}": {
             "get": {
+                "description": "Get details of a specific sync task by its unique key.",
                 "produces": [
                     "application/json"
                 ],
@@ -380,9 +1565,9 @@
                 "summary": "Get a sync task",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "Task ID",
-                        "name": "id",
+                        "type": "string",
+                        "description": "Task Key",
+                        "name": "key",
                         "in": "path",
                         "required": true
                     }
@@ -391,12 +1576,31 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/model.SyncTask"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/model.SyncTask"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Task not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
                         }
                     }
                 }
             },
             "put": {
+                "description": "Update configuration of an existing sync task.",
                 "produces": [
                     "application/json"
                 ],
@@ -406,9 +1610,9 @@
                 "summary": "Update a sync task",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "Task ID",
-                        "name": "id",
+                        "type": "string",
+                        "description": "Task Key",
+                        "name": "key",
                         "in": "path",
                         "required": true
                     },
@@ -426,48 +1630,232 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/model.SyncTask"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/model.SyncTask"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Task not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
                         }
                     }
                 }
-            }
-        },
-        "/api/webhooks/task-sync": {
-            "post": {
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
+            },
+            "delete": {
+                "description": "Delete a sync task.",
                 "tags": [
-                    "Webhook"
+                    "Tasks"
                 ],
-                "summary": "Trigger sync via Webhook",
+                "summary": "Delete a sync task",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "HMAC-SHA256 signature",
-                        "name": "X-Hub-Signature-256",
-                        "in": "header",
+                        "description": "Task Key",
+                        "name": "key",
+                        "in": "path",
                         "required": true
-                    },
-                    {
-                        "description": "Webhook payload",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/handler.WebhookRequest"
-                        }
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Task not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/system/dirs": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "System"
+                ],
+                "summary": "List directories for file browser",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Current path",
+                        "name": "path",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search term",
+                        "name": "search",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ListDirsResp"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/system/ssh-keys": {
+            "get": {
+                "description": "List public SSH keys available in the user's home .ssh directory.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "System"
+                ],
+                "summary": "List available SSH keys",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/handler.SSHKey"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
                             "type": "object",
-                            "additionalProperties": true
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/tasks/{id}": {
+            "get": {
+                "description": "Get the status and logs of a background clone task.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Repositories"
+                ],
+                "summary": "Get clone task status",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Task ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/service.Task"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Task not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/webhooks/trigger": {
+            "post": {
+                "description": "Trigger a specific sync task using a secure token. Useful for external integrations (e.g., GitHub Webhooks).",
+                "tags": [
+                    "Webhook"
+                ],
+                "summary": "Trigger a sync task via Webhook",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Webhook Token",
+                        "name": "token",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Status triggered",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "additionalProperties": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Missing token",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "403": {
+                        "description": "Task is disabled",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Invalid token or task not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
                         }
                     }
                 }
@@ -475,6 +1863,29 @@
         }
     },
     "definitions": {
+        "handler.CloneRepoReq": {
+            "type": "object",
+            "properties": {
+                "auth_key": {
+                    "type": "string"
+                },
+                "auth_secret": {
+                    "type": "string"
+                },
+                "auth_type": {
+                    "type": "string"
+                },
+                "config_source": {
+                    "type": "string"
+                },
+                "local_path": {
+                    "type": "string"
+                },
+                "remote_url": {
+                    "type": "string"
+                }
+            }
+        },
         "handler.ConfigReq": {
             "type": "object",
             "properties": {
@@ -483,7 +1894,7 @@
                 }
             }
         },
-        "handler.RegisterRepoReq": {
+        "handler.DirItem": {
             "type": "object",
             "properties": {
                 "name": {
@@ -494,19 +1905,199 @@
                 }
             }
         },
-        "handler.RunSyncReq": {
+        "handler.ExecuteSyncReq": {
             "type": "object",
             "properties": {
-                "task_id": {
-                    "type": "integer"
+                "push_options": {
+                    "type": "string"
+                },
+                "repo_key": {
+                    "type": "string"
+                },
+                "source_branch": {
+                    "type": "string"
+                },
+                "source_remote": {
+                    "description": "\"local\", \"origin\", etc",
+                    "type": "string"
+                },
+                "target_branch": {
+                    "type": "string"
+                },
+                "target_remote": {
+                    "type": "string"
                 }
             }
         },
-        "handler.WebhookRequest": {
+        "handler.ListDirsResp": {
             "type": "object",
             "properties": {
-                "task_id": {
+                "current": {
+                    "type": "string"
+                },
+                "dirs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.DirItem"
+                    }
+                },
+                "parent": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.MergeReq": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "source": {
+                    "type": "string"
+                },
+                "strategy": {
+                    "description": "Not implemented yet",
+                    "type": "string"
+                },
+                "target": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.PushBranchReq": {
+            "type": "object",
+            "properties": {
+                "remotes": {
+                    "description": "List of remote names",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "handler.RegisterRepoReq": {
+            "type": "object",
+            "properties": {
+                "auth_key": {
+                    "type": "string"
+                },
+                "auth_secret": {
+                    "type": "string"
+                },
+                "auth_type": {
+                    "type": "string"
+                },
+                "config_source": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "path": {
+                    "type": "string"
+                },
+                "remote_auths": {
+                    "description": "Optional auth per remote",
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/model.AuthInfo"
+                    }
+                },
+                "remote_url": {
+                    "type": "string"
+                },
+                "remotes": {
+                    "description": "Optional list of remotes to sync",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.GitRemote"
+                    }
+                }
+            }
+        },
+        "handler.RunSyncReq": {
+            "type": "object",
+            "properties": {
+                "task_key": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.SSHKey": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "path": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.ScanRepoReq": {
+            "type": "object",
+            "properties": {
+                "path": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.TestConnectionReq": {
+            "type": "object",
+            "properties": {
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.AuditLog": {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "description": "CREATE, UPDATE, DELETE, SYNC, etc.",
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "details": {
+                    "description": "JSON payload of changes or details",
+                    "type": "string"
+                },
+                "id": {
                     "type": "integer"
+                },
+                "ip_address": {
+                    "type": "string"
+                },
+                "operator": {
+                    "description": "User ID or IP (since we don't have full auth yet)",
+                    "type": "string"
+                },
+                "target": {
+                    "description": "repo:1, task:abc, etc.",
+                    "type": "string"
+                },
+                "user_agent": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.AuthInfo": {
+            "type": "object",
+            "properties": {
+                "key": {
+                    "description": "SSH Key Path or Username",
+                    "type": "string"
+                },
+                "secret": {
+                    "description": "Passphrase or Password (Encrypted in DB)",
+                    "type": "string"
+                },
+                "type": {
+                    "description": "ssh, http, none",
+                    "type": "string"
                 }
             }
         },
@@ -560,19 +2151,125 @@
                 }
             }
         },
+        "model.CreateBranchReq": {
+            "type": "object",
+            "properties": {
+                "base_ref": {
+                    "type": "string"
+                },
+                "name": {
+                    "description": "Removed binding:\"required\" as hertz might handle it differently or I'll validate manually",
+                    "type": "string"
+                }
+            }
+        },
+        "model.GitBranch": {
+            "type": "object",
+            "properties": {
+                "merge": {
+                    "description": "refs/heads/xxx",
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "remote": {
+                    "type": "string"
+                },
+                "upstream_ref": {
+                    "description": "e.g. origin/main",
+                    "type": "string"
+                }
+            }
+        },
+        "model.GitRemote": {
+            "type": "object",
+            "properties": {
+                "fetch_specs": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "fetch_url": {
+                    "type": "string"
+                },
+                "is_mirror": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "push_specs": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "push_url": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.GitRepoConfig": {
+            "type": "object",
+            "properties": {
+                "branches": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.GitBranch"
+                    }
+                },
+                "remotes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.GitRemote"
+                    }
+                }
+            }
+        },
         "model.Repo": {
             "type": "object",
             "properties": {
+                "auth_key": {
+                    "description": "SSH Key Path or Username",
+                    "type": "string"
+                },
+                "auth_secret": {
+                    "description": "Passphrase or Password (Encrypted in DB)",
+                    "type": "string"
+                },
+                "auth_type": {
+                    "description": "ssh, http, none",
+                    "type": "string"
+                },
+                "config_source": {
+                    "description": "local, database",
+                    "type": "string"
+                },
                 "created_at": {
                     "type": "string"
                 },
                 "id": {
                     "type": "integer"
                 },
+                "key": {
+                    "type": "string"
+                },
                 "name": {
                     "type": "string"
                 },
                 "path": {
+                    "type": "string"
+                },
+                "remote_auths": {
+                    "description": "Memory \u0026 API",
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/model.AuthInfo"
+                    }
+                },
+                "remote_url": {
                     "type": "string"
                 },
                 "updated_at": {
@@ -620,8 +2317,16 @@
                     "description": "success, failed, conflict",
                     "type": "string"
                 },
-                "task_id": {
-                    "type": "integer"
+                "task": {
+                    "description": "Associations",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.SyncTask"
+                        }
+                    ]
+                },
+                "task_key": {
+                    "type": "string"
                 }
             }
         },
@@ -641,6 +2346,9 @@
                 "id": {
                     "type": "integer"
                 },
+                "key": {
+                    "type": "string"
+                },
                 "push_options": {
                     "description": "e.g. \"--force --no-verify\"",
                     "type": "string"
@@ -659,8 +2367,8 @@
                         }
                     ]
                 },
-                "source_repo_id": {
-                    "type": "integer"
+                "source_repo_key": {
+                    "type": "string"
                 },
                 "target_branch": {
                     "type": "string"
@@ -671,13 +2379,71 @@
                 "target_repo": {
                     "$ref": "#/definitions/model.Repo"
                 },
-                "target_repo_id": {
-                    "type": "integer"
+                "target_repo_key": {
+                    "type": "string"
                 },
                 "updated_at": {
+                    "type": "string"
+                },
+                "webhook_token": {
+                    "description": "For webhook triggering",
+                    "type": "string"
+                }
+            }
+        },
+        "model.UpdateBranchReq": {
+            "type": "object",
+            "properties": {
+                "desc": {
+                    "description": "Description is not native to git branch, maybe store in config or ignore for now? Requirement said \"Modify branch name and description\". Git doesn't strictly support branch description except via `git branch --edit-description` which opens an editor. `git config branch.\u003cname\u003e.description` works.",
+                    "type": "string"
+                },
+                "new_name": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.Response": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {},
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "service.Task": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "progress": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "status": {
+                    "description": "running, success, failed",
                     "type": "string"
                 }
             }
         }
+    },
+    "securityDefinitions": {
+        "BasicAuth": {
+            "type": "basic"
+        }
+    },
+    "externalDocs": {
+        "description": "OpenAPI",
+        "url": "https://swagger.io/resources/open-api/"
     }
 }

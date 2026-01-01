@@ -36,10 +36,10 @@ async function loadRepos() {
                     <div class="btn-group btn-group-sm">
                         <button class="btn btn-outline-secondary" onclick="openRepoDetailModal(${repo.id})" title="详情"><i class="bi bi-info-circle"></i></button>
                         <button class="btn btn-outline-primary" onclick="openEditRepoModal(${repo.id})" title="编辑"><i class="bi bi-pencil"></i></button>
-                        <a class="btn btn-outline-success" href="branches.html?repo_id=${repo.id}" title="分支管理"><i class="bi bi-diagram-3"></i></a>
+                        <a class="btn btn-outline-success" href="branches.html?repo_key=${repo.key}" title="分支管理"><i class="bi bi-diagram-3"></i></a>
                         <a class="btn btn-outline-dark" href="repo_sync.html?repo_key=${repo.key}" title="同步配置"><i class="bi bi-arrow-repeat"></i></a>
                         <button class="btn btn-outline-info" onclick="openRepoHistoryModal('${repo.key}')" title="同步历史"><i class="bi bi-clock-history"></i></button>
-                        <button class="btn btn-outline-danger" onclick="deleteRepo(${repo.id})" title="删除"><i class="bi bi-trash"></i></button>
+                        <button class="btn btn-outline-danger" onclick="deleteRepo('${repo.key}')" title="删除"><i class="bi bi-trash"></i></button>
                     </div>
                 </td>
             `;
@@ -426,17 +426,25 @@ function openExecuteSyncModal(rowId) {
     // But this button is only inside the Edit Modal usually or Add Modal?
     // If Add Modal, we can't sync yet.
     // Check if we are in Edit Modal
+    // Note: We need repo KEY now, not ID.
+    // The editRepoForm input[name=id] actually stores ID. We need to find Key from allRepos.
     const repoIdInput = document.querySelector('#editRepoForm input[name=id]');
     if (!repoIdInput || !repoIdInput.value) {
         showToast('请先保存仓库后再执行同步操作', 'warning');
         return;
     }
+    
+    const repo = allRepos.find(r => r.id == repoIdInput.value);
+    if (!repo) {
+        showToast('仓库信息丢失，请刷新页面', 'error');
+        return;
+    }
 
-    openSyncModalCommon(repoIdInput.value, name, [name]);
+    openSyncModalCommon(repo.key, name, [name]);
 }
 
-function openSyncModalCommon(repoId, defaultTargetRemote, allRemotes) {
-    document.getElementById('execSyncRepoId').value = repoId;
+function openSyncModalCommon(repoKey, defaultTargetRemote, allRemotes) {
+    document.getElementById('execSyncRepoId').value = repoKey;
     
     const srcSelect = document.getElementById('execSourceSelect');
     const tgtSelect = document.getElementById('execTargetSelect');
@@ -478,7 +486,7 @@ function updateExecSyncUI() {
 }
 
 async function submitExecuteSync() {
-    const repoId = document.getElementById('execSyncRepoId').value;
+    const repoKey = document.getElementById('execSyncRepoId').value;
     const src = document.getElementById('execSourceSelect').value;
     const tgt = document.getElementById('execTargetSelect').value;
     const force = document.getElementById('execForce').checked;
@@ -489,7 +497,7 @@ async function submitExecuteSync() {
     }
 
     const req = {
-        repo_id: parseInt(repoId),
+        repo_key: repoKey,
         source_remote: src,
         source_branch: document.getElementById('execSourceBranch').value,
         target_remote: tgt,
@@ -740,6 +748,12 @@ function openEditRepoModal(id) {
 
 async function updateRepo() {
     const form = document.getElementById('editRepoForm');
+    // Using repo ID here but backend endpoint should be updated to use key? 
+    // Wait, the API endpoint is PUT /repos/:key now.
+    // We need repo key. But edit form only has ID.
+    // Let's find repo from allRepos to get key.
+    const repo = allRepos.find(r => r.id == form.id.value);
+    if (!repo) return;
 
     // Collect Remotes from Edit Table
     const remotes = [];
@@ -775,7 +789,7 @@ async function updateRepo() {
     };
 
     try {
-        await request(`/repos/${form.id.value}`, {
+        await request(`/repos/${repo.key}`, {
             method: 'PUT',
             body: data
         });
@@ -788,12 +802,12 @@ async function updateRepo() {
     }
 }
 
-async function deleteRepo(id) {
+async function deleteRepo(key) {
     if (!confirm('确定要删除这个仓库吗？如果被同步任务使用将无法删除。')) {
         return;
     }
     try {
-        await request(`/repos/${id}`, { method: 'DELETE' });
+        await request(`/repos/${key}`, { method: 'DELETE' });
         showToast('仓库已删除', 'success');
         loadRepos();
     } catch (e) {

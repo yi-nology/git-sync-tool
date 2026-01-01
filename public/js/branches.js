@@ -1,10 +1,10 @@
 const urlParams = new URLSearchParams(window.location.search);
-const repoId = urlParams.get('repo_id');
+const repoKey = urlParams.get('repo_key');
 
 document.addEventListener('DOMContentLoaded', () => {
     initToastContainer();
-    if (!repoId) {
-        showToast("缺少 repo_id 参数", "error");
+    if (!repoKey) {
+        showToast("缺少 repo_key 参数", "error");
         return;
     }
     loadRepoInfo();
@@ -13,9 +13,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function loadRepoInfo() {
     try {
-        // Since we don't have GET /repos/:id, we fetch all
-        const repos = await request('/repos');
-        const repo = repos.find(r => r.id == repoId);
+        // Use GET /repos/:key
+        const repo = await request(`/repos/${repoKey}`);
         if (repo) {
             currentRepo = repo;
             document.getElementById('repo-title').innerText = `${repo.name} - 分支管理`;
@@ -25,6 +24,7 @@ async function loadRepoInfo() {
         }
     } catch (e) {
         console.error(e);
+        document.getElementById('repo-title').innerText = "仓库加载失败";
     }
 }
 
@@ -35,7 +35,7 @@ async function loadBranches() {
     const keyword = document.getElementById('searchInput').value;
     
     try {
-        const res = await request(`/repos/${repoId}/branches?keyword=${encodeURIComponent(keyword)}`);
+        const res = await request(`/repos/${repoKey}/branches?keyword=${encodeURIComponent(keyword)}`);
         // Response structure: { total: N, list: [] }
         const list = res.list || [];
         const total = res.total || 0;
@@ -113,7 +113,7 @@ async function loadBranches() {
 }
 
 function openComparePage() {
-    window.location.href = `compare.html?repo_id=${repoId}`;
+    window.location.href = `compare.html?repo_key=${repoKey}`;
 }
 
 function openCreateModal() {
@@ -135,7 +135,7 @@ async function submitCreate() {
     btn.disabled = true;
 
     try {
-        await request(`/repos/${repoId}/branches`, {
+        await request(`/repos/${repoKey}/branches`, {
             method: 'POST',
             body: { name, base_ref: base }
         });
@@ -173,7 +173,7 @@ async function submitRename() {
     btn.disabled = true;
 
     try {
-        await request(`/repos/${repoId}/branches/${encodeURIComponent(oldName)}`, {
+        await request(`/repos/${repoKey}/branches/${encodeURIComponent(oldName)}`, {
             method: 'PUT',
             body: { new_name: newName, desc: desc }
         });
@@ -191,7 +191,7 @@ async function deleteBranch(name) {
     if (!confirm(`确定要删除分支 "${name}" 吗？\n注意：未合并的改动将会丢失！`)) return;
 
     try {
-        await request(`/repos/${repoId}/branches/${encodeURIComponent(name)}?force=true`, {
+        await request(`/repos/${repoKey}/branches/${encodeURIComponent(name)}?force=true`, {
             method: 'DELETE'
         });
         showToast("删除成功", "success");
@@ -202,14 +202,14 @@ async function deleteBranch(name) {
 }
 
 function openDetail(branchName) {
-    window.location.href = `branch_detail.html?repo_id=${repoId}&branch=${encodeURIComponent(branchName)}`;
+    window.location.href = `branch_detail.html?repo_key=${repoKey}&branch=${encodeURIComponent(branchName)}`;
 }
 
 async function syncBranch(branch) {
     if (!confirm(`确定要同步分支 ${branch} 吗？\n这将执行 git pull --rebase，可能会产生冲突。`)) return;
     
     try {
-        await request(`/repos/${repoId}/branches/${encodeURIComponent(branch)}/pull`, { method: 'POST' });
+        await request(`/repos/${repoKey}/branches/${encodeURIComponent(branch)}/pull`, { method: 'POST' });
         showToast("同步成功", "success");
         loadBranches();
     } catch (e) {
@@ -274,7 +274,7 @@ async function submitPush() {
     btn.innerText = "推送中...";
     
     try {
-        await request(`/repos/${repoId}/branches/${encodeURIComponent(branch)}/push`, {
+        await request(`/repos/${repoKey}/branches/${encodeURIComponent(branch)}/push`, {
             method: 'POST',
             body: { remotes }
         });

@@ -124,7 +124,7 @@
                 if (!select) return;
                 select.innerHTML = '<option value="">请选择...</option>';
                 repos.forEach(repo => {
-                    select.innerHTML += `<option value="${repo.id}">${repo.name}</option>`;
+                    select.innerHTML += `<option value="${repo.key}">${repo.name}</option>`;
                 });
             } catch (e) {
                 // Handled by request.js
@@ -132,11 +132,11 @@
         }
         
         async function loadStatsBranches() {
-            const repoId = document.getElementById('statsRepoSelect').value;
-            if (!repoId) return;
+            const repoKey = document.getElementById('statsRepoSelect').value;
+            if (!repoKey) return;
             
             try {
-                const branches = await request(`/stats/branches?repo_id=${repoId}`);
+                const branches = await request(`/stats/branches?repo_key=${repoKey}`);
                 const select = document.getElementById('statsBranchSelect');
                 select.innerHTML = '';
                 branches.forEach(b => {
@@ -158,13 +158,13 @@
         let allAuthors = []; // Cache all authors for filtering
         
         async function loadStatsData() {
-            const repoId = document.getElementById('statsRepoSelect').value;
+            const repoKey = document.getElementById('statsRepoSelect').value;
             const branch = document.getElementById('statsBranchSelect').value;
             const author = document.getElementById('statsAuthorSelect').value;
             const since = document.getElementById('statsSince').value;
             const until = document.getElementById('statsUntil').value;
             
-            if (!repoId || !branch) return;
+            if (!repoKey || !branch) return;
             
             const btn = document.querySelector('button[onclick="loadStatsData()"]');
             // Check if btn exists (it might be the search icon button now)
@@ -181,7 +181,7 @@
                 // 3. If author filter is active, filter the data (either frontend or backend).
                 // Let's rely on backend filtering for consistency with CSV export.
                 
-                let url = `/stats/analyze?repo_id=${repoId}&branch=${encodeURIComponent(branch)}&since=${since}&until=${until}`;
+                let url = `/stats/analyze?repo_key=${repoKey}&branch=${encodeURIComponent(branch)}&since=${since}&until=${until}`;
                 // Only fetch full list if we don't have authors yet or params changed significantly?
                 // Actually, backend calculation is heavy. Maybe we should fetch full stats once, then filter in frontend?
                 // But the user asked for "group by submitter selection", implying backend filter or view filter.
@@ -211,7 +211,7 @@
                 
                 // Commits might still need backend filter if list is huge? 
                 // Commits API doesn't support author filter yet. Let's leave it for now or filter in JS if we fetch all.
-                loadCommits(repoId, branch, since, until, author);
+                loadCommits(repoKey, branch, since, until, author);
             } catch (e) {
                 // Handled
             } finally {
@@ -273,9 +273,9 @@
             });
         }
         
-        async function loadCommits(repoId, branch, since, until, authorFilter) {
+        async function loadCommits(repoKey, branch, since, until, authorFilter) {
             try {
-                const commits = await request(`/stats/commits?repo_id=${repoId}&branch=${encodeURIComponent(branch)}&since=${since}&until=${until}`);
+                const commits = await request(`/stats/commits?repo_key=${repoKey}&branch=${encodeURIComponent(branch)}&since=${since}&until=${until}`);
                 const tbody = document.getElementById('commitsList');
                 tbody.innerHTML = '';
                 
@@ -305,18 +305,18 @@
         }
         
         function exportStatsCSV() {
-             const repoId = document.getElementById('statsRepoSelect').value;
+             const repoKey = document.getElementById('statsRepoSelect').value;
             const branch = document.getElementById('statsBranchSelect').value;
             const author = document.getElementById('statsAuthorSelect').value;
             const since = document.getElementById('statsSince').value;
             const until = document.getElementById('statsUntil').value;
             
-            if (!repoId || !branch) {
+            if (!repoKey || !branch) {
                 showToast("请先选择仓库和分支", "warning");
                 return;
             }
             // Pass author param to backend for filtered CSV
-            let url = `${API_BASE}/stats/export/csv?repo_id=${repoId}&branch=${encodeURIComponent(branch)}&since=${since}&until=${until}`;
+            let url = `/api/stats/export/csv?repo_key=${repoKey}&branch=${encodeURIComponent(branch)}&since=${since}&until=${until}`;
             if (author) {
                 url += `&author=${encodeURIComponent(author)}`;
             }

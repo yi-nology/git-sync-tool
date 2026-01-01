@@ -3,7 +3,6 @@ package handler
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/cloudwego/hertz/pkg/app"
@@ -15,17 +14,19 @@ import (
 )
 
 // @Summary List branches for a repository
+// @Description List branches for statistics (simplified list).
 // @Tags Stats
-// @Param repo_id query int true "Repo ID"
+// @Param repo_key query string true "Repo Key"
 // @Produce json
 // @Success 200 {object} response.Response{data=[]string}
+// @Failure 404 {object} response.Response "Repo not found"
+// @Failure 500 {object} response.Response "Internal Server Error"
 // @Router /api/stats/branches [get]
 func ListBranches(ctx context.Context, c *app.RequestContext) {
-	repoIDStr := c.Query("repo_id")
-	repoID, _ := strconv.Atoi(repoIDStr)
+	repoKey := c.Query("repo_key")
 
 	var repo model.Repo
-	if err := dal.DB.First(&repo, repoID).Error; err != nil {
+	if err := dal.DB.Where("key = ?", repoKey).First(&repo).Error; err != nil {
 		response.NotFound(c, "repo not found")
 		return
 	}
@@ -41,7 +42,7 @@ func ListBranches(ctx context.Context, c *app.RequestContext) {
 
 // @Summary Get commit history for a branch
 // @Tags Stats
-// @Param repo_id query int true "Repo ID"
+// @Param repo_key query string true "Repo Key"
 // @Param branch query string true "Branch Name"
 // @Param since query string false "Since (YYYY-MM-DD)"
 // @Param until query string false "Until (YYYY-MM-DD)"
@@ -49,14 +50,13 @@ func ListBranches(ctx context.Context, c *app.RequestContext) {
 // @Success 200 {object} response.Response{data=[]model.Commit}
 // @Router /api/stats/commits [get]
 func ListCommits(ctx context.Context, c *app.RequestContext) {
-	repoIDStr := c.Query("repo_id")
-	repoID, _ := strconv.Atoi(repoIDStr)
+	repoKey := c.Query("repo_key")
 	branch := c.Query("branch")
 	since := c.Query("since")
 	until := c.Query("until")
 
 	var repo model.Repo
-	if err := dal.DB.First(&repo, repoID).Error; err != nil {
+	if err := dal.DB.Where("key = ?", repoKey).First(&repo).Error; err != nil {
 		response.NotFound(c, "repo not found")
 		return
 	}
@@ -72,23 +72,26 @@ func ListCommits(ctx context.Context, c *app.RequestContext) {
 }
 
 // @Summary Get code statistics for a branch
+// @Description Analyze code statistics (author contributions, file types, etc.) for a branch.
 // @Tags Stats
-// @Param repo_id query int true "Repo ID"
+// @Param repo_key query string true "Repo Key"
 // @Param branch query string true "Branch Name"
 // @Param since query string false "Since (YYYY-MM-DD)"
 // @Param until query string false "Until (YYYY-MM-DD)"
+// @Param author query string false "Filter by Author Name or Email"
 // @Produce json
 // @Success 200 {object} response.Response{data=model.StatsResponse}
+// @Failure 404 {object} response.Response "Repo not found"
+// @Failure 500 {object} response.Response "Internal Server Error"
 // @Router /api/stats/analyze [get]
 func GetStats(ctx context.Context, c *app.RequestContext) {
-	repoIDStr := c.Query("repo_id")
-	repoID, _ := strconv.Atoi(repoIDStr)
+	repoKey := c.Query("repo_key")
 	branch := c.Query("branch")
 	since := c.Query("since")
 	until := c.Query("until")
 
 	var repo model.Repo
-	if err := dal.DB.First(&repo, repoID).Error; err != nil {
+	if err := dal.DB.Where("key = ?", repoKey).First(&repo).Error; err != nil {
 		response.NotFound(c, "repo not found")
 		return
 	}
@@ -124,21 +127,20 @@ func GetStats(ctx context.Context, c *app.RequestContext) {
 
 // @Summary Export statistics as CSV
 // @Tags Stats
-// @Param repo_id query int true "Repo ID"
+// @Param repo_key query string true "Repo Key"
 // @Param branch query string true "Branch Name"
 // @Param since query string false "Since (YYYY-MM-DD)"
 // @Param until query string false "Until (YYYY-MM-DD)"
 // @Produce text/csv
 // @Router /api/stats/export/csv [get]
 func ExportStatsCSV(ctx context.Context, c *app.RequestContext) {
-	repoIDStr := c.Query("repo_id")
-	repoID, _ := strconv.Atoi(repoIDStr)
+	repoKey := c.Query("repo_key")
 	branch := c.Query("branch")
 	since := c.Query("since")
 	until := c.Query("until")
 
 	var repo model.Repo
-	if err := dal.DB.First(&repo, repoID).Error; err != nil {
+	if err := dal.DB.Where("key = ?", repoKey).First(&repo).Error; err != nil {
 		c.JSON(consts.StatusNotFound, map[string]string{"error": "repo not found"})
 		return
 	}

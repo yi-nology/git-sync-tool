@@ -405,6 +405,29 @@ func (s *GitService) TestRemoteConnection(url string) error {
 	return nil
 }
 
+// GetStatus returns the git status output
+func (s *GitService) GetStatus(path string) (string, error) {
+	return s.RunCommand(path, "status")
+}
+
+// AddAll stages all changes
+func (s *GitService) AddAll(path string) error {
+	_, err := s.RunCommand(path, "add", ".")
+	return err
+}
+
+// Commit commits changes with a message
+func (s *GitService) Commit(path, message string) error {
+	_, err := s.RunCommand(path, "commit", "-m", message)
+	return err
+}
+
+// PushCurrent pushes the current branch to its upstream
+func (s *GitService) PushCurrent(path string) error {
+	_, err := s.RunCommand(path, "push")
+	return err
+}
+
 // Task Manager for Async Clones
 type TaskManager struct {
 	tasks sync.Map

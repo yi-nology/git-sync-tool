@@ -235,11 +235,11 @@
                                     ${task.source_remote}/${task.source_branch} <i class="bi bi-arrow-right"></i> ${task.target_remote}/${task.target_branch}
                                 </h5>
                                 <div>
-                                    <button class="btn btn-sm btn-outline-success me-1" onclick="runTask(${task.id})" title="立即执行"><i class="bi bi-play-fill"></i></button>
-                                    <button class="btn btn-sm btn-outline-info me-1" onclick="showHistory('${task.key}')" title="历史记录"><i class="bi bi-clock-history"></i></button>
-                                    <button class="btn btn-sm btn-outline-secondary me-1" onclick="editTask(${task.id})"><i class="bi bi-pencil"></i></button>
-                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteTask(${task.id})"><i class="bi bi-trash"></i></button>
-                                </div>
+                                <button class="btn btn-sm btn-outline-success me-1" onclick="runTask('${task.key}')" title="立即执行"><i class="bi bi-play-fill"></i></button>
+                                <button class="btn btn-sm btn-outline-info me-1" onclick="showHistory('${task.key}')" title="历史记录"><i class="bi bi-clock-history"></i></button>
+                                <button class="btn btn-sm btn-outline-secondary me-1" onclick="editTask('${task.key}')"><i class="bi bi-pencil"></i></button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteTask('${task.key}')"><i class="bi bi-trash"></i></button>
+                            </div>
                             </div>
                             <div class="text-muted small mt-2">
                                 ${task.cron ? `<span class="me-3"><i class="bi bi-alarm"></i> ${task.cron}</span>` : ''}
@@ -305,11 +305,11 @@
             document.getElementById('targetRemoteSelect').innerHTML = options;
         }
 
-        function editTask(id) {
-            request(`/sync/tasks/${id}`)
+        function editTask(key) {
+            request(`/sync/tasks/${key}`)
                 .then(task => {
                     const form = document.getElementById('taskForm');
-                    form.id.value = task.id;
+                    form.id.value = task.key; // We use key as ID for update endpoint which uses path param
                     
                     populateRemotes();
                     form.source_remote.value = task.source_remote;
@@ -377,19 +377,19 @@
             }
         }
 
-        async function deleteTask(id) {
+        async function deleteTask(key) {
             if(!confirm("确定删除该同步规则吗？")) return;
             try {
-                await request(`/sync/tasks/${id}`, { method: 'DELETE' });
+                await request(`/sync/tasks/${key}`, { method: 'DELETE' });
                 loadTasks();
             } catch(e) {}
         }
 
-        async function runTask(id) {
+        async function runTask(key) {
             try {
                 await request(`/sync/run`, {
                     method: 'POST',
-                    body: {task_id: id}
+                    body: {task_key: key}
                 });
                 alert("任务已触发");
             } catch(e) {

@@ -24,11 +24,13 @@ func GetConfig(ctx context.Context, c *app.RequestContext) {
 }
 
 // @Summary Update global configuration
+// @Description Update global system configuration settings.
 // @Tags Config
 // @Accept json
 // @Produce json
 // @Param request body ConfigReq true "Config info"
-// @Success 200 {object} map[string]interface{}
+// @Success 200 {object} map[string]interface{} "Updated config"
+// @Failure 400 {object} map[string]string "Bad Request"
 // @Router /api/config [post]
 func UpdateConfig(ctx context.Context, c *app.RequestContext) {
 	var req ConfigReq
