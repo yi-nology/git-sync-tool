@@ -2,51 +2,47 @@ package handler
 
 import (
 	"context"
-	"github.com/yi-nology/git-manage-service/biz/service"
-	"log"
-	"net/http"
 
 	"github.com/cloudwego/hertz/pkg/app"
+	"github.com/cloudwego/hertz/pkg/protocol/consts"
+	"github.com/yi-nology/git-manage-service/biz/dal"
+	"github.com/yi-nology/git-manage-service/biz/model"
+	"github.com/yi-nology/git-manage-service/biz/pkg/response"
+	"github.com/yi-nology/git-manage-service/biz/service"
 )
 
-type WebhookRequest struct {
-	TaskID uint `json:"task_id"`
-}
-
-// @Summary Trigger sync via Webhook
+// @Summary Trigger a sync task via Webhook
 // @Tags Webhook
-// @Param X-Hub-Signature-256 header string true "HMAC-SHA256 signature"
-// @Param request body WebhookRequest true "Webhook payload"
-// @Accept json
-// @Produce json
-// @Success 200 {object} map[string]interface{}
-// @Router /api/webhooks/task-sync [post]
+// @Param token query string true "Webhook Token"
+// @Success 200 {object} response.Response{data=map[string]string}
+// @Router /api/webhooks/trigger [post]
 func HandleWebhookTrigger(ctx context.Context, c *app.RequestContext) {
-	var req WebhookRequest
-	if err := c.BindAndValidate(&req); err != nil {
-		c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request body", "details": err.Error()})
+	token := c.Query("token")
+	if token == "" {
+		response.BadRequest(c, "missing token")
 		return
 	}
 
-	if req.TaskID == 0 {
-		c.JSON(http.StatusBadRequest, map[string]string{"error": "task_id is required"})
+	var task model.SyncTask
+	if err := dal.DB.Preload("SourceRepo").Preload("TargetRepo").Where("webhook_token = ?", token).First(&task).Error; err != nil {
+		response.NotFound(c, "invalid token or task not found")
 		return
 	}
 
-	log.Printf("Received valid webhook trigger for task %d", req.TaskID)
+	if !task.Enabled {
+		response.Error(c, consts.StatusForbidden, 403, "task is disabled")
+		return
+	}
 
-	// Trigger sync asynchronously
-	go func(taskID uint) {
+	// Run Async
+	go func() {
 		svc := service.NewSyncService()
-		if err := svc.RunTask(taskID); err != nil {
-			log.Printf("Webhook triggered task %d failed: %v", taskID, err)
-		} else {
-			log.Printf("Webhook triggered task %d success", taskID)
-		}
-	}(req.TaskID)
+		svc.ExecuteSync(&task)
+	}()
 
-	c.JSON(http.StatusOK, map[string]interface{}{
-		"message": "Sync triggered successfully",
-		"task_id": req.TaskID,
+	response.Success(c, map[string]string{
+		"status":   "triggered",
+		"task_key": task.Key,
+		"message":  "Sync task triggered successfully",
 	})
 }

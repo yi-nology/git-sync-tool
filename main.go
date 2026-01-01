@@ -6,8 +6,8 @@ import (
 	"github.com/yi-nology/git-manage-service/biz/config"
 	"github.com/yi-nology/git-manage-service/biz/dal"
 	"github.com/yi-nology/git-manage-service/biz/handler"
-	"github.com/yi-nology/git-manage-service/biz/middleware"
 	"github.com/yi-nology/git-manage-service/biz/service"
+	"github.com/yi-nology/git-manage-service/biz/utils"
 
 	_ "github.com/yi-nology/git-manage-service/docs"
 
@@ -33,13 +33,21 @@ func main() {
 
 	// 2. Init Cron
 	service.InitCronService()
+	service.InitStatsService()
+	utils.InitEncryption()
 
 	// 3. Init Server
 	h := server.Default(server.WithHostPorts(":8080"))
 
 	// 4. Register Routes
 	h.POST("/api/repos", handler.RegisterRepo)
+	h.POST("/api/repos/scan", handler.ScanRepo) // New Scan Endpoint
+	h.POST("/api/repos/clone", handler.CloneRepo)
 	h.GET("/api/repos", handler.ListRepos)
+	h.PUT("/api/repos/:id", handler.UpdateRepo)
+	h.DELETE("/api/repos/:id", handler.DeleteRepo)
+
+	h.GET("/api/tasks/:id", handler.GetCloneTask) // New Task Endpoint
 
 	h.GET("/api/config", handler.GetConfig)
 	h.POST("/api/config", handler.UpdateConfig)
@@ -53,8 +61,11 @@ func main() {
 	h.GET("/api/sync/tasks", handler.ListTasks)
 	h.GET("/api/sync/tasks/:id", handler.GetTask)
 	h.PUT("/api/sync/tasks/:id", handler.UpdateTask)
+	h.DELETE("/api/sync/tasks/:id", handler.DeleteTask)
 	h.POST("/api/sync/run", handler.RunSync)
+	h.POST("/api/sync/execute", handler.ExecuteSync) // New Ad-hoc Sync
 	h.GET("/api/sync/history", handler.ListHistory)
+	h.DELETE("/api/sync/history/:id", handler.DeleteHistory)
 
 	// Stats Routes
 	h.GET("/api/stats/branches", handler.ListBranches)
@@ -63,7 +74,7 @@ func main() {
 	h.GET("/api/stats/export/csv", handler.ExportStatsCSV)
 
 	// Webhook
-	h.POST("/api/webhooks/task-sync", middleware.WebhookAuth(), handler.HandleWebhookTrigger)
+	h.POST("/api/webhooks/trigger", handler.HandleWebhookTrigger)
 
 	// Swagger JSON
 	h.StaticFile("/docs/swagger.json", "./docs/swagger.json")

@@ -2,10 +2,11 @@ package service
 
 import (
 	"fmt"
-	"github.com/yi-nology/git-manage-service/biz/dal"
-	"github.com/yi-nology/git-manage-service/biz/model"
 	"strings"
 	"time"
+
+	"github.com/yi-nology/git-manage-service/biz/dal"
+	"github.com/yi-nology/git-manage-service/biz/model"
 )
 
 type SyncService struct {
@@ -28,7 +29,7 @@ func (s *SyncService) RunTask(taskID uint) error {
 
 func (s *SyncService) ExecuteSync(task *model.SyncTask) error {
 	run := model.SyncRun{
-		TaskID:    task.ID,
+		TaskKey:   task.Key,
 		StartTime: time.Now(),
 		Status:    "running",
 	}
@@ -67,27 +68,97 @@ func (s *SyncService) ExecuteSync(task *model.SyncTask) error {
 	return err
 }
 
+func getAuthForRemote(repo model.Repo, remoteName string) (string, string, string) {
+	if repo.RemoteAuths != nil {
+		if auth, ok := repo.RemoteAuths[remoteName]; ok {
+			return auth.Type, auth.Key, auth.Secret
+		}
+	}
+	return repo.AuthType, repo.AuthKey, repo.AuthSecret
+}
+
 func (s *SyncService) doSync(path string, task *model.SyncTask, logf func(string, ...interface{})) (string, error) {
-	logf("Starting sync for task %d (Repo: %s)", task.ID, path)
+	logf("Starting sync for task %s (Repo: %s)", task.Key, path)
 
 	// 1. Fetch Source
-	logf("Fetching source remote: %s", task.SourceRemote)
-	if err := s.git.Fetch(path, task.SourceRemote); err != nil {
-		return "", fmt.Errorf("fetch source failed: %v", err)
+	sourceRemote := task.SourceRemote
+	if sourceRemote == "" {
+		sourceRemote = "origin"
 	}
 
+	// Check if source is local
+	isLocalSource := (sourceRemote == "local")
+
+	var sourceHash string
+
+	if !isLocalSource {
+		sourceURL, _ := s.git.GetRemoteURL(path, sourceRemote)
+		if sourceURL == "" && sourceRemote == "origin" {
+			sourceURL = task.SourceRepo.RemoteURL
+		}
+
+		sType, sKey, sSecret := getAuthForRemote(task.SourceRepo, sourceRemote)
+		sRefSpec := fmt.Sprintf("+refs/heads/%s:refs/remotes/%s/%s", task.SourceBranch, sourceRemote, task.SourceBranch)
+
+		if sourceURL != "" && sType != "" && sType != "none" {
+			logf("Fetching source %s (Auth: %s)...", sourceRemote, sType)
+			if err := s.git.FetchWithAuth(path, sourceURL, sType, sKey, sSecret, sRefSpec); err != nil {
+				return "", fmt.Errorf("fetch source failed: %v", err)
+			}
+		} else {
+			logf("Fetching source %s...", sourceRemote)
+			if err := s.git.Fetch(path, sourceRemote); err != nil {
+				return "", fmt.Errorf("fetch source failed: %v", err)
+			}
+		}
+
+		// Get Hash from Remote Ref
+		h, err := s.git.GetCommitHash(path, task.SourceRemote, task.SourceBranch)
+		if err != nil {
+			return "", fmt.Errorf("get source hash failed: %v", err)
+		}
+		sourceHash = h
+	} else {
+		// Local Source
+		// Get Hash from Local Head
+		logf("Using local branch: %s", task.SourceBranch)
+		h, err := s.git.RunCommand(path, "rev-parse", task.SourceBranch)
+		if err != nil {
+			return "", fmt.Errorf("get local source hash failed: %v", err)
+		}
+		sourceHash = h
+	}
+
+	logf("Source hash (%s/%s): %s", task.SourceRemote, task.SourceBranch, sourceHash)
+
 	// 2. Fetch Target
-	logf("Fetching target remote: %s", task.TargetRemote)
-	if err := s.git.Fetch(path, task.TargetRemote); err != nil {
-		return "", fmt.Errorf("fetch target failed: %v", err)
+	targetRemote := task.TargetRemote
+	if targetRemote == "" {
+		targetRemote = "origin"
+	}
+
+	targetURL, _ := s.git.GetRemoteURL(path, targetRemote)
+	if targetURL == "" && targetRemote == "origin" {
+		targetURL = task.TargetRepo.RemoteURL
+	}
+
+	tType, tKey, tSecret := getAuthForRemote(task.TargetRepo, targetRemote)
+	tRefSpec := fmt.Sprintf("+refs/heads/%s:refs/remotes/%s/%s", task.TargetBranch, targetRemote, task.TargetBranch)
+
+	if targetURL != "" && tType != "" && tType != "none" {
+		logf("Fetching target %s (Auth: %s)...", targetRemote, tType)
+		if err := s.git.FetchWithAuth(path, targetURL, tType, tKey, tSecret, tRefSpec); err != nil {
+			return "", fmt.Errorf("fetch target failed: %v", err)
+		}
+	} else {
+		logf("Fetching target %s...", targetRemote)
+		if err := s.git.Fetch(path, targetRemote); err != nil {
+			return "", fmt.Errorf("fetch target failed: %v", err)
+		}
 	}
 
 	// 3. Get Hashes
-	sourceHash, err := s.git.GetCommitHash(path, task.SourceRemote, task.SourceBranch)
-	if err != nil {
-		return "", fmt.Errorf("get source hash failed: %v", err)
-	}
-	logf("Source hash (%s/%s): %s", task.SourceRemote, task.SourceBranch, sourceHash)
+	// sourceHash already got
 
 	targetHash, err := s.git.GetCommitHash(path, task.TargetRemote, task.TargetBranch)
 	// Target branch might not exist yet (first sync).
@@ -139,8 +210,16 @@ func (s *SyncService) doSync(path string, task *model.SyncTask, logf func(string
 	}
 	logf("Pushing to %s/%s with options: %v", task.TargetRemote, task.TargetBranch, pushOpts)
 
-	if err := s.git.Push(path, task.TargetRemote, sourceHash, task.TargetBranch, pushOpts); err != nil {
-		return "", fmt.Errorf("push failed: %v", err)
+	if targetURL != "" && tType != "" && tType != "none" {
+		logf("Pushing target (Auth: %s)...", tType)
+		err := s.git.PushWithAuth(path, targetURL, sourceHash, task.TargetBranch, tType, tKey, tSecret, pushOpts)
+		if err != nil {
+			return "", fmt.Errorf("push failed: %v", err)
+		}
+	} else {
+		if err := s.git.Push(path, task.TargetRemote, sourceHash, task.TargetBranch, pushOpts); err != nil {
+			return "", fmt.Errorf("push failed: %v", err)
+		}
 	}
 
 	return commitRange, nil

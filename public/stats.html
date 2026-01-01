@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>度量 - 分支管理工具</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        .container { max_width: 1000px; margin-top: 20px; }
+        .card { margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row mb-3">
+            <div class="col-md-3">
+                <label class="form-label">选择仓库</label>
+                <select class="form-select" id="statsRepoSelect" onchange="loadStatsBranches()"></select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">选择分支</label>
+                <select class="form-select" id="statsBranchSelect" onchange="loadStatsData()"></select>
+            </div>
+            <div class="col-md-2">
+                 <label class="form-label">开始日期</label>
+                 <input type="date" class="form-control" id="statsSince">
+            </div>
+            <div class="col-md-2">
+                 <label class="form-label">结束日期</label>
+                 <input type="date" class="form-control" id="statsUntil">
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button class="btn btn-primary me-2" onclick="loadStatsData()">分析</button>
+                <button class="btn btn-outline-success" onclick="exportStatsCSV()" title="导出 CSV"><i class="bi bi-download"></i></button>
+            </div>
+        </div>
+
+        <!-- Dashboard -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card text-center text-bg-primary mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">总有效行数</h5>
+                        <h2 class="display-6" id="totalLines">0</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center text-bg-success mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">活跃贡献者</h5>
+                        <h2 class="display-6" id="totalAuthors">0</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">贡献分布 (有效行数)</h5>
+                        <div id="pieChart" style="height: 350px;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">贡献趋势 (近30天)</h5>
+                        <div id="lineChart" style="height: 350px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Commits Table -->
+        <div class="card">
+            <div class="card-header">提交历史 (最近 100 条)</div>
+            <div class="card-body">
+                 <table class="table table-sm table-hover">
+                    <thead>
+                        <tr>
+                            <th>Hash</th>
+                            <th>作者</th>
+                            <th>时间</th>
+                            <th>信息</th>
+                        </tr>
+                    </thead>
+                    <tbody id="commitsList">
+                        <tr><td colspan="4" class="text-center">请选择仓库和分支进行分析</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <script src="js/request.js"></script>
+    <script src="js/toast.js"></script>
+    <script src="js/common.js"></script>
+    <script src="js/navbar.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            initToastContainer();
+            loadStatsRepos();
+        });
+
+        async function loadStatsRepos() {
+            try {
+                const repos = await request('/repos');
+                const select = document.getElementById('statsRepoSelect');
+                if (!select) return;
+                select.innerHTML = '<option value="">请选择...</option>';
+                repos.forEach(repo => {
+                    select.innerHTML += `<option value="${repo.id}">${repo.name}</option>`;
+                });
+            } catch (e) {
+                // Handled by request.js
+            }
+        }
+        
+        async function loadStatsBranches() {
+            const repoId = document.getElementById('statsRepoSelect').value;
+            if (!repoId) return;
+            
+            try {
+                const branches = await request(`/stats/branches?repo_id=${repoId}`);
+                const select = document.getElementById('statsBranchSelect');
+                select.innerHTML = '';
+                branches.forEach(b => {
+                    select.innerHTML += `<option value="${b}">${b}</option>`;
+                });
+                
+                // Auto select main/master if exists
+                if (branches.includes('main')) select.value = 'main';
+                else if (branches.includes('master')) select.value = 'master';
+                
+                loadStatsData();
+            } catch (e) {
+                // Handled by request.js
+            }
+        }
+        
+        let pieChart = null;
+        let lineChart = null;
+        
+        async function loadStatsData() {
+            const repoId = document.getElementById('statsRepoSelect').value;
+            const branch = document.getElementById('statsBranchSelect').value;
+            const since = document.getElementById('statsSince').value;
+            const until = document.getElementById('statsUntil').value;
+            
+            if (!repoId || !branch) return;
+            
+            const btn = document.querySelector('button[onclick="loadStatsData()"]');
+            const originalText = btn.innerText;
+            btn.innerText = '分析中...';
+            btn.disabled = true;
+
+            try {
+                const data = await request(`/stats/analyze?repo_id=${repoId}&branch=${encodeURIComponent(branch)}&since=${since}&until=${until}`);
+                
+                document.getElementById('totalLines').innerText = data.total_lines.toLocaleString();
+                document.getElementById('totalAuthors').innerText = data.authors.length;
+                
+                // Pie Chart
+                if (!pieChart) pieChart = echarts.init(document.getElementById('pieChart'));
+                pieChart.setOption({
+                    tooltip: { trigger: 'item' },
+                    series: [{
+                        type: 'pie',
+                        radius: '50%',
+                        data: data.authors.map(a => ({value: a.total_lines, name: a.name})),
+                        emphasis: { itemStyle: { shadowBlur: 10, shadowOffsetX: 0, shadowColor: 'rgba(0, 0, 0, 0.5)' } }
+                    }]
+                });
+                
+                // Line Chart (Placeholder - would need historical data from backend)
+                if (!lineChart) lineChart = echarts.init(document.getElementById('lineChart'));
+                lineChart.setOption({
+                    title: { text: '暂无趋势数据', left: 'center', textStyle: { color: '#ccc' } },
+                    xAxis: { type: 'category', data: [] },
+                    yAxis: { type: 'value' },
+                    series: []
+                });
+                
+                loadCommits(repoId, branch, since, until);
+            } catch (e) {
+                // Handled
+            } finally {
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }
+        }
+        
+        async function loadCommits(repoId, branch, since, until) {
+            try {
+                const commits = await request(`/stats/commits?repo_id=${repoId}&branch=${encodeURIComponent(branch)}&since=${since}&until=${until}`);
+                const tbody = document.getElementById('commitsList');
+                tbody.innerHTML = '';
+                
+                if (!commits || commits.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">无提交记录</td></tr>';
+                    return;
+                }
+
+                commits.slice(0, 100).forEach(c => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><span class="font-monospace" title="${c.hash}">${c.hash.substring(0,7)}</span></td>
+                        <td>${c.author}</td>
+                        <td>${new Date(c.date).toLocaleString()}</td>
+                        <td class="text-break">${c.message}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (e) {
+                // Handled
+            }
+        }
+        
+        function exportStatsCSV() {
+             const repoId = document.getElementById('statsRepoSelect').value;
+            const branch = document.getElementById('statsBranchSelect').value;
+            const since = document.getElementById('statsSince').value;
+            const until = document.getElementById('statsUntil').value;
+            
+            if (!repoId || !branch) {
+                showToast("请先选择仓库和分支", "warning");
+                return;
+            }
+            // Direct link for file download
+            window.location.href = `${API_BASE}/stats/export/csv?repo_id=${repoId}&branch=${encodeURIComponent(branch)}&since=${since}&until=${until}`;
+        }
+    </script>
+</body>
+</html>

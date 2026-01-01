@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>仓库同步配置 - 分支管理工具</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        .container { max_width: 1000px; margin-top: 20px; }
+        .sync-card { border-left: 4px solid #0d6efd; }
+        .sync-status-success { border-left-color: #198754; }
+        .sync-status-failed { border-left-color: #dc3545; }
+        .cursor-pointer { cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4><a href="repos.html" class="text-decoration-none text-dark"><i class="bi bi-arrow-left"></i></a> 仓库同步配置: <span id="repoNameTitle">加载中...</span></h4>
+            <button class="btn btn-primary" onclick="openAddTaskModal()">新建同步规则</button>
+        </div>
+
+        <div id="taskList">
+            <!-- Dynamic Tasks -->
+            <div class="text-center text-muted">加载中...</div>
+        </div>
+    </div>
+
+    <!-- Task Modal -->
+    <div class="modal fade" id="taskModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="taskModalTitle">新建同步规则</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="taskForm">
+                        <input type="hidden" name="id">
+                        <input type="hidden" name="repo_id" id="taskRepoId">
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">源 (Source)</label>
+                                <select class="form-select mb-2" name="source_remote" id="sourceRemoteSelect" onchange="updateTaskHint()">
+                                    <!-- Options populated by JS -->
+                                </select>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text">分支</span>
+                                    <input type="text" class="form-control" name="source_branch" value="main">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">目标 (Target)</label>
+                                <select class="form-select mb-2" name="target_remote" id="targetRemoteSelect" onchange="updateTaskHint()">
+                                    <!-- Options populated by JS -->
+                                </select>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text">分支</span>
+                                    <input type="text" class="form-control" name="target_branch" value="main">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info py-2 small" id="taskHint"></div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Push 选项</label>
+                            <input type="text" class="form-control" name="push_options" placeholder="例如: --force">
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">定时同步 (Cron)</label>
+                                <input type="text" class="form-control" name="cron" placeholder="0 2 * * * (留空禁用)">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Webhook 触发</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-link-45deg"></i></span>
+                                    <input type="text" class="form-control" name="webhook_token" placeholder="Token (可选)">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="enabled" checked>
+                            <label class="form-check-label">启用任务</label>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" onclick="saveTask()">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- History Modal -->
+    <div class="modal fade" id="historyModal" tabindex="-1">
+         <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">同步历史</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <table class="table table-striped table-sm">
+                        <thead>
+                            <tr>
+                                <th>时间</th>
+                                <th>状态</th>
+                                <th>耗时</th>
+                                <th>详情</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyList"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Webhook Info Modal -->
+    <div class="modal fade" id="webhookModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Webhook 详情</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted small">使用此 Webhook 触发远程同步任务。请确保在触发时发送 POST 请求。</p>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Webhook URL</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control font-monospace small" id="webhookUrlInput" readonly>
+                            <button class="btn btn-outline-secondary" onclick="copyToClipboard(document.getElementById('webhookUrlInput').value)"><i class="bi bi-copy"></i></button>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">cURL 示例</label>
+                        <div class="position-relative">
+                            <pre class="bg-light p-3 border rounded font-monospace small" id="curlExample" style="white-space: pre-wrap; word-break: break-all;"></pre>
+                            <button class="btn btn-sm btn-light position-absolute top-0 end-0 m-2 border" onclick="copyToClipboard(document.getElementById('curlExample').innerText)" title="复制命令"><i class="bi bi-copy"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Log Modal -->
+    <div class="modal fade" id="logModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">执行日志</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <pre id="logContent" style="background: #f8f9fa; padding: 10px; max-height: 500px; overflow-y: auto; white-space: pre-wrap;"></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/common.js"></script>
+    <script src="js/navbar.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const repoKey = urlParams.get('repo_key');
+        let currentRepo = null;
+        let repoRemotes = [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!repoKey) {
+                alert("缺少 Repo Key");
+                window.location.href = "repos.html";
+                return;
+            }
+            loadRepoInfo();
+            loadTasks();
+        });
+
+        async function loadRepoInfo() {
+            // Load all repos to find current (or add specific API)
+            const res = await fetch(`${API_BASE}/repos`);
+            const repos = await res.json();
+            currentRepo = repos.find(r => r.key === repoKey);
+            if (!currentRepo) {
+                alert("仓库不存在");
+                window.location.href = "repos.html";
+                return;
+            }
+            document.getElementById('repoNameTitle').innerText = currentRepo.name;
+            // document.getElementById('taskRepoId').value = repoId; // No longer needed or used as reference? 
+            // We might need repo ID for some other things, but here we use Key mainly.
+            
+            // Scan remotes for dropdowns
+            const scanRes = await fetch(`${API_BASE}/repos/scan`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({path: currentRepo.path})
+            });
+            if (scanRes.ok) {
+                const config = await scanRes.json();
+                repoRemotes = (config.remotes || []).map(r => r.name);
+            }
+        }
+
+        async function loadTasks() {
+            const res = await fetch(`${API_BASE}/sync/tasks?repo_key=${repoKey}`);
+            const tasks = await res.json();
+            const list = document.getElementById('taskList');
+            list.innerHTML = '';
+            
+            if (tasks.length === 0) {
+                list.innerHTML = '<div class="alert alert-secondary text-center">暂无同步规则</div>';
+                return;
+            }
+
+            tasks.forEach(task => {
+                const item = document.createElement('div');
+                item.className = 'card mb-3 sync-card';
+                if (!task.enabled) item.classList.add('opacity-75');
+                
+                item.innerHTML = `
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <h5 class="card-title">
+                                <span class="badge bg-light text-dark border me-2">${getSyncType(task)}</span>
+                                ${task.source_remote}/${task.source_branch} <i class="bi bi-arrow-right"></i> ${task.target_remote}/${task.target_branch}
+                            </h5>
+                            <div>
+                                <button class="btn btn-sm btn-outline-success me-1" onclick="runTask(${task.id})" title="立即执行"><i class="bi bi-play-fill"></i></button>
+                                <button class="btn btn-sm btn-outline-info me-1" onclick="showHistory('${task.key}')" title="历史记录"><i class="bi bi-clock-history"></i></button>
+                                <button class="btn btn-sm btn-outline-secondary me-1" onclick="editTask(${task.id})"><i class="bi bi-pencil"></i></button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteTask(${task.id})"><i class="bi bi-trash"></i></button>
+                            </div>
+                        </div>
+                        <div class="text-muted small mt-2">
+                            ${task.cron ? `<span class="me-3"><i class="bi bi-alarm"></i> ${task.cron}</span>` : ''}
+                            ${task.webhook_token ? renderWebhookInfo(task.webhook_token) : ''}
+                            <span class="me-3"><i class="bi bi-toggle-${task.enabled ? 'on text-success' : 'off'}"></i> ${task.enabled ? '已启用' : '已禁用'}</span>
+                            ${task.push_options ? `<span><i class="bi bi-terminal"></i> ${task.push_options}</span>` : ''}
+                        </div>
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+        }
+        
+        function renderWebhookInfo(token) {
+            return `<span class="me-3 cursor-pointer" onclick="openWebhookModal('${token}')">
+                <i class="bi bi-lightning-charge-fill text-warning"></i> Webhook
+            </span>`;
+        }
+        
+        function openWebhookModal(token) {
+            const url = `${window.location.origin}/api/webhooks/trigger?token=${token}`;
+            const curl = `curl -X POST "${url}"`;
+            
+            document.getElementById('webhookUrlInput').value = url;
+            document.getElementById('curlExample').innerText = curl;
+            
+            new bootstrap.Modal(document.getElementById('webhookModal')).show();
+        }
+        
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert("已复制到剪贴板");
+            });
+        }
+        
+        function getSyncType(task) {
+            if (task.source_remote === 'local') return 'Push';
+            if (task.target_remote === 'local') return 'Fetch';
+            return 'Sync';
+        }
+
+        function openAddTaskModal() {
+            document.getElementById('taskForm').reset();
+            document.getElementById('taskForm').id.value = '';
+            // document.getElementById('taskRepoId').value = repoId;
+            document.getElementById('taskModalTitle').innerText = '新建同步规则';
+            
+            populateRemotes();
+            document.getElementById('sourceRemoteSelect').value = 'local';
+            if (repoRemotes.length > 0) document.getElementById('targetRemoteSelect').value = repoRemotes[0];
+            
+            updateTaskHint();
+            new bootstrap.Modal(document.getElementById('taskModal')).show();
+        }
+
+        function populateRemotes() {
+            const options = `<option value="local">Local (本地)</option>` + 
+                            repoRemotes.map(r => `<option value="${r}">${r}</option>`).join('');
+            document.getElementById('sourceRemoteSelect').innerHTML = options;
+            document.getElementById('targetRemoteSelect').innerHTML = options;
+        }
+
+        function editTask(id) {
+            // Need to fetch task details or find from list if we stored it
+            // Let's fetch individual
+             fetch(`${API_BASE}/sync/tasks/${id}`)
+                .then(res => res.json())
+                .then(task => {
+                    const form = document.getElementById('taskForm');
+                    form.id.value = task.id;
+                    // form.repo_id.value = repoId; 
+                    
+                    populateRemotes();
+                    form.source_remote.value = task.source_remote;
+                    form.source_branch.value = task.source_branch;
+                    form.target_remote.value = task.target_remote;
+                    form.target_branch.value = task.target_branch;
+                    form.push_options.value = task.push_options;
+                    form.cron.value = task.cron;
+                    form.webhook_token.value = task.webhook_token || '';
+                    form.enabled.checked = task.enabled;
+                    
+                    document.getElementById('taskModalTitle').innerText = '编辑同步规则';
+                    updateTaskHint();
+                    new bootstrap.Modal(document.getElementById('taskModal')).show();
+                });
+        }
+        
+        function updateTaskHint() {
+             const src = document.getElementById('sourceRemoteSelect').value;
+             const tgt = document.getElementById('targetRemoteSelect').value;
+             const hint = document.getElementById('taskHint');
+             
+             if (src === tgt) {
+                 hint.className = 'alert alert-warning py-2 small';
+                 hint.innerText = '源和目标不能相同';
+                 return;
+             }
+             hint.className = 'alert alert-info py-2 small';
+             if (src === 'local') hint.innerText = `Push Mode: 将本地推送到 ${tgt}`;
+             else if (tgt === 'local') hint.innerText = `Fetch Mode: 从 ${src} 拉取到本地`;
+             else hint.innerText = `Sync Mode: 从 ${src} 同步到 ${tgt}`;
+        }
+
+        async function saveTask() {
+            const form = document.getElementById('taskForm');
+            const id = form.id.value;
+            const data = {
+                source_repo_key: currentRepo.key, // Use Key for backend relation
+                target_repo_key: currentRepo.key, // Self-sync usually
+                source_remote: form.source_remote.value,
+                source_branch: form.source_branch.value,
+                target_remote: form.target_remote.value,
+                target_branch: form.target_branch.value,
+                push_options: form.push_options.value,
+                cron: form.cron.value,
+                webhook_token: form.webhook_token.value,
+                enabled: form.enabled.checked
+            };
+            
+            const url = id ? `${API_BASE}/sync/tasks/${id}` : `${API_BASE}/sync/tasks`;
+            const method = id ? 'PUT' : 'POST';
+            
+            const res = await fetch(url, {
+                method: method,
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+            
+            if (res.ok) {
+                bootstrap.Modal.getInstance(document.getElementById('taskModal')).hide();
+                loadTasks();
+            } else {
+                const err = await res.json();
+                alert("保存失败: " + err.error);
+            }
+        }
+
+        async function deleteTask(id) {
+            if(!confirm("确定删除该同步规则吗？")) return;
+            await fetch(`${API_BASE}/sync/tasks/${id}`, { method: 'DELETE' });
+            loadTasks();
+        }
+
+        async function runTask(id) {
+            const res = await fetch(`${API_BASE}/sync/run`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({task_id: id})
+            });
+            if (res.ok) {
+                alert("任务已触发");
+            } else {
+                alert("触发失败");
+            }
+        }
+        
+        async function showHistory(taskKey) {
+             // We need an API to get history by task key
+             // Currently ListHistory returns all. We can filter on client or add API param.
+             // Let's assume client filter for now as history list is small (limit 50)
+             // Or better, fetch all history and filter.
+             
+             const res = await fetch(`${API_BASE}/sync/history`);
+             const allHistory = await res.json();
+             const history = allHistory.filter(h => h.task_key === taskKey);
+             
+             const tbody = document.getElementById('historyList');
+             tbody.innerHTML = '';
+             history.forEach(h => {
+                 const duration = h.end_time ? (new Date(h.end_time) - new Date(h.start_time)) + 'ms' : '-';
+                 const tr = document.createElement('tr');
+                 tr.innerHTML = `
+                    <td>${new Date(h.start_time).toLocaleString()}</td>
+                    <td><span class="badge bg-${getStatusColor(h.status)}">${h.status}</span></td>
+                    <td>${duration}</td>
+                    <td><button class="btn btn-xs btn-link p-0" onclick='showLog(${JSON.stringify(h.details || "")})'>日志</button></td>
+                 `;
+                 tbody.appendChild(tr);
+             });
+             
+             new bootstrap.Modal(document.getElementById('historyModal')).show();
+        }
+    </script>
+</body>
+</html>

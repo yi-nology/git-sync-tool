@@ -51,14 +51,23 @@ func (s *StatsService) ParseCommits(raw string) []model.Commit {
 }
 
 // CalculateStats computes effective line counts per author
-func (s *StatsService) CalculateStats(path, branch string) (*model.StatsResponse, error) {
+func (s *StatsService) CalculateStats(path, branch, since, until string) (*model.StatsResponse, error) {
 	files, err := s.Git.GetRepoFiles(path, branch)
 	if err != nil {
 		return nil, err
 	}
 
-	// Use a map to aggregate stats
-	// key: author_email
+	// Parse dates
+	var sinceTime, untilTime time.Time
+	if since != "" {
+		sinceTime, _ = time.Parse("2006-01-02", since)
+	}
+	if until != "" {
+		untilTime, _ = time.Parse("2006-01-02", until)
+		// Set until to end of day
+		untilTime = untilTime.Add(24*time.Hour - time.Nanosecond)
+	}
+
 	authorStats := make(map[string]*model.AuthorStat)
 	var mu sync.Mutex
 
@@ -94,6 +103,14 @@ func (s *StatsService) CalculateStats(path, branch string) (*model.StatsResponse
 			defer mu.Unlock()
 
 			for _, line := range lines {
+				// Date Filter
+				if !sinceTime.IsZero() && line.Date.Before(sinceTime) {
+					continue
+				}
+				if !untilTime.IsZero() && line.Date.After(untilTime) {
+					continue
+				}
+
 				if _, exists := authorStats[line.Email]; !exists {
 					authorStats[line.Email] = &model.AuthorStat{
 						Name:      line.Author,

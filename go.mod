@@ -4,6 +4,7 @@ go 1.24.0
 
 require (
 	github.com/cloudwego/hertz v0.7.3
+	github.com/google/uuid v1.6.0
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/swaggo/swag v1.16.2
 	golang.org/x/time v0.14.0

@@ -68,6 +68,16 @@ func (s *CronService) UpdateTask(task model.SyncTask) {
 	}
 }
 
+func (s *CronService) RemoveTask(taskID uint) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if id, ok := s.entries[taskID]; ok {
+		s.cron.Remove(id)
+		delete(s.entries, taskID)
+	}
+}
+
 func (s *CronService) addTask(task model.SyncTask) {
 	taskID := task.ID
 	entryID, err := s.cron.AddFunc(task.Cron, func() {
