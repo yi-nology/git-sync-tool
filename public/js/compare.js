@@ -212,10 +212,12 @@ async function openMergeModal() {
             document.getElementById('confirmMergeBtn').disabled = false;
         } else {
             // Conflict
-            showConflictUI(res.conflicts, null); // No merge ID yet for simple check
+            showConflictUI(res.conflicts || [], null); 
         }
     } catch (e) {
-        document.getElementById('mergeCheckResult').innerHTML = `<span class="text-danger">检测失败: ${e.message}</span>`;
+        const checkResult = document.getElementById('mergeCheckResult');
+        checkResult.classList.remove('d-none');
+        checkResult.innerHTML = `<span class="text-danger">检测失败: ${e.message}</span>`;
     }
 }
 
@@ -223,7 +225,7 @@ function showConflictUI(conflicts, reportUrl) {
     const alert = document.getElementById('conflictAlert');
     const list = document.getElementById('conflictList');
     list.innerHTML = '';
-    conflicts.forEach(c => {
+    (conflicts || []).forEach(c => {
         list.innerHTML += `<li>${c}</li>`;
     });
     

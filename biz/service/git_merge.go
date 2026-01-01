@@ -144,7 +144,7 @@ func (s *GitService) MergeDryRun(path, source, target string) (*MergeResult, err
 	if strings.Contains(out, "changed in both") {
 		result.Success = false
 		lines := strings.Split(out, "\n")
-		var conflicts []string
+		var conflicts = []string{} // Initialize as empty slice
 		capture := false
 		for _, line := range lines {
 			if strings.TrimSpace(line) == "changed in both" {
