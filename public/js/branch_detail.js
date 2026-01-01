@@ -19,6 +19,24 @@ document.addEventListener('DOMContentLoaded', () => {
 async function loadData() {
     loadStats();
     loadCommits();
+    checkUncommittedChanges();
+}
+
+async function checkUncommittedChanges() {
+    try {
+        const res = await request(`/repos/${repoKey}/status`);
+        const status = res.status;
+        const badge = document.getElementById('submit-badge');
+        
+        if (!status.includes('nothing to commit, working tree clean')) {
+            badge.style.display = 'block';
+            showToast('检测到未提交的变更，请及时提交', 'info');
+        } else {
+            badge.style.display = 'none';
+        }
+    } catch (e) {
+        console.error("Failed to check status:", e);
+    }
 }
 
 async function loadStats() {
@@ -125,5 +143,90 @@ async function deleteCurrentBranch() {
         }, 1000);
     } catch (e) {
         // handled
+    }
+}
+
+// Submit Changes Logic
+let submitModal = null;
+
+function openSubmitModal() {
+    if (!submitModal) {
+        submitModal = new bootstrap.Modal(document.getElementById('submitModal'));
+    }
+    submitModal.show();
+    checkRepoStatus();
+}
+
+async function checkRepoStatus() {
+    const loading = document.getElementById('submit-loading');
+    const content = document.getElementById('submit-content');
+    const statusDisplay = document.getElementById('git-status-display');
+    const formArea = document.getElementById('submit-form-area');
+    const noChanges = document.getElementById('no-changes-alert');
+    const btnSubmit = document.getElementById('btn-do-submit');
+
+    loading.style.display = 'block';
+    content.style.display = 'none';
+
+    try {
+        const res = await request(`/repos/${repoKey}/status`);
+        const status = res.status;
+        
+        statusDisplay.textContent = status;
+        
+        if (status.includes('nothing to commit, working tree clean')) {
+            formArea.style.display = 'none';
+            noChanges.style.display = 'block';
+            btnSubmit.disabled = true;
+        } else {
+            formArea.style.display = 'block';
+            noChanges.style.display = 'none';
+            btnSubmit.disabled = false;
+        }
+
+        loading.style.display = 'none';
+        content.style.display = 'block';
+    } catch (e) {
+        loading.innerHTML = `<span class="text-danger">检查状态失败: ${e.message}</span>`;
+    }
+}
+
+async function doSubmit() {
+    const msg = document.getElementById('commit-message').value;
+    const push = document.getElementById('push-after-commit').checked;
+    
+    if (!msg.trim()) {
+        showToast('请输入提交信息', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('btn-do-submit');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> 提交中...';
+
+    try {
+        const res = await request(`/repos/${repoKey}/submit`, {
+            method: 'POST',
+            body: JSON.stringify({
+                message: msg,
+                push: push
+            })
+        });
+
+        showToast(res.message, res.warning ? 'warning' : 'success');
+        
+        // Reset form
+        document.getElementById('commit-message').value = '';
+        submitModal.hide();
+        
+        // Refresh data to show new commits
+        refreshData();
+        checkUncommittedChanges(); // Refresh badge
+    } catch (e) {
+        showToast(e.message || '提交失败', 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
     }
 }

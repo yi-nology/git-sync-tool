@@ -31,6 +31,12 @@
                 <button class="btn btn-outline-success me-2" onclick="openCompare()">
                     <i class="bi bi-arrow-left-right"></i> 对比/合并
                 </button>
+                <button class="btn btn-primary me-2 position-relative" onclick="openSubmitModal()">
+                    <i class="bi bi-upload"></i> 提交变更
+                    <span id="submit-badge" class="position-absolute top-0 start-100 translate-middle p-2 bg-danger border border-light rounded-circle" style="display: none;">
+                        <span class="visually-hidden">New alerts</span>
+                    </span>
+                </button>
                 <button class="btn btn-outline-primary me-2" onclick="refreshData()">
                     <i class="bi bi-arrow-clockwise"></i> 刷新
                 </button>
@@ -98,6 +104,53 @@
                     <ul class="list-group list-group-flush" id="author-list">
                         <li class="list-group-item text-center py-3">加载中...</li>
                     </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Submit Modal -->
+    <div class="modal fade" id="submitModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-upload me-2"></i>提交变更 (本地)</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info" id="submit-loading">
+                        <i class="bi bi-hourglass-split me-2"></i>正在检查仓库状态...
+                    </div>
+                    
+                    <div id="submit-content" style="display: none;">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Git Status:</label>
+                            <pre class="bg-dark text-light p-3 rounded" id="git-status-display" style="max-height: 200px; overflow: auto;"></pre>
+                        </div>
+                        
+                        <div id="submit-form-area">
+                            <div class="mb-3">
+                                <label for="commit-message" class="form-label fw-bold">Commit Message:</label>
+                                <textarea class="form-control" id="commit-message" rows="3" placeholder="feat: description of changes"></textarea>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="push-after-commit" checked>
+                                <label class="form-check-label" for="push-after-commit">
+                                    提交后推送到远程 (git push)
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-success" id="no-changes-alert" style="display: none;">
+                            <i class="bi bi-check-circle me-2"></i>工作区干净，没有需要提交的变更。
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="btn-do-submit" onclick="doSubmit()">
+                        <i class="bi bi-check-lg me-1"></i>提交
+                    </button>
                 </div>
             </div>
         </div>
