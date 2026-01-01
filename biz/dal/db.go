@@ -1,11 +1,14 @@
 package dal
 
 import (
+	"fmt"
 	"log"
-	"os"
 
+	"github.com/yi-nology/git-manage-service/biz/config"
 	"github.com/yi-nology/git-manage-service/biz/model"
 
+	"gorm.io/driver/mysql"
+	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -14,11 +17,36 @@ var DB *gorm.DB
 
 func Init() {
 	var err error
-	dbPath := os.Getenv("DB_PATH")
-	if dbPath == "" {
-		dbPath = "git_sync.db"
+	var dialector gorm.Dialector
+
+	dbConfig := config.GlobalConfig.Database
+
+	switch dbConfig.Type {
+	case "mysql":
+		dsn := dbConfig.DSN
+		if dsn == "" {
+			dsn = fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+				dbConfig.User, dbConfig.Password, dbConfig.Host, dbConfig.Port, dbConfig.DBName)
+		}
+		dialector = mysql.Open(dsn)
+	case "postgres":
+		dsn := dbConfig.DSN
+		if dsn == "" {
+			dsn = fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%d sslmode=disable TimeZone=Asia/Shanghai",
+				dbConfig.Host, dbConfig.User, dbConfig.Password, dbConfig.DBName, dbConfig.Port)
+		}
+		dialector = postgres.Open(dsn)
+	case "sqlite":
+		fallthrough
+	default:
+		dbPath := dbConfig.Path
+		if dbPath == "" {
+			dbPath = "git_sync.db"
+		}
+		dialector = sqlite.Open(dbPath)
 	}
-	DB, err = gorm.Open(sqlite.Open(dbPath), &gorm.Config{})
+
+	DB, err = gorm.Open(dialector, &gorm.Config{})
 	if err != nil {
 		log.Fatal("failed to connect database: ", err)
 	}

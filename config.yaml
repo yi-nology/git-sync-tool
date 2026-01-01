@@ -1,0 +1,21 @@
+server:
+  port: 8080
+
+database:
+  # type: sqlite, mysql, postgres
+  type: sqlite
+  # for sqlite
+  path: git_sync.db
+  
+  # for mysql / postgres
+  # host: localhost
+  # port: 3306 # 5432 for postgres
+  # user: root
+  # password: password
+  # dbname: git_manage
+  # dsn: "user:pass@tcp(127.0.0.1:3306)/dbname?charset=utf8mb4&parseTime=True&loc=Local" # optional override
+
+webhook:
+  secret: "my-secret-key"
+  rate_limit: 100
+  ip_whitelist: []

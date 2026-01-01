@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/yi-nology/git-manage-service/biz/config"
 	"github.com/yi-nology/git-manage-service/biz/dal"
@@ -51,7 +52,8 @@ func main() {
 	utils.InitEncryption()
 
 	// 3. Init Server
-	h := server.Default(server.WithHostPorts(":8080"))
+	addr := fmt.Sprintf(":%d", config.GlobalConfig.Server.Port)
+	h := server.Default(server.WithHostPorts(addr))
 
 	// 4. Register Routes
 	h.POST("/api/repos", handler.RegisterRepo)
