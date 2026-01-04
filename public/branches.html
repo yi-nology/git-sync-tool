@@ -177,10 +177,49 @@
                             <label class="form-label">目标引用 (Ref)</label>
                             <input type="text" class="form-control" name="ref" readonly>
                         </div>
+                        
                         <div class="mb-3">
-                            <label class="form-label">标签名 (Tag Name) <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" name="tag_name" placeholder="v1.0.0" required>
+                            <label class="form-label">选择版本类型 <span class="text-danger">*</span></label>
+                            <div class="list-group mb-2" id="version-type-group">
+                                <label class="list-group-item d-flex gap-3 align-items-center">
+                                    <input class="form-check-input flex-shrink-0" type="radio" name="version_type" value="patch" checked onchange="updateTagName(this)">
+                                    <span class="pt-1 form-checked-content">
+                                        <strong>补丁 (Patch)</strong>
+                                        <small class="d-block text-muted">Bug修复，向后兼容</small>
+                                    </span>
+                                    <span class="badge bg-success rounded-pill ms-auto" id="badge-patch">...</span>
+                                </label>
+                                <label class="list-group-item d-flex gap-3 align-items-center">
+                                    <input class="form-check-input flex-shrink-0" type="radio" name="version_type" value="minor" onchange="updateTagName(this)">
+                                    <span class="pt-1 form-checked-content">
+                                        <strong>小版本 (Minor)</strong>
+                                        <small class="d-block text-muted">新功能，向后兼容</small>
+                                    </span>
+                                    <span class="badge bg-warning text-dark rounded-pill ms-auto" id="badge-minor">...</span>
+                                </label>
+                                <label class="list-group-item d-flex gap-3 align-items-center">
+                                    <input class="form-check-input flex-shrink-0" type="radio" name="version_type" value="major" onchange="updateTagName(this)">
+                                    <span class="pt-1 form-checked-content">
+                                        <strong>大版本 (Major)</strong>
+                                        <small class="d-block text-muted">架构变更，可能不兼容</small>
+                                    </span>
+                                    <span class="badge bg-danger rounded-pill ms-auto" id="badge-major">...</span>
+                                </label>
+                                <label class="list-group-item d-flex gap-3 align-items-center">
+                                    <input class="form-check-input flex-shrink-0" type="radio" name="version_type" value="custom" onchange="updateTagName(this)">
+                                    <span class="pt-1 form-checked-content">
+                                        <strong>自定义</strong>
+                                        <small class="d-block text-muted">手动输入任意标签名</small>
+                                    </span>
+                                </label>
+                            </div>
                         </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">标签名 (Tag Name)</label>
+                            <input type="text" class="form-control font-monospace fw-bold" name="tag_name" placeholder="v1.0.0" required readonly>
+                        </div>
+
                         <div class="mb-3">
                             <label class="form-label">说明 (Message)</label>
                             <textarea class="form-control" name="message" rows="2"></textarea>

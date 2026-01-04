@@ -75,6 +75,9 @@
                 <a href="javascript:void(0)" class="list-group-item list-group-item-action border-0 px-3 py-2 nav-link" data-module="branch" onclick="switchModule('branch')">
                     <i class="bi bi-git me-2"></i> 分支信息
                 </a>
+                <a href="javascript:void(0)" class="list-group-item list-group-item-action border-0 px-3 py-2 nav-link" data-module="versions" onclick="switchModule('versions')">
+                    <i class="bi bi-tags me-2"></i> 版本历史
+                </a>
                 <a href="javascript:void(0)" class="list-group-item list-group-item-action border-0 px-3 py-2 nav-link" data-module="sync" onclick="switchModule('sync')">
                     <i class="bi bi-arrow-repeat me-2"></i> 多仓同步
                 </a>
@@ -142,6 +145,15 @@
                     document.getElementById('sidebarRepoName').innerText = repo.name;
                     document.title = `${repo.name} - 项目详情`;
                 }
+                
+                // Load Version
+                try {
+                    const version = await request(`/repos/${repoKey}/version`);
+                    document.getElementById('breadcrumbCurrent').innerHTML = `${document.getElementById('breadcrumbCurrent').innerText} <span class="badge bg-info ms-2 font-monospace small" title="项目版本">${version}</span>`;
+                } catch(e) {
+                    console.warn("Version load failed", e);
+                }
+                
             } catch (e) {
                 console.error("Failed to load repo info", e);
             }
@@ -164,6 +176,7 @@
             const titles = {
                 'info': '项目详情',
                 'branch': '分支信息',
+                'versions': '版本历史',
                 'sync': '多仓同步'
             };
             document.getElementById('breadcrumbCurrent').innerText = titles[module] || '详情';
@@ -178,6 +191,9 @@
                     break;
                 case 'branch':
                     src = `branches.html?repo_key=${repoKey}&hide_nav=true`;
+                    break;
+                case 'versions':
+                    src = `versions.html?repo_key=${repoKey}`;
                     break;
                 case 'sync':
                     src = `repo_sync.html?repo_key=${repoKey}&hide_nav=true`;

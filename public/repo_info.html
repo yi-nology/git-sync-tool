@@ -30,6 +30,12 @@
                     </div>
                 </div>
                 <div class="row mb-3">
+                    <label class="col-sm-2 col-form-label fw-bold">当前版本</label>
+                    <div class="col-sm-10">
+                         <span id="repoVersion" class="badge bg-success font-monospace p-2">loading...</span>
+                    </div>
+                </div>
+                <div class="row mb-3">
                     <label class="col-sm-2 col-form-label fw-bold">本地路径</label>
                     <div class="col-sm-10">
                         <input type="text" readonly class="form-control-plaintext font-monospace" id="repoPath" value="...">
@@ -306,6 +312,15 @@
                 document.getElementById('repoPath').value = repo.path;
                 document.getElementById('repoKey').value = repo.key;
                 document.getElementById('repoSource').value = repo.config_source === 'database' ? '数据库' : '本地配置文件';
+
+                // Load Version
+                try {
+                    const version = await request(`/repos/${repoKey}/version`);
+                    document.getElementById('repoVersion').innerText = version;
+                } catch(e) {
+                    document.getElementById('repoVersion').innerText = 'Unknown';
+                    document.getElementById('repoVersion').classList.replace('bg-success', 'bg-secondary');
+                }
 
                 const config = await request('/repos/scan', {
                     method: 'POST',
