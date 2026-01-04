@@ -96,6 +96,9 @@ func (s *SyncService) doSync(path string, task *po.SyncTask, logf func(string, .
 
 	var sourceHash string
 
+	// Helper for progress logging
+	progressWriter := &logWriter{logf: logf}
+
 	if !isLocalSource {
 		sourceURL, _ := s.git.GetRemoteURL(path, sourceRemote)
 		if sourceURL == "" && sourceRemote == "origin" {
@@ -105,14 +108,18 @@ func (s *SyncService) doSync(path string, task *po.SyncTask, logf func(string, .
 		sType, sKey, sSecret := getAuthForRemote(task.SourceRepo, sourceRemote)
 		sRefSpec := fmt.Sprintf("+refs/heads/%s:refs/remotes/%s/%s", task.SourceBranch, sourceRemote, task.SourceBranch)
 
+		// Log Fetch Command (Approximate)
+		fetchCmd := fmt.Sprintf("git fetch %s %s", sourceRemote, sRefSpec)
+		logf("Command: %s", fetchCmd)
+
 		if sourceURL != "" && sType != "" && sType != "none" {
 			logf("Fetching source %s (Auth: %s)...", sourceRemote, sType)
-			if err := s.git.FetchWithAuth(path, sourceURL, sType, sKey, sSecret, sRefSpec); err != nil {
+			if err := s.git.FetchWithAuth(path, sourceURL, sType, sKey, sSecret, progressWriter, sRefSpec); err != nil {
 				return "", fmt.Errorf("fetch source failed: %v", err)
 			}
 		} else {
 			logf("Fetching source %s...", sourceRemote)
-			if err := s.git.Fetch(path, sourceRemote); err != nil {
+			if err := s.git.Fetch(path, sourceRemote, progressWriter); err != nil {
 				return "", fmt.Errorf("fetch source failed: %v", err)
 			}
 		}
@@ -150,14 +157,18 @@ func (s *SyncService) doSync(path string, task *po.SyncTask, logf func(string, .
 	tType, tKey, tSecret := getAuthForRemote(task.TargetRepo, targetRemote)
 	tRefSpec := fmt.Sprintf("+refs/heads/%s:refs/remotes/%s/%s", task.TargetBranch, targetRemote, task.TargetBranch)
 
+	// Log Fetch Target Command
+	fetchTgtCmd := fmt.Sprintf("git fetch %s %s", targetRemote, tRefSpec)
+	logf("Command: %s", fetchTgtCmd)
+
 	if targetURL != "" && tType != "" && tType != "none" {
 		logf("Fetching target %s (Auth: %s)...", targetRemote, tType)
-		if err := s.git.FetchWithAuth(path, targetURL, tType, tKey, tSecret, tRefSpec); err != nil {
+		if err := s.git.FetchWithAuth(path, targetURL, tType, tKey, tSecret, progressWriter, tRefSpec); err != nil {
 			return "", fmt.Errorf("fetch target failed: %v", err)
 		}
 	} else {
 		logf("Fetching target %s...", targetRemote)
-		if err := s.git.Fetch(path, targetRemote); err != nil {
+		if err := s.git.Fetch(path, targetRemote, progressWriter); err != nil {
 			return "", fmt.Errorf("fetch target failed: %v", err)
 		}
 	}
@@ -213,7 +224,7 @@ func (s *SyncService) doSync(path string, task *po.SyncTask, logf func(string, .
 	if task.PushOptions != "" {
 		pushOpts = strings.Fields(task.PushOptions)
 	}
-	
+
 	// Construct command for logging
 	cmdStr := fmt.Sprintf("git push %s %s:refs/heads/%s", task.TargetRemote, sourceHash, task.TargetBranch)
 	if len(pushOpts) > 0 {
@@ -224,15 +235,28 @@ func (s *SyncService) doSync(path string, task *po.SyncTask, logf func(string, .
 
 	if targetURL != "" && tType != "" && tType != "none" {
 		logf("Pushing target (Auth: %s)...", tType)
-		err := s.git.PushWithAuth(path, targetURL, sourceHash, task.TargetBranch, tType, tKey, tSecret, pushOpts)
+		err := s.git.PushWithAuth(path, targetURL, sourceHash, task.TargetBranch, tType, tKey, tSecret, pushOpts, progressWriter)
 		if err != nil {
 			return "", fmt.Errorf("push failed: %v", err)
 		}
 	} else {
-		if err := s.git.Push(path, task.TargetRemote, sourceHash, task.TargetBranch, pushOpts); err != nil {
+		if err := s.git.Push(path, task.TargetRemote, sourceHash, task.TargetBranch, pushOpts, progressWriter); err != nil {
 			return "", fmt.Errorf("push failed: %v", err)
 		}
 	}
 
 	return commitRange, nil
+}
+
+// LogWriter implements io.Writer
+type logWriter struct {
+	logf func(string, ...interface{})
+}
+
+func (w *logWriter) Write(p []byte) (n int, err error) {
+	str := strings.TrimSpace(string(p))
+	if str != "" {
+		w.logf("[Git] %s", str)
+	}
+	return len(p), nil
 }

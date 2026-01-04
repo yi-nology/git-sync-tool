@@ -135,7 +135,7 @@ func (s *GitService) IsGitRepo(path string) bool {
 	return err == nil
 }
 
-func (s *GitService) Fetch(path, remote string) error {
+func (s *GitService) Fetch(path, remote string, progress io.Writer) error {
 	r, err := s.openRepo(path)
 	if err != nil {
 		return err
@@ -154,6 +154,7 @@ func (s *GitService) Fetch(path, remote string) error {
 	err = r.Fetch(&git.FetchOptions{
 		RemoteName: remote,
 		Auth:       auth,
+		Progress:   progress,
 	})
 	if err == git.NoErrAlreadyUpToDate {
 		return nil
@@ -161,7 +162,7 @@ func (s *GitService) Fetch(path, remote string) error {
 	return err
 }
 
-func (s *GitService) FetchWithAuth(path, remoteURL, authType, authKey, authSecret string, extraArgs ...string) error {
+func (s *GitService) FetchWithAuth(path, remoteURL, authType, authKey, authSecret string, progress io.Writer, extraArgs ...string) error {
 	r, err := s.openRepo(path)
 	if err != nil {
 		return err
@@ -181,6 +182,7 @@ func (s *GitService) FetchWithAuth(path, remoteURL, authType, authKey, authSecre
 	err = remote.Fetch(&git.FetchOptions{
 		Auth:       auth,
 		RemoteName: "origin",
+		Progress:   progress,
 	})
 	if err == git.NoErrAlreadyUpToDate {
 		return nil
@@ -287,7 +289,7 @@ func parsePushOptions(options []string) *git.PushOptions {
 	return opts
 }
 
-func (s *GitService) Push(path, targetRemote, sourceHash, targetBranch string, options []string) error {
+func (s *GitService) Push(path, targetRemote, sourceHash, targetBranch string, options []string, progress io.Writer) error {
 	r, err := s.openRepo(path)
 	if err != nil {
 		return err
@@ -311,6 +313,7 @@ func (s *GitService) Push(path, targetRemote, sourceHash, targetBranch string, o
 	pushOpts.RemoteName = targetRemote
 	pushOpts.RefSpecs = []config.RefSpec{refSpec}
 	pushOpts.Auth = auth
+	pushOpts.Progress = progress
 
 	err = r.Push(pushOpts)
 	if err == git.NoErrAlreadyUpToDate {
@@ -504,7 +507,7 @@ func (s *GitService) GetCommits(path, branch, since, until string) (string, erro
 	return sb.String(), nil
 }
 
-func (s *GitService) PushWithAuth(path, targetRemoteURL, sourceHash, targetBranch, authType, authKey, authSecret string, options []string) error {
+func (s *GitService) PushWithAuth(path, targetRemoteURL, sourceHash, targetBranch, authType, authKey, authSecret string, options []string, progress io.Writer) error {
 	r, err := s.openRepo(path)
 	if err != nil {
 		return err
@@ -525,6 +528,7 @@ func (s *GitService) PushWithAuth(path, targetRemoteURL, sourceHash, targetBranc
 	pushOpts := parsePushOptions(options)
 	pushOpts.Auth = auth
 	pushOpts.RefSpecs = []config.RefSpec{refSpec}
+	pushOpts.Progress = progress
 
 	err = remote.Push(pushOpts)
 	if err == git.NoErrAlreadyUpToDate {
