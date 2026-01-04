@@ -213,6 +213,13 @@ func (s *SyncService) doSync(path string, task *po.SyncTask, logf func(string, .
 	if task.PushOptions != "" {
 		pushOpts = strings.Fields(task.PushOptions)
 	}
+	
+	// Construct command for logging
+	cmdStr := fmt.Sprintf("git push %s %s:refs/heads/%s", task.TargetRemote, sourceHash, task.TargetBranch)
+	if len(pushOpts) > 0 {
+		cmdStr += " " + strings.Join(pushOpts, " ")
+	}
+	logf("Command: %s", cmdStr)
 	logf("Pushing to %s/%s with options: %v", task.TargetRemote, task.TargetBranch, pushOpts)
 
 	if targetURL != "" && tType != "" && tType != "none" {

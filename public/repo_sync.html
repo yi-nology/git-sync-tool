@@ -131,11 +131,22 @@
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">执行日志</h5>
+                    <h5 class="modal-title">执行详情</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <pre id="logContent" style="background: #f8f9fa; padding: 10px; max-height: 500px; overflow-y: auto; white-space: pre-wrap;"></pre>
+                    <div id="commandContainer" class="mb-3 d-none">
+                        <label class="fw-bold mb-1"><i class="bi bi-terminal"></i> 执行命令:</label>
+                        <div class="bg-dark text-light p-2 rounded font-monospace small position-relative">
+                            <code id="commandContent"></code>
+                            <button class="btn btn-sm btn-outline-light position-absolute top-0 end-0 m-1 py-0 px-1" onclick="copyCommand()" title="复制">
+                                <i class="bi bi-clipboard"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <label class="fw-bold mb-1"><i class="bi bi-file-text"></i> 完整日志:</label>
+                    <pre id="logContent" style="background: #f8f9fa; padding: 10px; max-height: 400px; overflow-y: auto; white-space: pre-wrap; font-size: 0.85rem;"></pre>
                 </div>
             </div>
         </div>
