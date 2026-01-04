@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/yi-nology/git-manage-service/biz/dal/db"
 	"github.com/yi-nology/git-manage-service/biz/model/api"
+	domain "github.com/yi-nology/git-manage-service/biz/model/domain"
 	"github.com/yi-nology/git-manage-service/biz/model/po"
 	"github.com/yi-nology/git-manage-service/biz/service/audit"
 	"github.com/yi-nology/git-manage-service/biz/service/git"
@@ -131,7 +132,9 @@ func ScanRepo(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	config, err := gitSvc.GetRepoConfig(req.Path)
+	var config *domain.GitRepoConfig
+	var err error
+	config, err = gitSvc.GetRepoConfig(req.Path)
 	if err != nil {
 		response.InternalServerError(c, err.Error())
 		return
@@ -446,7 +449,7 @@ func FetchRepo(ctx context.Context, c *app.RequestContext) {
 		response.InternalServerError(c, err.Error())
 		return
 	}
-	
+
 	audit.AuditSvc.Log(c, "FETCH_REPO", "repo:"+repo.Key, nil)
 	response.Success(c, map[string]string{"message": "fetched"})
 }
