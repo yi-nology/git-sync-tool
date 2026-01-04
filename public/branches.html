@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>分支管理 - Git Manage Service</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link href="vendor/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="vendor/css/bootstrap-icons.css">
     <style>
         .container { max_width: 1200px; margin-top: 20px; }
         .branch-current { font-weight: bold; color: #198754; }
@@ -163,7 +163,48 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Create Tag Modal -->
+    <div class="modal fade" id="tagModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">打标签 (Tag)</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="tagForm">
+                        <div class="mb-3">
+                            <label class="form-label">目标引用 (Ref)</label>
+                            <input type="text" class="form-control" name="ref" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">标签名 (Tag Name) <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="tag_name" placeholder="v1.0.0" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">说明 (Message)</label>
+                            <textarea class="form-control" name="message" rows="2"></textarea>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="pushTagCheck" onchange="toggleTagPush(this.checked)">
+                            <label class="form-check-label" for="pushTagCheck">推送到远端</label>
+                        </div>
+                        <div class="mt-2 d-none" id="pushTagRemoteDiv">
+                            <select class="form-select" name="push_remote" id="pushTagRemoteSelect">
+                                <!-- Options loaded dynamically -->
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="submitCreateTag()">创建</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="vendor/js/bootstrap.bundle.min.js"></script>
     <script src="js/request.js"></script>
     <script src="js/toast.js"></script>
     <script src="js/branches.js"></script>

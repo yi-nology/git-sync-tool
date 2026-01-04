@@ -33,6 +33,10 @@ func GeneratedRegister(h *server.Hertz) {
 		repos.POST("/:key/branches/:name/push", handler.PushBranch)
 		repos.POST("/:key/branches/:name/pull", handler.PullBranch)
 
+		// Tag Routes
+		repos.POST("/:key/tags", handler.CreateTag)
+		repos.GET("/:key/tags", handler.ListTags)
+
 		// Workspace/Submit Routes
 		repos.GET("/:key/status", handler.GetRepoStatus)
 		repos.GET("/:key/git-config", handler.GetRepoGitConfig)

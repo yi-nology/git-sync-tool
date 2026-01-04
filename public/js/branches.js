@@ -139,6 +139,7 @@ function renderBranches() {
                     ${syncBtn}
                     ${!b.is_current && currentTab === 'local' ? `<button class="btn btn-outline-success" onclick="checkoutBranch('${b.name}')" title="切换到此分支"><i class="bi bi-check2-circle"></i></button>` : ''}
                     ${currentTab === 'local' ? `<button class="btn btn-outline-dark" onclick="openPushModal('${b.name}')" title="推送至远端"><i class="bi bi-cloud-upload"></i></button>` : ''}
+                    ${currentTab === 'local' ? `<button class="btn btn-outline-warning" onclick="openTagModal('${b.name}')" title="打标签"><i class="bi bi-tag"></i></button>` : ''}
                     ${currentTab === 'local' ? `<button class="btn btn-outline-secondary" onclick="openDetail('${b.name}')" title="详情"><i class="bi bi-info-circle"></i></button>` : ''}
                     ${currentTab === 'local' ? `<button class="btn btn-outline-primary" onclick="openRenameModal('${b.name}')" title="重命名/描述"><i class="bi bi-pencil"></i></button>` : ''}
                     ${currentTab === 'local' && !b.is_current ? `<button class="btn btn-outline-danger" onclick="deleteBranch('${b.name}')" title="删除"><i class="bi bi-trash"></i></button>` : ''}
@@ -351,5 +352,93 @@ async function submitPush() {
     } finally {
         btn.disabled = false;
         btn.innerText = "确认推送";
+    }
+}
+
+async function openTagModal(ref) {
+    document.getElementById('tagForm').reset();
+    document.querySelector('#tagForm input[name="ref"]').value = ref;
+    
+    // Reset remote select
+    const select = document.getElementById('pushTagRemoteSelect');
+    select.innerHTML = '<option value="">加载中...</option>';
+    document.getElementById('pushTagRemoteDiv').classList.add('d-none');
+    
+    new bootstrap.Modal(document.getElementById('tagModal')).show();
+    
+    // Load remotes in background
+    try {
+        const config = await request('/repos/scan', {
+            method: 'POST',
+            body: { path: currentRepo.path }
+        });
+        select.innerHTML = '';
+        if (config.remotes && config.remotes.length > 0) {
+            config.remotes.forEach(r => {
+                const opt = document.createElement('option');
+                opt.value = r.name;
+                opt.innerText = r.name;
+                select.appendChild(opt);
+            });
+            // Default to origin if exists
+            if (config.remotes.some(r => r.name === 'origin')) {
+                select.value = 'origin';
+            }
+        } else {
+            select.innerHTML = '<option value="">无可用远端</option>';
+        }
+    } catch(e) {}
+}
+
+function toggleTagPush(checked) {
+    const div = document.getElementById('pushTagRemoteDiv');
+    if (checked) div.classList.remove('d-none');
+    else div.classList.add('d-none');
+}
+
+async function submitCreateTag() {
+    const form = document.getElementById('tagForm');
+    const ref = form.ref.value;
+    const tagName = form.tag_name.value.trim();
+    const message = form.message.value;
+    const push = form.pushTagCheck.checked;
+    const remote = form.push_remote.value;
+    
+    if (!tagName) {
+        showToast("请输入标签名", "warning");
+        return;
+    }
+    
+    if (push && !remote) {
+        showToast("请选择推送的远端", "warning");
+        return;
+    }
+    
+    const btn = document.querySelector('#tagModal .btn-primary');
+    btn.disabled = true;
+    btn.innerText = "创建中...";
+    
+    try {
+        const body = {
+            tag_name: tagName,
+            ref: ref,
+            message: message
+        };
+        if (push) {
+            body.push_remote = remote;
+        }
+        
+        await request(`/repos/${repoKey}/tags`, {
+            method: 'POST',
+            body: body
+        });
+        
+        showToast(push ? "标签已创建并推送" : "标签已创建", "success");
+        bootstrap.Modal.getInstance(document.getElementById('tagModal')).hide();
+    } catch (e) {
+        // handled
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "创建";
     }
 }

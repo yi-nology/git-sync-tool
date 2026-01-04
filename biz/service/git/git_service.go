@@ -922,3 +922,85 @@ func (tm *TaskManager) UpdateStatus(id string, status string, errStr string) {
 		t.Error = errStr
 	}
 }
+
+func (s *GitService) CreateTag(path, tagName, ref, message, authorName, authorEmail string) error {
+	r, err := s.openRepo(path)
+	if err != nil {
+		return err
+	}
+
+	hash, err := r.ResolveRevision(plumbing.Revision(ref))
+	if err != nil {
+		return fmt.Errorf("invalid reference '%s': %v", ref, err)
+	}
+
+	if authorName == "" {
+		authorName = "Git Manage Service"
+	}
+	if authorEmail == "" {
+		authorEmail = "git-manage@example.com"
+	}
+
+	_, err = r.CreateTag(tagName, *hash, &git.CreateTagOptions{
+		Tagger: &object.Signature{
+			Name:  authorName,
+			Email: authorEmail,
+			When:  time.Now(),
+		},
+		Message: message,
+	})
+	return err
+}
+
+func (s *GitService) PushTag(path, remoteName, tagName, authType, authKey, authSecret string) error {
+	r, err := s.openRepo(path)
+	if err != nil {
+		return err
+	}
+
+	// Detect Auth
+	auth, err := s.getAuth(authType, authKey, authSecret)
+	if err != nil {
+		return err
+	}
+
+	if auth == nil {
+		// Try to detect from remote URL
+		rem, err := r.Remote(remoteName)
+		if err == nil {
+			urls := rem.Config().URLs
+			if len(urls) > 0 {
+				auth = s.detectSSHAuth(urls[0])
+			}
+		}
+	}
+
+	refSpec := config.RefSpec(fmt.Sprintf("refs/tags/%s:refs/tags/%s", tagName, tagName))
+
+	err = r.Push(&git.PushOptions{
+		RemoteName: remoteName,
+		RefSpecs:   []config.RefSpec{refSpec},
+		Auth:       auth,
+	})
+	if err == git.NoErrAlreadyUpToDate {
+		return nil
+	}
+	return err
+}
+
+func (s *GitService) GetTags(path string) ([]string, error) {
+	r, err := s.openRepo(path)
+	if err != nil {
+		return nil, err
+	}
+	iter, err := r.Tags()
+	if err != nil {
+		return nil, err
+	}
+	var tags []string
+	iter.ForEach(func(ref *plumbing.Reference) error {
+		tags = append(tags, ref.Name().Short())
+		return nil
+	})
+	return tags, nil
+}
