@@ -26,7 +26,7 @@ const docTemplate = `{
     "paths": {
         "/api/audit/logs": {
             "get": {
-                "description": "Retrieve a list of system audit logs, ordered by creation time (descending).",
+                "description": "Retrieve a list of system audit logs with pagination",
                 "produces": [
                     "application/json"
                 ],
@@ -34,22 +34,75 @@ const docTemplate = `{
                     "Audit"
                 ],
                 "summary": "List audit logs",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Page number (default 1)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size (default 20)",
+                        "name": "page_size",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/response.Response"
+                                    "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/definitions/model.AuditLog"
-                                            }
+                                            "type": "object",
+                                            "additionalProperties": true
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/api/audit/logs/{id}": {
+            "get": {
+                "description": "Retrieve details for a specific audit log entry",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Audit"
+                ],
+                "summary": "Get audit log details",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Audit Log ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_biz_model_api.AuditLogDTO"
                                         }
                                     }
                                 }
@@ -97,7 +150,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.ConfigReq"
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_biz_model_api.ConfigReq"
                         }
                     }
                 ],
@@ -138,7 +191,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.TestConnectionReq"
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_biz_model_api.TestConnectionReq"
                         }
                     }
                 ],
@@ -148,7 +201,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/response.Response"
+                                    "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                                 },
                                 {
                                     "type": "object",
@@ -167,7 +220,7 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                         }
                     }
                 }
@@ -189,7 +242,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/response.Response"
+                                    "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                                 },
                                 {
                                     "type": "object",
@@ -197,7 +250,7 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/model.Repo"
+                                                "$ref": "#/definitions/github_com_yi-nology_git-manage-service_biz_model_api.RepoDTO"
                                             }
                                         }
                                     }
@@ -226,7 +279,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.RegisterRepoReq"
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_biz_model_api.RegisterRepoReq"
                         }
                     }
                 ],
@@ -236,13 +289,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/response.Response"
+                                    "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/model.Repo"
+                                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_biz_model_api.RepoDTO"
                                         }
                                     }
                                 }
@@ -252,13 +305,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request - Invalid input or path",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                         }
                     }
                 }
@@ -284,7 +337,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.CloneRepoReq"
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_biz_model_api.CloneRepoReq"
                         }
                     }
                 ],
@@ -294,7 +347,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/response.Response"
+                                    "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                                 },
                                 {
                                     "type": "object",
@@ -313,7 +366,7 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request - Directory exists or invalid input",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                         }
                     }
                 }
@@ -339,7 +392,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.ScanRepoReq"
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_biz_model_api.ScanRepoReq"
                         }
                     }
                 ],
@@ -349,13 +402,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/response.Response"
+                                    "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/model.GitRepoConfig"
+                                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_biz_model_domain.GitRepoConfig"
                                         }
                                     }
                                 }
@@ -365,13 +418,222 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request - Invalid path",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/repos/{id}/tags": {
+            "get": {
+                "description": "List all tags in the repository",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tag"
+                ],
+                "summary": "List tags",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Repo Key",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create a tag on a specific branch or commit, optionally push to remote",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tag"
+                ],
+                "summary": "Create a new tag",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Repo Key",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Tag Info",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_biz_model_api.CreateTagReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/repos/{id}/version": {
+            "get": {
+                "description": "Get version string based on git describe",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Stats"
+                ],
+                "summary": "Get project version",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Repo Key",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/api/repos/{id}/version/next": {
+            "get": {
+                "description": "Get suggestions for next major, minor, and patch versions",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Stats"
+                ],
+                "summary": "Get next version suggestions",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Repo Key",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_biz_service_git.NextVersionInfo"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/api/repos/{id}/versions": {
+            "get": {
+                "description": "List all versions (tags)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Stats"
+                ],
+                "summary": "List version history",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Repo Key",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/github_com_yi-nology_git-manage-service_biz_service_git.TagInfo"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     }
                 }
@@ -402,13 +664,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/response.Response"
+                                    "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/model.Repo"
+                                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_biz_model_api.RepoDTO"
                                         }
                                     }
                                 }
@@ -418,7 +680,7 @@ const docTemplate = `{
                     "404": {
                         "description": "Repo not found",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                         }
                     }
                 }
@@ -448,7 +710,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.RegisterRepoReq"
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_biz_model_api.RegisterRepoReq"
                         }
                     }
                 ],
@@ -458,13 +720,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/response.Response"
+                                    "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/model.Repo"
+                                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_biz_model_api.RepoDTO"
                                         }
                                     }
                                 }
@@ -492,19 +754,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                         }
                     },
                     "400": {
                         "description": "Cannot delete if used in sync tasks",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                         }
                     },
                     "404": {
                         "description": "Repo not found",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                         }
                     }
                 }
@@ -550,7 +812,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/response.Response"
+                                    "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                                 },
                                 {
                                     "type": "object",
@@ -567,13 +829,13 @@ const docTemplate = `{
                     "404": {
                         "description": "Repo not found",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                         }
                     }
                 }
@@ -597,7 +859,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/model.CreateBranchReq"
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_biz_model_api.CreateBranchReq"
                         }
                     }
                 ],
@@ -605,7 +867,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                         }
                     }
                 }
@@ -639,7 +901,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/model.UpdateBranchReq"
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_biz_model_api.UpdateBranchReq"
                         }
                     }
                 ],
@@ -647,25 +909,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                         }
                     },
                     "404": {
                         "description": "Repo not found",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                         }
                     }
                 }
@@ -701,7 +963,52 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/repos/{key}/branches/{name}/checkout": {
+            "post": {
+                "description": "Switch the working tree to the specified branch.",
+                "tags": [
+                    "Branches"
+                ],
+                "summary": "Checkout a branch",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Repo Key",
+                        "name": "key",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Branch Name",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request or Checkout Failed",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Repo not found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                         }
                     }
                 }
@@ -734,25 +1041,25 @@ const docTemplate = `{
                     "200": {
                         "description": "Status synced",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                         }
                     },
                     "400": {
                         "description": "Bad Request - No upstream or not current branch",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                         }
                     },
                     "404": {
                         "description": "Repo not found",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                         }
                     }
                 }
@@ -785,7 +1092,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.PushBranchReq"
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_biz_model_api.PushBranchReq"
                         }
                     }
                 ],
@@ -793,7 +1100,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                         }
                     }
                 }
@@ -835,7 +1142,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/response.Response"
+                                    "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                                 },
                                 {
                                     "type": "object",
@@ -852,19 +1159,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request - Missing params",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                         }
                     },
                     "404": {
                         "description": "Repo not found",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                         }
                     }
                 }
@@ -912,7 +1219,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/response.Response"
+                                    "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                                 },
                                 {
                                     "type": "object",
@@ -931,13 +1238,94 @@ const docTemplate = `{
                     "404": {
                         "description": "Repo not found",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/repos/{key}/fetch": {
+            "post": {
+                "description": "Fetch updates from all configured remotes.",
+                "tags": [
+                    "Repositories"
+                ],
+                "summary": "Fetch all remotes for a repository",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Repo Key",
+                        "name": "key",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Repo not found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/repos/{key}/git-config": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Workspace"
+                ],
+                "summary": "Get effective git config (user.name, user.email) for the repo",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Repo Key",
+                        "name": "key",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "additionalProperties": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     }
                 }
@@ -963,7 +1351,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.MergeReq"
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_biz_model_api.MergeReq"
                         }
                     }
                 ],
@@ -971,7 +1359,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                         }
                     }
                 }
@@ -1011,19 +1399,19 @@ const docTemplate = `{
                     "200": {
                         "description": "Success status, does not mean no conflict, check data",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                         }
                     },
                     "404": {
                         "description": "Repo not found",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                         }
                     }
                 }
@@ -1063,6 +1451,133 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "type": "file"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/repos/{key}/status": {
+            "get": {
+                "description": "Get the output of 'git status' for the repository.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Workspace"
+                ],
+                "summary": "Get repository status",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Repo Key",
+                        "name": "key",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "additionalProperties": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Repo not found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/repos/{key}/submit": {
+            "post": {
+                "description": "Stage all changes, commit them with a message, and optionally push to remote.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Workspace"
+                ],
+                "summary": "Submit changes (Add, Commit, Push)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Repo Key",
+                        "name": "key",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Submit info",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/biz_handler.SubmitChangesReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "additionalProperties": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Repo not found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                         }
                     }
                 }
@@ -1118,13 +1633,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/response.Response"
+                                    "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/model.StatsResponse"
+                                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_biz_model_api.StatsResponse"
                                         }
                                     }
                                 }
@@ -1134,13 +1649,13 @@ const docTemplate = `{
                     "404": {
                         "description": "Repo not found",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                         }
                     }
                 }
@@ -1171,7 +1686,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/response.Response"
+                                    "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                                 },
                                 {
                                     "type": "object",
@@ -1190,13 +1705,13 @@ const docTemplate = `{
                     "404": {
                         "description": "Repo not found",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                         }
                     }
                 }
@@ -1245,7 +1760,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/response.Response"
+                                    "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                                 },
                                 {
                                     "type": "object",
@@ -1253,7 +1768,7 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/model.Commit"
+                                                "$ref": "#/definitions/github_com_yi-nology_git-manage-service_biz_model_domain.Commit"
                                             }
                                         }
                                     }
@@ -1323,7 +1838,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.ExecuteSyncReq"
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_biz_model_api.ExecuteSyncReq"
                         }
                     }
                 ],
@@ -1333,7 +1848,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/response.Response"
+                                    "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                                 },
                                 {
                                     "type": "object",
@@ -1376,7 +1891,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/response.Response"
+                                    "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                                 },
                                 {
                                     "type": "object",
@@ -1384,7 +1899,7 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/model.SyncRun"
+                                                "$ref": "#/definitions/github_com_yi-nology_git-manage-service_biz_model_api.SyncRunDTO"
                                             }
                                         }
                                     }
@@ -1414,7 +1929,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                         }
                     }
                 }
@@ -1440,7 +1955,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.RunSyncReq"
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_biz_model_api.RunSyncReq"
                         }
                     }
                 ],
@@ -1448,13 +1963,13 @@ const docTemplate = `{
                     "200": {
                         "description": "Status started",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                         }
                     }
                 }
@@ -1484,7 +1999,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/response.Response"
+                                    "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                                 },
                                 {
                                     "type": "object",
@@ -1492,7 +2007,7 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/model.SyncTask"
+                                                "$ref": "#/definitions/github_com_yi-nology_git-manage-service_biz_model_api.SyncTaskDTO"
                                             }
                                         }
                                     }
@@ -1521,7 +2036,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/model.SyncTask"
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_biz_model_api.SyncTaskDTO"
                         }
                     }
                 ],
@@ -1531,13 +2046,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/response.Response"
+                                    "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/model.SyncTask"
+                                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_biz_model_api.SyncTaskDTO"
                                         }
                                     }
                                 }
@@ -1547,13 +2062,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                         }
                     }
                 }
@@ -1584,13 +2099,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/response.Response"
+                                    "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/model.SyncTask"
+                                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_biz_model_api.SyncTaskDTO"
                                         }
                                     }
                                 }
@@ -1600,7 +2115,7 @@ const docTemplate = `{
                     "404": {
                         "description": "Task not found",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                         }
                     }
                 }
@@ -1628,7 +2143,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/model.SyncTask"
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_biz_model_api.SyncTaskDTO"
                         }
                     }
                 ],
@@ -1638,13 +2153,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/response.Response"
+                                    "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/model.SyncTask"
+                                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_biz_model_api.SyncTaskDTO"
                                         }
                                     }
                                 }
@@ -1654,13 +2169,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                         }
                     },
                     "404": {
                         "description": "Task not found",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                         }
                     }
                 }
@@ -1684,13 +2199,13 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                         }
                     },
                     "404": {
                         "description": "Task not found",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                         }
                     }
                 }
@@ -1723,7 +2238,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/handler.ListDirsResp"
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_biz_model_api.ListDirsResp"
                         }
                     }
                 }
@@ -1745,7 +2260,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/handler.SSHKey"
+                                "$ref": "#/definitions/github_com_yi-nology_git-manage-service_biz_model_api.SSHKey"
                             }
                         }
                     },
@@ -1786,13 +2301,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/response.Response"
+                                    "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/service.Task"
+                                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_biz_service_git.Task"
                                         }
                                     }
                                 }
@@ -1802,66 +2317,7 @@ const docTemplate = `{
                     "404": {
                         "description": "Task not found",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/webhooks/trigger": {
-            "post": {
-                "description": "Trigger a specific sync task using a secure token. Useful for external integrations (e.g., GitHub Webhooks).",
-                "tags": [
-                    "Webhook"
-                ],
-                "summary": "Trigger a sync task via Webhook",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Webhook Token",
-                        "name": "token",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Status triggered",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/response.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "object",
-                                            "additionalProperties": {
-                                                "type": "string"
-                                            }
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "400": {
-                        "description": "Missing token",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    },
-                    "403": {
-                        "description": "Task is disabled",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    },
-                    "404": {
-                        "description": "Invalid token or task not found",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_yi-nology_git-manage-service_pkg_response.Response"
                         }
                     }
                 }
@@ -1869,206 +2325,33 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "handler.CloneRepoReq": {
+        "biz_handler.SubmitChangesReq": {
             "type": "object",
             "properties": {
-                "auth_key": {
+                "author_email": {
                     "type": "string"
                 },
-                "auth_secret": {
+                "author_name": {
                     "type": "string"
                 },
-                "auth_type": {
+                "message": {
                     "type": "string"
                 },
-                "config_source": {
-                    "type": "string"
-                },
-                "local_path": {
-                    "type": "string"
-                },
-                "remote_url": {
-                    "type": "string"
-                }
-            }
-        },
-        "handler.ConfigReq": {
-            "type": "object",
-            "properties": {
-                "debug_mode": {
+                "push": {
                     "type": "boolean"
                 }
             }
         },
-        "handler.DirItem": {
-            "type": "object",
-            "properties": {
-                "name": {
-                    "type": "string"
-                },
-                "path": {
-                    "type": "string"
-                }
-            }
-        },
-        "handler.ExecuteSyncReq": {
-            "type": "object",
-            "properties": {
-                "push_options": {
-                    "type": "string"
-                },
-                "repo_key": {
-                    "type": "string"
-                },
-                "source_branch": {
-                    "type": "string"
-                },
-                "source_remote": {
-                    "description": "\"local\", \"origin\", etc",
-                    "type": "string"
-                },
-                "target_branch": {
-                    "type": "string"
-                },
-                "target_remote": {
-                    "type": "string"
-                }
-            }
-        },
-        "handler.ListDirsResp": {
-            "type": "object",
-            "properties": {
-                "current": {
-                    "type": "string"
-                },
-                "dirs": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/handler.DirItem"
-                    }
-                },
-                "parent": {
-                    "type": "string"
-                }
-            }
-        },
-        "handler.MergeReq": {
-            "type": "object",
-            "properties": {
-                "message": {
-                    "type": "string"
-                },
-                "source": {
-                    "type": "string"
-                },
-                "strategy": {
-                    "description": "Not implemented yet",
-                    "type": "string"
-                },
-                "target": {
-                    "type": "string"
-                }
-            }
-        },
-        "handler.PushBranchReq": {
-            "type": "object",
-            "properties": {
-                "remotes": {
-                    "description": "List of remote names",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                }
-            }
-        },
-        "handler.RegisterRepoReq": {
-            "type": "object",
-            "properties": {
-                "auth_key": {
-                    "type": "string"
-                },
-                "auth_secret": {
-                    "type": "string"
-                },
-                "auth_type": {
-                    "type": "string"
-                },
-                "config_source": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "path": {
-                    "type": "string"
-                },
-                "remote_auths": {
-                    "description": "Optional auth per remote",
-                    "type": "object",
-                    "additionalProperties": {
-                        "$ref": "#/definitions/model.AuthInfo"
-                    }
-                },
-                "remote_url": {
-                    "type": "string"
-                },
-                "remotes": {
-                    "description": "Optional list of remotes to sync",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/model.GitRemote"
-                    }
-                }
-            }
-        },
-        "handler.RunSyncReq": {
-            "type": "object",
-            "properties": {
-                "task_key": {
-                    "type": "string"
-                }
-            }
-        },
-        "handler.SSHKey": {
-            "type": "object",
-            "properties": {
-                "name": {
-                    "type": "string"
-                },
-                "path": {
-                    "type": "string"
-                }
-            }
-        },
-        "handler.ScanRepoReq": {
-            "type": "object",
-            "properties": {
-                "path": {
-                    "type": "string"
-                }
-            }
-        },
-        "handler.TestConnectionReq": {
-            "type": "object",
-            "properties": {
-                "url": {
-                    "type": "string"
-                }
-            }
-        },
-        "model.AuditLog": {
+        "github_com_yi-nology_git-manage-service_biz_model_api.AuditLogDTO": {
             "type": "object",
             "properties": {
                 "action": {
-                    "description": "CREATE, UPDATE, DELETE, SYNC, etc.",
                     "type": "string"
                 },
                 "created_at": {
                     "type": "string"
                 },
                 "details": {
-                    "description": "JSON payload of changes or details",
                     "type": "string"
                 },
                 "id": {
@@ -2078,11 +2361,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "operator": {
-                    "description": "User ID or IP (since we don't have full auth yet)",
                     "type": "string"
                 },
                 "target": {
-                    "description": "repo:1, task:abc, etc.",
                     "type": "string"
                 },
                 "user_agent": {
@@ -2090,24 +2371,7 @@ const docTemplate = `{
                 }
             }
         },
-        "model.AuthInfo": {
-            "type": "object",
-            "properties": {
-                "key": {
-                    "description": "SSH Key Path or Username",
-                    "type": "string"
-                },
-                "secret": {
-                    "description": "Passphrase or Password (Encrypted in DB)",
-                    "type": "string"
-                },
-                "type": {
-                    "description": "ssh, http, none",
-                    "type": "string"
-                }
-            }
-        },
-        "model.AuthorStat": {
+        "github_com_yi-nology_git-manage-service_biz_model_api.AuthorStat": {
             "type": "object",
             "properties": {
                 "email": {
@@ -2134,7 +2398,411 @@ const docTemplate = `{
                 }
             }
         },
-        "model.Commit": {
+        "github_com_yi-nology_git-manage-service_biz_model_api.CloneRepoReq": {
+            "type": "object",
+            "properties": {
+                "auth_key": {
+                    "type": "string"
+                },
+                "auth_secret": {
+                    "type": "string"
+                },
+                "auth_type": {
+                    "type": "string"
+                },
+                "config_source": {
+                    "type": "string"
+                },
+                "local_path": {
+                    "type": "string"
+                },
+                "remote_url": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_yi-nology_git-manage-service_biz_model_api.ConfigReq": {
+            "type": "object",
+            "properties": {
+                "author_email": {
+                    "type": "string"
+                },
+                "author_name": {
+                    "type": "string"
+                },
+                "debug_mode": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "github_com_yi-nology_git-manage-service_biz_model_api.CreateBranchReq": {
+            "type": "object",
+            "properties": {
+                "base_ref": {
+                    "type": "string"
+                },
+                "name": {
+                    "description": "Removed binding:\"required\" as hertz might handle it differently or I'll validate manually",
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_yi-nology_git-manage-service_biz_model_api.CreateTagReq": {
+            "type": "object",
+            "required": [
+                "ref",
+                "tag_name"
+            ],
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "push_remote": {
+                    "description": "Optional: Remote name to push to",
+                    "type": "string"
+                },
+                "ref": {
+                    "description": "Branch name or Commit Hash",
+                    "type": "string"
+                },
+                "tag_name": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_yi-nology_git-manage-service_biz_model_api.DirItem": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "path": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_yi-nology_git-manage-service_biz_model_api.ExecuteSyncReq": {
+            "type": "object",
+            "properties": {
+                "push_options": {
+                    "type": "string"
+                },
+                "repo_key": {
+                    "type": "string"
+                },
+                "source_branch": {
+                    "type": "string"
+                },
+                "source_remote": {
+                    "description": "\"local\", \"origin\", etc",
+                    "type": "string"
+                },
+                "target_branch": {
+                    "type": "string"
+                },
+                "target_remote": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_yi-nology_git-manage-service_biz_model_api.ListDirsResp": {
+            "type": "object",
+            "properties": {
+                "current": {
+                    "type": "string"
+                },
+                "dirs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_yi-nology_git-manage-service_biz_model_api.DirItem"
+                    }
+                },
+                "parent": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_yi-nology_git-manage-service_biz_model_api.MergeReq": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "source": {
+                    "type": "string"
+                },
+                "strategy": {
+                    "description": "Not implemented yet",
+                    "type": "string"
+                },
+                "target": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_yi-nology_git-manage-service_biz_model_api.PushBranchReq": {
+            "type": "object",
+            "properties": {
+                "remotes": {
+                    "description": "List of remote names",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "github_com_yi-nology_git-manage-service_biz_model_api.RegisterRepoReq": {
+            "type": "object",
+            "properties": {
+                "auth_key": {
+                    "type": "string"
+                },
+                "auth_secret": {
+                    "type": "string"
+                },
+                "auth_type": {
+                    "type": "string"
+                },
+                "config_source": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "path": {
+                    "type": "string"
+                },
+                "remote_auths": {
+                    "description": "Optional auth per remote",
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/github_com_yi-nology_git-manage-service_biz_model_domain.AuthInfo"
+                    }
+                },
+                "remote_url": {
+                    "type": "string"
+                },
+                "remotes": {
+                    "description": "Optional list of remotes to sync",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_yi-nology_git-manage-service_biz_model_domain.GitRemote"
+                    }
+                }
+            }
+        },
+        "github_com_yi-nology_git-manage-service_biz_model_api.RepoDTO": {
+            "type": "object",
+            "properties": {
+                "auth_key": {
+                    "type": "string"
+                },
+                "auth_secret": {
+                    "type": "string"
+                },
+                "auth_type": {
+                    "type": "string"
+                },
+                "config_source": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "key": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "path": {
+                    "type": "string"
+                },
+                "remote_auths": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/github_com_yi-nology_git-manage-service_biz_model_domain.AuthInfo"
+                    }
+                },
+                "remote_url": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_yi-nology_git-manage-service_biz_model_api.RunSyncReq": {
+            "type": "object",
+            "properties": {
+                "task_key": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_yi-nology_git-manage-service_biz_model_api.SSHKey": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "path": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_yi-nology_git-manage-service_biz_model_api.ScanRepoReq": {
+            "type": "object",
+            "properties": {
+                "path": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_yi-nology_git-manage-service_biz_model_api.StatsResponse": {
+            "type": "object",
+            "properties": {
+                "authors": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_yi-nology_git-manage-service_biz_model_api.AuthorStat"
+                    }
+                },
+                "total_lines": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_yi-nology_git-manage-service_biz_model_api.SyncRunDTO": {
+            "type": "object",
+            "properties": {
+                "commit_range": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "details": {
+                    "type": "string"
+                },
+                "end_time": {
+                    "type": "string"
+                },
+                "error_message": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "start_time": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "task": {
+                    "$ref": "#/definitions/github_com_yi-nology_git-manage-service_biz_model_api.SyncTaskDTO"
+                },
+                "task_key": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_yi-nology_git-manage-service_biz_model_api.SyncTaskDTO": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "cron": {
+                    "type": "string"
+                },
+                "enabled": {
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "key": {
+                    "type": "string"
+                },
+                "push_options": {
+                    "type": "string"
+                },
+                "source_branch": {
+                    "type": "string"
+                },
+                "source_remote": {
+                    "type": "string"
+                },
+                "source_repo": {
+                    "$ref": "#/definitions/github_com_yi-nology_git-manage-service_biz_model_api.RepoDTO"
+                },
+                "source_repo_key": {
+                    "type": "string"
+                },
+                "target_branch": {
+                    "type": "string"
+                },
+                "target_remote": {
+                    "type": "string"
+                },
+                "target_repo": {
+                    "$ref": "#/definitions/github_com_yi-nology_git-manage-service_biz_model_api.RepoDTO"
+                },
+                "target_repo_key": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_yi-nology_git-manage-service_biz_model_api.TestConnectionReq": {
+            "type": "object",
+            "properties": {
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_yi-nology_git-manage-service_biz_model_api.UpdateBranchReq": {
+            "type": "object",
+            "properties": {
+                "desc": {
+                    "description": "Description is not native to git branch, maybe store in config or ignore for now? Requirement said \"Modify branch name and description\". Git doesn't strictly support branch description except via ` + "`" + `git branch --edit-description` + "`" + ` which opens an editor. ` + "`" + `git config branch.\u003cname\u003e.description` + "`" + ` works.",
+                    "type": "string"
+                },
+                "new_name": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_yi-nology_git-manage-service_biz_model_domain.AuthInfo": {
+            "type": "object",
+            "properties": {
+                "key": {
+                    "description": "SSH Key Path or Username",
+                    "type": "string"
+                },
+                "secret": {
+                    "description": "Passphrase or Password (Encrypted in DB)",
+                    "type": "string"
+                },
+                "type": {
+                    "description": "ssh, http, none",
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_yi-nology_git-manage-service_biz_model_domain.Commit": {
             "type": "object",
             "properties": {
                 "author": {
@@ -2157,19 +2825,7 @@ const docTemplate = `{
                 }
             }
         },
-        "model.CreateBranchReq": {
-            "type": "object",
-            "properties": {
-                "base_ref": {
-                    "type": "string"
-                },
-                "name": {
-                    "description": "Removed binding:\"required\" as hertz might handle it differently or I'll validate manually",
-                    "type": "string"
-                }
-            }
-        },
-        "model.GitBranch": {
+        "github_com_yi-nology_git-manage-service_biz_model_domain.GitBranch": {
             "type": "object",
             "properties": {
                 "merge": {
@@ -2188,7 +2844,7 @@ const docTemplate = `{
                 }
             }
         },
-        "model.GitRemote": {
+        "github_com_yi-nology_git-manage-service_biz_model_domain.GitRemote": {
             "type": "object",
             "properties": {
                 "fetch_specs": {
@@ -2217,211 +2873,61 @@ const docTemplate = `{
                 }
             }
         },
-        "model.GitRepoConfig": {
+        "github_com_yi-nology_git-manage-service_biz_model_domain.GitRepoConfig": {
             "type": "object",
             "properties": {
                 "branches": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/model.GitBranch"
+                        "$ref": "#/definitions/github_com_yi-nology_git-manage-service_biz_model_domain.GitBranch"
                     }
                 },
                 "remotes": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/model.GitRemote"
+                        "$ref": "#/definitions/github_com_yi-nology_git-manage-service_biz_model_domain.GitRemote"
                     }
                 }
             }
         },
-        "model.Repo": {
+        "github_com_yi-nology_git-manage-service_biz_service_git.NextVersionInfo": {
             "type": "object",
             "properties": {
-                "auth_key": {
-                    "description": "SSH Key Path or Username",
+                "current": {
                     "type": "string"
                 },
-                "auth_secret": {
-                    "description": "Passphrase or Password (Encrypted in DB)",
+                "next_major": {
                     "type": "string"
                 },
-                "auth_type": {
-                    "description": "ssh, http, none",
+                "next_minor": {
                     "type": "string"
                 },
-                "config_source": {
-                    "description": "local, database",
+                "next_patch": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_yi-nology_git-manage-service_biz_service_git.TagInfo": {
+            "type": "object",
+            "properties": {
+                "date": {
                     "type": "string"
                 },
-                "created_at": {
+                "hash": {
                     "type": "string"
                 },
-                "id": {
-                    "type": "integer"
-                },
-                "key": {
+                "message": {
                     "type": "string"
                 },
                 "name": {
                     "type": "string"
                 },
-                "path": {
-                    "type": "string"
-                },
-                "remote_auths": {
-                    "description": "Memory \u0026 API",
-                    "type": "object",
-                    "additionalProperties": {
-                        "$ref": "#/definitions/model.AuthInfo"
-                    }
-                },
-                "remote_url": {
-                    "type": "string"
-                },
-                "updated_at": {
+                "tagger": {
                     "type": "string"
                 }
             }
         },
-        "model.StatsResponse": {
-            "type": "object",
-            "properties": {
-                "authors": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/model.AuthorStat"
-                    }
-                },
-                "total_lines": {
-                    "type": "integer"
-                }
-            }
-        },
-        "model.SyncRun": {
-            "type": "object",
-            "properties": {
-                "commit_range": {
-                    "type": "string"
-                },
-                "details": {
-                    "description": "Execution logs",
-                    "type": "string"
-                },
-                "end_time": {
-                    "type": "string"
-                },
-                "error_message": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "start_time": {
-                    "type": "string"
-                },
-                "status": {
-                    "description": "success, failed, conflict",
-                    "type": "string"
-                },
-                "task": {
-                    "description": "Associations",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/model.SyncTask"
-                        }
-                    ]
-                },
-                "task_key": {
-                    "type": "string"
-                }
-            }
-        },
-        "model.SyncTask": {
-            "type": "object",
-            "properties": {
-                "created_at": {
-                    "type": "string"
-                },
-                "cron": {
-                    "description": "e.g. \"0 2 * * *\"",
-                    "type": "string"
-                },
-                "enabled": {
-                    "type": "boolean"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "key": {
-                    "type": "string"
-                },
-                "push_options": {
-                    "description": "e.g. \"--force --no-verify\"",
-                    "type": "string"
-                },
-                "source_branch": {
-                    "type": "string"
-                },
-                "source_remote": {
-                    "type": "string"
-                },
-                "source_repo": {
-                    "description": "Associations",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/model.Repo"
-                        }
-                    ]
-                },
-                "source_repo_key": {
-                    "type": "string"
-                },
-                "target_branch": {
-                    "type": "string"
-                },
-                "target_remote": {
-                    "type": "string"
-                },
-                "target_repo": {
-                    "$ref": "#/definitions/model.Repo"
-                },
-                "target_repo_key": {
-                    "type": "string"
-                },
-                "updated_at": {
-                    "type": "string"
-                },
-                "webhook_token": {
-                    "description": "For webhook triggering",
-                    "type": "string"
-                }
-            }
-        },
-        "model.UpdateBranchReq": {
-            "type": "object",
-            "properties": {
-                "desc": {
-                    "description": "Description is not native to git branch, maybe store in config or ignore for now? Requirement said \"Modify branch name and description\". Git doesn't strictly support branch description except via ` + "`" + `git branch --edit-description` + "`" + ` which opens an editor. ` + "`" + `git config branch.\u003cname\u003e.description` + "`" + ` works.",
-                    "type": "string"
-                },
-                "new_name": {
-                    "type": "string"
-                }
-            }
-        },
-        "response.Response": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "type": "integer"
-                },
-                "data": {},
-                "message": {
-                    "type": "string"
-                }
-            }
-        },
-        "service.Task": {
+        "github_com_yi-nology_git-manage-service_biz_service_git.Task": {
             "type": "object",
             "properties": {
                 "error": {
@@ -2438,6 +2944,18 @@ const docTemplate = `{
                 },
                 "status": {
                     "description": "running, success, failed",
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_yi-nology_git-manage-service_pkg_response.Response": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {},
+                "message": {
                     "type": "string"
                 }
             }

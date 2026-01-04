@@ -9,6 +9,7 @@ import (
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
 	"github.com/yi-nology/git-manage-service/biz/dal/db"
 	"github.com/yi-nology/git-manage-service/biz/model/api"
+	"github.com/yi-nology/git-manage-service/biz/model/domain"
 	"github.com/yi-nology/git-manage-service/biz/service/git"
 	"github.com/yi-nology/git-manage-service/biz/service/stats"
 	"github.com/yi-nology/git-manage-service/pkg/response"
@@ -48,9 +49,10 @@ func ListBranches(ctx context.Context, c *app.RequestContext) {
 // @Param since query string false "Since (YYYY-MM-DD)"
 // @Param until query string false "Until (YYYY-MM-DD)"
 // @Produce json
-// @Success 200 {object} response.Response{data=[]api.Commit}
+// @Success 200 {object} response.Response{data=[]domain.Commit}
 // @Router /api/stats/commits [get]
 func ListCommits(ctx context.Context, c *app.RequestContext) {
+	var _ = domain.Commit{}
 	repoKey := c.Query("repo_key")
 	branch := c.Query("branch")
 	since := c.Query("since")

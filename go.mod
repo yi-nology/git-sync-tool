@@ -1,6 +1,6 @@
 module github.com/yi-nology/git-manage-service
 
-go 1.24.0
+go 1.25.0
 
 require (
 	github.com/cloudwego/hertz v0.7.3
