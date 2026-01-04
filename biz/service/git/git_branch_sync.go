@@ -149,6 +149,40 @@ func (s *GitService) PullBranch(path, remote, branch string) error {
 	return err
 }
 
+// UpdateBranchFastForward fetches remote branch and updates local branch if fast-forward possible.
+// Used for updating non-current branches.
+func (s *GitService) UpdateBranchFastForward(path, remote, branch, remoteBranch string) error {
+	r, err := s.openRepo(path)
+	if err != nil {
+		return err
+	}
+
+	// Detect Auth
+	var auth transport.AuthMethod
+	rem, err := r.Remote(remote)
+	if err == nil {
+		urls := rem.Config().URLs
+		if len(urls) > 0 {
+			auth = s.detectSSHAuth(urls[0])
+		}
+	}
+
+	// git fetch remote remoteBranch:branch
+	// e.g. git fetch origin main:main
+	refSpec := config.RefSpec(fmt.Sprintf("refs/heads/%s:refs/heads/%s", remoteBranch, branch))
+
+	err = rem.Fetch(&git.FetchOptions{
+		RemoteName: remote,
+		RefSpecs:   []config.RefSpec{refSpec},
+		Auth:       auth,
+	})
+
+	if err == git.NoErrAlreadyUpToDate {
+		return nil
+	}
+	return err
+}
+
 // FetchAll fetches all remotes
 func (s *GitService) FetchAll(path string) error {
 	r, err := s.openRepo(path)

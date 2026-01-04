@@ -61,6 +61,27 @@ async function loadBranches() {
     }
 }
 
+async function fetchAll() {
+    const btn = document.querySelector('button[onclick="fetchAll()"]');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+    }
+
+    try {
+        await request(`/repos/${repoKey}/fetch`, { method: 'POST' });
+        showToast("远端已刷新", "success");
+        loadBranches();
+    } catch (e) {
+        // handled
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-cloud-arrow-down"></i> 刷新远端 (Fetch)';
+        }
+    }
+}
+
 function switchTab(tab) {
     currentTab = tab;
     document.querySelectorAll('.nav-link').forEach(btn => btn.classList.remove('active'));
@@ -73,9 +94,19 @@ function renderBranches() {
     tbody.innerHTML = '';
     
     let filtered = [];
+    // Prepare map for remote -> local branch lookup
+    const upstreamMap = {};
+
+    // First pass: identify local branches and their upstreams
+    const localBranches = allBranches.filter(b => !repoRemotes.some(r => b.name.startsWith(r + '/')));
+    localBranches.forEach(b => {
+        if (b.upstream) {
+            upstreamMap[b.upstream] = b;
+        }
+    });
+
     if (currentTab === 'local') {
-        // Local: Not starting with remote/
-        filtered = allBranches.filter(b => !repoRemotes.some(r => b.name.startsWith(r + '/')));
+        filtered = localBranches;
     } else {
         // Remote: Starting with remote/
         filtered = allBranches.filter(b => repoRemotes.some(r => b.name.startsWith(r + '/')));
@@ -100,21 +131,43 @@ function renderBranches() {
         // Sync Status UI
         let syncStatus = '';
         let syncBtn = '';
-        if (b.upstream) {
-            if (b.behind > 0) {
-                syncStatus += `<span class="badge bg-danger me-1" title="落后 ${b.behind} 个提交"><i class="bi bi-arrow-down"></i> ${b.behind}</span>`;
+        
+        if (currentTab === 'local') {
+            if (b.upstream) {
                 if (b.is_current) {
-                    syncBtn = `<button class="btn btn-warning btn-sm" onclick="syncBranch('${b.name}')" title="同步代码 (Pull --rebase)"><i class="bi bi-cloud-download"></i></button>`;
+                    syncBtn = `<button class="btn btn-outline-warning btn-sm" onclick="syncBranch('${b.name}', true)" title="同步代码 (Pull --rebase)"><i class="bi bi-cloud-download"></i></button>`;
+                } else {
+                    syncBtn = `<button class="btn btn-outline-warning btn-sm" onclick="syncBranch('${b.name}', false)" title="更新分支 (Fast-forward Only)"><i class="bi bi-cloud-download"></i></button>`;
                 }
-            }
-            if (b.ahead > 0) {
-                syncStatus += `<span class="badge bg-success me-1" title="领先 ${b.ahead} 个提交"><i class="bi bi-arrow-up"></i> ${b.ahead}</span>`;
-            }
-            if (b.behind === 0 && b.ahead === 0) {
-                syncStatus = `<span class="text-success small"><i class="bi bi-check-all"></i> 已同步</span>`;
+
+                if (b.behind > 0) {
+                    syncStatus += `<span class="badge bg-danger me-1" title="落后 ${b.behind} 个提交"><i class="bi bi-arrow-down"></i> ${b.behind}</span>`;
+                    syncBtn = syncBtn.replace('btn-outline-warning', 'btn-warning');
+                }
+                if (b.ahead > 0) {
+                    syncStatus += `<span class="badge bg-success me-1" title="领先 ${b.ahead} 个提交"><i class="bi bi-arrow-up"></i> ${b.ahead}</span>`;
+                }
+                if (b.behind === 0 && b.ahead === 0) {
+                    syncStatus = `<span class="text-success small"><i class="bi bi-check-all"></i> 已同步</span>`;
+                }
+            } else {
+                syncStatus = `<span class="text-muted small">无上游</span>`;
             }
         } else {
-            syncStatus = `<span class="text-muted small">无上游</span>`;
+            // Remote Tab Logic
+            const linkedLocal = upstreamMap[b.name];
+            if (linkedLocal) {
+                syncStatus = `<span class="badge bg-info text-dark"><i class="bi bi-link-45deg"></i> 已关联本地: ${linkedLocal.name}</span>`;
+                // Show sync button for the LINKED LOCAL branch
+                if (linkedLocal.is_current) {
+                    syncBtn = `<button class="btn btn-outline-warning btn-sm" onclick="syncBranch('${linkedLocal.name}', true)" title="同步本地 ${linkedLocal.name} (Pull --rebase)"><i class="bi bi-cloud-download"></i> 同步本地</button>`;
+                } else {
+                    syncBtn = `<button class="btn btn-outline-warning btn-sm" onclick="syncBranch('${linkedLocal.name}', false)" title="更新本地 ${linkedLocal.name} (Fast-forward)"><i class="bi bi-cloud-download"></i> 更新本地</button>`;
+                }
+            } else {
+                syncStatus = `<span class="text-muted small">无本地关联</span>`;
+                syncBtn = `<button class="btn btn-outline-success btn-sm" onclick="checkoutRemoteBranch('${b.name}')" title="检出为本地分支"><i class="bi bi-download"></i> 新建本地分支</button>`;
+            }
         }
 
         tr.innerHTML = `
@@ -143,7 +196,6 @@ function renderBranches() {
                     ${currentTab === 'local' ? `<button class="btn btn-outline-secondary" onclick="openDetail('${b.name}')" title="详情"><i class="bi bi-info-circle"></i></button>` : ''}
                     ${currentTab === 'local' ? `<button class="btn btn-outline-primary" onclick="openRenameModal('${b.name}')" title="重命名/描述"><i class="bi bi-pencil"></i></button>` : ''}
                     ${currentTab === 'local' && !b.is_current ? `<button class="btn btn-outline-danger" onclick="deleteBranch('${b.name}')" title="删除"><i class="bi bi-trash"></i></button>` : ''}
-                    ${currentTab === 'remote' ? `<button class="btn btn-outline-success" onclick="checkoutRemoteBranch('${b.name}')" title="检出为本地分支"><i class="bi bi-download"></i></button>` : ''}
                 </div>
             </td>
         `;
@@ -271,8 +323,12 @@ function openDetail(branchName) {
     window.location.href = `branch_detail.html?repo_key=${repoKey}&branch=${encodeURIComponent(branchName)}`;
 }
 
-async function syncBranch(branch) {
-    if (!confirm(`确定要同步分支 ${branch} 吗？\n这将执行 git pull --rebase，可能会产生冲突。`)) return;
+async function syncBranch(branch, isCurrent = true) {
+    const msg = isCurrent 
+        ? `确定要同步分支 ${branch} 吗？\n这将执行 git pull --rebase，可能会产生冲突。`
+        : `确定要更新分支 ${branch} 吗？\n仅支持 Fast-forward 更新 (本地无额外提交)。`;
+
+    if (!confirm(msg)) return;
     
     try {
         await request(`/repos/${repoKey}/branches/${encodeURIComponent(branch)}/pull`, { method: 'POST' });

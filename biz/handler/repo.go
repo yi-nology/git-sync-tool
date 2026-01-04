@@ -424,3 +424,29 @@ func DeleteRepo(ctx context.Context, c *app.RequestContext) {
 	audit.AuditSvc.Log(c, "DELETE", "repo:"+repo.Key, nil)
 	response.Success(c, map[string]string{"message": "deleted"})
 }
+
+// @Summary Fetch all remotes for a repository
+// @Description Fetch updates from all configured remotes.
+// @Tags Repositories
+// @Param key path string true "Repo Key"
+// @Success 200 {object} response.Response
+// @Failure 404 {object} response.Response "Repo not found"
+// @Failure 500 {object} response.Response "Internal Server Error"
+// @Router /api/repos/{key}/fetch [post]
+func FetchRepo(ctx context.Context, c *app.RequestContext) {
+	key := c.Param("key")
+	repo, err := db.NewRepoDAO().FindByKey(key)
+	if err != nil {
+		response.NotFound(c, "repo not found")
+		return
+	}
+
+	gitSvc := git.NewGitService()
+	if err := gitSvc.FetchAll(repo.Path); err != nil {
+		response.InternalServerError(c, err.Error())
+		return
+	}
+	
+	audit.AuditSvc.Log(c, "FETCH_REPO", "repo:"+repo.Key, nil)
+	response.Success(c, map[string]string{"message": "fetched"})
+}

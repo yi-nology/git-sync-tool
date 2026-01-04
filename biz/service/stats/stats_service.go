@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -161,6 +162,12 @@ func (s *StatsService) ParseCommits(raw string) []domain.Commit {
 			Message:   parts[4],
 		})
 	}
+
+	// Sort by Timestamp Descending (Newest First)
+	sort.Slice(commits, func(i, j int) bool {
+		return commits[i].Timestamp > commits[j].Timestamp
+	})
+
 	return commits
 }
 
@@ -225,7 +232,7 @@ func (s *StatsService) updateCache(key string, update func(*StatsCacheItem)) {
 		update(item)
 		// No need to Store back since we modified the pointer, but sync.Map might need it if we replaced the struct.
 		// Since we are modifying fields of the struct pointer, it is visible to other goroutines reading the same pointer.
-		// However, to be safe from race conditions on the struct fields themselves if they were not atomic, 
+		// However, to be safe from race conditions on the struct fields themselves if they were not atomic,
 		// we should be careful. But here it's simple string/status updates.
 		// Ideally we should use a mutex inside StatsCacheItem or replace the item in the map.
 		// For progress reporting, replacing the item in map is safer if we treat it as immutable, but slower.
@@ -256,7 +263,7 @@ func (s *StatsService) calculateStatsFast(path, branch, since, until, cacheKey s
 	defer stream.Close()
 
 	authorStats := make(map[string]*api.AuthorStat)
-	
+
 	scanner := bufio.NewScanner(stream)
 	// Increase buffer size for long lines
 	buf := make([]byte, 0, 64*1024)
@@ -264,7 +271,7 @@ func (s *StatsService) calculateStatsFast(path, branch, since, until, cacheKey s
 
 	var currentEmail, currentName string
 	var currentDate time.Time
-	
+
 	commitCount := 0
 	lastUpdate := time.Now()
 
@@ -276,7 +283,7 @@ func (s *StatsService) calculateStatsFast(path, branch, since, until, cacheKey s
 
 		if strings.HasPrefix(line, "COMMIT|") {
 			commitCount++
-			
+
 			// Update progress every 100 commits or 1 second
 			if commitCount%100 == 0 || time.Since(lastUpdate) > time.Second {
 				s.updateCache(cacheKey, func(item *StatsCacheItem) {
@@ -295,9 +302,9 @@ func (s *StatsService) calculateStatsFast(path, branch, since, until, cacheKey s
 			}
 			continue
 		}
-		
+
 		// ... (rest of the loop)
-		
+
 		// Date Filter
 		if !sinceTime.IsZero() && currentDate.Before(sinceTime) {
 			continue
@@ -346,7 +353,7 @@ func (s *StatsService) calculateStatsFast(path, branch, since, until, cacheKey s
 		dateStr := currentDate.Format("2006-01-02")
 		stat.TimeTrend[dateStr] += (added - deleted)
 	}
-	
+
 	if err := scanner.Err(); err != nil {
 		return nil, err
 	}

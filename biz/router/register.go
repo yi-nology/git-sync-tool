@@ -23,6 +23,7 @@ func GeneratedRegister(h *server.Hertz) {
 		repos.GET("/:key", handler.GetRepo)
 		repos.PUT("/:key", handler.UpdateRepo)
 		repos.DELETE("/:key", handler.DeleteRepo)
+		repos.POST("/:key/fetch", handler.FetchRepo)
 
 		// Branch Sub-Routes
 		repos.GET("/:key/branches", handler.ListRepoBranches)

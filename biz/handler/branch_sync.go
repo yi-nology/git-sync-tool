@@ -89,6 +89,7 @@ func PullBranch(ctx context.Context, c *app.RequestContext) {
 	branches, _ := gitSvc.ListBranchesWithInfo(repo.Path)
 	var isCurrent bool
 	var upstreamRemote string
+	var remoteBranch string
 
 	for _, b := range branches {
 		if b.Name == branch {
@@ -97,24 +98,37 @@ func PullBranch(ctx context.Context, c *app.RequestContext) {
 				parts := strings.Split(b.Upstream, "/")
 				if len(parts) > 0 {
 					upstreamRemote = parts[0]
+					if len(parts) > 1 {
+						remoteBranch = strings.Join(parts[1:], "/")
+					}
 				}
 			}
 			break
 		}
 	}
 
-	if !isCurrent {
-		// Can't pull non-checked out branch easily without fetching + rebase/merge manually.
-		// For now, let's just Fetch origin:branch.
-		// Actually requirement says "Sync function... execute git pull --rebase".
-		// This implies we are working on the workspace.
-		// If it's not checked out, we should probably tell user to checkout first or we just fetch.
-		response.BadRequest(c, "Can only sync currently checked out branch")
-		return
-	}
-
 	if upstreamRemote == "" {
 		response.BadRequest(c, "No upstream configured for this branch")
+		return
+	}
+	
+	if remoteBranch == "" {
+		remoteBranch = branch
+	}
+
+	if !isCurrent {
+		// Try Fast-Forward Update for non-current branch
+		if err := gitSvc.UpdateBranchFastForward(repo.Path, upstreamRemote, branch, remoteBranch); err != nil {
+			response.InternalServerError(c, fmt.Sprintf("Update failed (must be fast-forward): %v", err))
+			return
+		}
+		
+		audit.AuditSvc.Log(c, "UPDATE_BRANCH", "repo:"+repo.Key, map[string]string{
+			"branch": branch,
+			"remote": upstreamRemote,
+			"type":   "fast-forward",
+		})
+		response.Success(c, map[string]string{"message": "updated (fast-forward)"})
 		return
 	}
 
