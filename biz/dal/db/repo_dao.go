@@ -26,6 +26,12 @@ func (d *RepoDAO) FindByKey(key string) (*po.Repo, error) {
 	return &repo, err
 }
 
+func (d *RepoDAO) FindByPath(path string) (*po.Repo, error) {
+	var repo po.Repo
+	err := DB.Where("path = ?", path).First(&repo).Error
+	return &repo, err
+}
+
 func (d *RepoDAO) Save(repo *po.Repo) error {
 	return DB.Save(repo).Error
 }

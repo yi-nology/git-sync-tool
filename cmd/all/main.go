@@ -19,7 +19,7 @@ import (
 	"github.com/yi-nology/git-manage-service/biz/service/stats"
 	"github.com/yi-nology/git-manage-service/biz/service/sync"
 	"github.com/yi-nology/git-manage-service/biz/utils"
-	"github.com/yi-nology/git-manage-service/kitex_gen/git/gitservice"
+	"github.com/yi-nology/git-manage-service/biz/kitex_gen/git/gitservice"
 	"github.com/yi-nology/git-manage-service/pkg/configs"
 
 	_ "github.com/yi-nology/git-manage-service/docs"

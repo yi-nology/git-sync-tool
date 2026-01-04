@@ -3,7 +3,7 @@ package gitservice
 
 import (
 	server "github.com/cloudwego/kitex/server"
-	git "github.com/yi-nology/git-manage-service/kitex_gen/git"
+	git "github.com/yi-nology/git-manage-service/biz/kitex_gen/git"
 )
 
 // NewServer creates a server.Server with the given handler and options.

@@ -9,7 +9,7 @@ import (
 	kitex "github.com/cloudwego/kitex/pkg/serviceinfo"
 	streaming "github.com/cloudwego/kitex/pkg/streaming"
 	proto "github.com/cloudwego/prutal"
-	git "github.com/yi-nology/git-manage-service/kitex_gen/git"
+	git "github.com/yi-nology/git-manage-service/biz/kitex_gen/git"
 )
 
 var errInvalidMessageType = errors.New("invalid message type for service method handler")

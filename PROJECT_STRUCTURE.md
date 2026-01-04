@@ -10,7 +10,7 @@ This document provides a comprehensive overview of the project's directory struc
 | `cmd/` | **Entry Points**. Main applications for API and RPC servers. |
 | `pkg/` | **Shared Packages**. Common utilities, configs, and helper functions. |
 | `idl/` | **Interface Definitions**. Protocol Buffer files (.proto) for RPC. |
-| `kitex_gen/` | **Generated Code**. Auto-generated Go code from IDL (Kitex). |
+| `biz/kitex_gen/` | **Generated Code**. Auto-generated Go code from IDL (Kitex). |
 | `conf/` | **Configuration**. YAML config files for different environments. |
 | `public/` | **Frontend Assets**. Static HTML, CSS, and JS files for the web UI. |
 | `deploy/` | **Deployment**. Kubernetes manifests and Docker configs. |
@@ -63,7 +63,7 @@ Defines data structures used across layers.
     *   `sync_run.go`: `sync_runs` table.
 
 ### 2.5 RPC Handler (`biz/rpc_handler/`)
-Implements the gRPC/Kitex interfaces defined in `kitex_gen`.
+Implements the gRPC/Kitex interfaces defined in `biz/kitex_gen`.
 *   **`git_handler.go`**: Handles RPC requests for Git services.
 
 ---

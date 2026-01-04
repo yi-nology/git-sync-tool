@@ -51,6 +51,18 @@ func Init() {
 		log.Fatal("failed to connect database: ", err)
 	}
 
+	// Check if tables exist to skip initialization if requested
+	migrator := DB.Migrator()
+	if migrator.HasTable(&po.Repo{}) &&
+		migrator.HasTable(&po.SyncTask{}) &&
+		migrator.HasTable(&po.SyncRun{}) &&
+		migrator.HasTable(&po.AuditLog{}) &&
+		migrator.HasTable(&po.SystemConfig{}) &&
+		migrator.HasTable(&po.CommitStat{}) {
+		log.Println("Database tables exist, skipping schema migration.")
+		return
+	}
+
 	// Migrate the schema
 	err = DB.AutoMigrate(&po.Repo{}, &po.SyncTask{}, &po.SyncRun{}, &po.AuditLog{}, &po.SystemConfig{}, &po.CommitStat{})
 	if err != nil {

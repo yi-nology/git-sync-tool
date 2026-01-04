@@ -822,6 +822,23 @@ func (s *GitService) GetGlobalGitUser() (string, string, error) {
 	return cfg.User.Name, cfg.User.Email, nil
 }
 
+func (s *GitService) GetHeadBranch(path string) (string, error) {
+	r, err := s.openRepo(path)
+	if err != nil {
+		return "", err
+	}
+	head, err := r.Head()
+	if err != nil {
+		return "", err
+	}
+	// refs/heads/master -> master
+	if head.Name().IsBranch() {
+		return head.Name().Short(), nil
+	}
+	// Detached HEAD or other state
+	return head.Hash().String(), nil
+}
+
 // Task Manager for Async Clones
 type TaskManager struct {
 	tasks sync.Map

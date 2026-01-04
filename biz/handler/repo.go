@@ -13,6 +13,7 @@ import (
 	"github.com/yi-nology/git-manage-service/biz/model/po"
 	"github.com/yi-nology/git-manage-service/biz/service/audit"
 	"github.com/yi-nology/git-manage-service/biz/service/git"
+	"github.com/yi-nology/git-manage-service/biz/service/stats"
 	"github.com/yi-nology/git-manage-service/pkg/response"
 )
 
@@ -93,6 +94,17 @@ func RegisterRepo(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 	audit.AuditSvc.Log(c, "CREATE", "repo:"+repo.Key, map[string]string{"name": repo.Name, "path": repo.Path})
+
+	// Trigger async stats sync
+	go func() {
+		// Sync default branch or all? For now, try master and main
+		// Or better: get HEAD branch
+		head, err := gitSvc.GetHeadBranch(repo.Path)
+		if err == nil && head != "" {
+			stats.StatsSvc.SyncRepoStats(repo.ID, repo.Path, head)
+		}
+	}()
+
 	response.Success(c, api.NewRepoDTO(repo))
 }
 
@@ -194,6 +206,14 @@ func CloneRepo(ctx context.Context, c *app.RequestContext) {
 			repo.ConfigSource = "local"
 		}
 		db.NewRepoDAO().Create(&repo)
+
+		// Trigger async stats sync
+		go func() {
+			head, err := gitSvc.GetHeadBranch(repo.Path)
+			if err == nil && head != "" {
+				stats.StatsSvc.SyncRepoStats(repo.ID, repo.Path, head)
+			}
+		}()
 	}()
 
 	response.Success(c, map[string]string{"task_id": taskID})
