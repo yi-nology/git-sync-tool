@@ -8,9 +8,31 @@ function getStatusColor(status) {
     return 'secondary';
 }
 
-function showLog(details) {
-    document.getElementById('logContent').textContent = details;
-    new bootstrap.Modal(document.getElementById('logModal')).show();
+function showLog(log) {
+    const modal = new bootstrap.Modal(document.getElementById('logModal'));
+    const logContent = document.getElementById('logContent');
+    const cmdContainer = document.getElementById('commandContainer');
+    const cmdContent = document.getElementById('commandContent');
+
+    logContent.innerText = log || "无日志";
+    
+    // Parse Command
+    const cmdMatch = (log || "").match(/\[.*\] Command: (.+)/);
+    if (cmdMatch && cmdMatch[1]) {
+        cmdContent.innerText = cmdMatch[1].trim();
+        cmdContainer.classList.remove('d-none');
+    } else {
+        cmdContainer.classList.add('d-none');
+    }
+    
+    modal.show();
+}
+
+function copyCommand() {
+    const text = document.getElementById('commandContent').innerText;
+    navigator.clipboard.writeText(text).then(() => {
+        showToast("命令已复制", "success");
+    });
 }
 
 async function loadSSHKeys(selectId = 'sshKeySelect') {

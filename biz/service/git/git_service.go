@@ -266,6 +266,27 @@ func (s *GitService) IsAncestor(path, ancestor, descendant string) (bool, error)
 	return c1.IsAncestor(c2)
 }
 
+func parsePushOptions(options []string) *git.PushOptions {
+	opts := &git.PushOptions{}
+	opts.Options = make(map[string]string)
+
+	for _, o := range options {
+		if o == "-f" || o == "--force" {
+			opts.Force = true
+		} else if o == "--prune" {
+			opts.Prune = true
+		} else if strings.HasPrefix(o, "--push-option=") {
+			// --push-option=key=value
+			kv := strings.TrimPrefix(o, "--push-option=")
+			parts := strings.SplitN(kv, "=", 2)
+			if len(parts) == 2 {
+				opts.Options[parts[0]] = parts[1]
+			}
+		}
+	}
+	return opts
+}
+
 func (s *GitService) Push(path, targetRemote, sourceHash, targetBranch string, options []string) error {
 	r, err := s.openRepo(path)
 	if err != nil {
@@ -286,11 +307,12 @@ func (s *GitService) Push(path, targetRemote, sourceHash, targetBranch string, o
 		}
 	}
 
-	err = r.Push(&git.PushOptions{
-		RemoteName: targetRemote,
-		RefSpecs:   []config.RefSpec{refSpec},
-		Auth:       auth,
-	})
+	pushOpts := parsePushOptions(options)
+	pushOpts.RemoteName = targetRemote
+	pushOpts.RefSpecs = []config.RefSpec{refSpec}
+	pushOpts.Auth = auth
+
+	err = r.Push(pushOpts)
 	if err == git.NoErrAlreadyUpToDate {
 		return nil
 	}
@@ -500,10 +522,11 @@ func (s *GitService) PushWithAuth(path, targetRemoteURL, sourceHash, targetBranc
 
 	refSpec := config.RefSpec(fmt.Sprintf("%s:refs/heads/%s", sourceHash, targetBranch))
 
-	err = remote.Push(&git.PushOptions{
-		Auth:     auth,
-		RefSpecs: []config.RefSpec{refSpec},
-	})
+	pushOpts := parsePushOptions(options)
+	pushOpts.Auth = auth
+	pushOpts.RefSpecs = []config.RefSpec{refSpec}
+
+	err = remote.Push(pushOpts)
 	if err == git.NoErrAlreadyUpToDate {
 		return nil
 	}
