@@ -1004,3 +1004,131 @@ func (s *GitService) GetTags(path string) ([]string, error) {
 	})
 	return tags, nil
 }
+
+type TagInfo struct {
+	Name    string    `json:"name"`
+	Hash    string    `json:"hash"`
+	Message string    `json:"message"`
+	Tagger  string    `json:"tagger"`
+	Date    time.Time `json:"date"`
+}
+
+func (s *GitService) GetTagList(path string) ([]TagInfo, error) {
+	r, err := s.openRepo(path)
+	if err != nil {
+		return nil, err
+	}
+	iter, err := r.Tags()
+	if err != nil {
+		return nil, err
+	}
+	var tags []TagInfo
+	iter.ForEach(func(ref *plumbing.Reference) error {
+		tagObj, err := r.TagObject(ref.Hash())
+		if err == nil {
+			// Annotated Tag
+			tags = append(tags, TagInfo{
+				Name:    ref.Name().Short(),
+				Hash:    ref.Hash().String(),
+				Message: tagObj.Message,
+				Tagger:  tagObj.Tagger.Name,
+				Date:    tagObj.Tagger.When,
+			})
+		} else {
+			// Lightweight Tag (commit)
+			commit, err := r.CommitObject(ref.Hash())
+			if err == nil {
+				tags = append(tags, TagInfo{
+					Name:    ref.Name().Short(),
+					Hash:    ref.Hash().String(),
+					Message: commit.Message,
+					Tagger:  commit.Author.Name,
+					Date:    commit.Author.When,
+				})
+			}
+		}
+		return nil
+	})
+	return tags, nil
+}
+
+func (s *GitService) GetDescribe(path string) (string, error) {
+	// git describe --tags --always --long
+	// Note: go-git does not implement describe yet.
+	// We use shell command for robustness and simplicity here.
+	return s.RunCommand(path, "describe", "--tags", "--always", "--long")
+}
+
+func (s *GitService) GetLatestVersion(path string) (string, error) {
+	// Simple strategy: use git describe --tags --abbrev=0 to get the latest tag reachable from HEAD
+	// This respects semver ordering if git is configured or tags are standard.
+	// However, git describe only sorts by topological reachability (most recent on branch).
+	// To get strictly highest semver, we need to list all tags and sort.
+	// For now, let's trust git describe --tags --abbrev=0 which is "latest tag on this branch".
+	out, err := s.RunCommand(path, "describe", "--tags", "--abbrev=0")
+	if err != nil {
+		// If no tags found, might fail. Return empty or error.
+		return "", err
+	}
+	return out, nil
+}
+
+type NextVersionInfo struct {
+	Current   string `json:"current"`
+	NextMajor string `json:"next_major"`
+	NextMinor string `json:"next_minor"`
+	NextPatch string `json:"next_patch"`
+}
+
+func (s *GitService) GetNextVersions(path string) (*NextVersionInfo, error) {
+	// 1. Get latest version
+	latest, err := s.GetLatestVersion(path)
+	// If error or empty, default to v0.0.0
+	if err != nil || latest == "" {
+		latest = "v0.0.0"
+	}
+
+	// 2. Parse SemVer
+	// Handle v prefix
+	version := latest
+	hasV := false
+	if strings.HasPrefix(version, "v") {
+		hasV = true
+		version = version[1:]
+	}
+
+	parts := strings.Split(version, ".")
+	major, minor, patch := 0, 0, 0
+
+	// Parse robustly
+	if len(parts) >= 1 {
+		fmt.Sscanf(parts[0], "%d", &major)
+	}
+	if len(parts) >= 2 {
+		fmt.Sscanf(parts[1], "%d", &minor)
+	}
+	if len(parts) >= 3 {
+		fmt.Sscanf(parts[2], "%d", &patch)
+	}
+
+	// 3. Calculate next versions
+	// Major: +1.0.0
+	nextMajor := fmt.Sprintf("%d.0.0", major+1)
+	// Minor: +0.1.0
+	nextMinor := fmt.Sprintf("%d.%d.0", major, minor+1)
+	// Patch: +0.0.1
+	nextPatch := fmt.Sprintf("%d.%d.%d", major, minor, patch+1)
+
+	if hasV {
+		nextMajor = "v" + nextMajor
+		nextMinor = "v" + nextMinor
+		nextPatch = "v" + nextPatch
+	}
+
+	return &NextVersionInfo{
+		Current:   latest,
+		NextMajor: nextMajor,
+		NextMinor: nextMinor,
+		NextPatch: nextPatch,
+	}, nil
+}

@@ -355,6 +355,8 @@ async function submitPush() {
     }
 }
 
+let nextVersions = {};
+
 async function openTagModal(ref) {
     document.getElementById('tagForm').reset();
     document.querySelector('#tagForm input[name="ref"]').value = ref;
@@ -364,8 +366,32 @@ async function openTagModal(ref) {
     select.innerHTML = '<option value="">加载中...</option>';
     document.getElementById('pushTagRemoteDiv').classList.add('d-none');
     
+    // Reset Version UI
+    document.getElementById('badge-patch').innerText = '...';
+    document.getElementById('badge-minor').innerText = '...';
+    document.getElementById('badge-major').innerText = '...';
+    document.querySelector('input[name="version_type"][value="patch"]').checked = true;
+    updateTagName({value: 'patch'}); // Reset to patch
+
     new bootstrap.Modal(document.getElementById('tagModal')).show();
     
+    // Fetch suggested versions
+    try {
+        const info = await request(`/repos/${repoKey}/version/next`);
+        if (info) {
+            nextVersions = info;
+            document.getElementById('badge-patch').innerText = info.next_patch;
+            document.getElementById('badge-minor').innerText = info.next_minor;
+            document.getElementById('badge-major').innerText = info.next_major;
+            
+            // Refresh current selection
+            const currentType = document.querySelector('input[name="version_type"]:checked');
+            if (currentType) updateTagName(currentType);
+        }
+    } catch(e) {
+        console.warn("Failed to fetch suggestions", e);
+    }
+
     // Load remotes in background
     try {
         const config = await request('/repos/scan', {
@@ -390,6 +416,25 @@ async function openTagModal(ref) {
     } catch(e) {}
 }
 
+function updateTagName(radio) {
+    const input = document.querySelector('input[name="tag_name"]');
+    if (radio.value === 'custom') {
+        input.readOnly = false;
+        input.value = '';
+        input.placeholder = '例如 v1.2.3';
+        input.focus();
+    } else {
+        input.readOnly = true;
+        if (nextVersions) {
+            switch(radio.value) {
+                case 'patch': input.value = nextVersions.next_patch || ''; break;
+                case 'minor': input.value = nextVersions.next_minor || ''; break;
+                case 'major': input.value = nextVersions.next_major || ''; break;
+            }
+        }
+    }
+}
+
 function toggleTagPush(checked) {
     const div = document.getElementById('pushTagRemoteDiv');
     if (checked) div.classList.remove('d-none');
@@ -399,7 +444,7 @@ function toggleTagPush(checked) {
 async function submitCreateTag() {
     const form = document.getElementById('tagForm');
     const ref = form.ref.value;
-    const tagName = form.tag_name.value.trim();
+    let tagName = form.tag_name.value.trim();
     const message = form.message.value;
     const push = form.pushTagCheck.checked;
     const remote = form.push_remote.value;
@@ -435,6 +480,7 @@ async function submitCreateTag() {
         
         showToast(push ? "标签已创建并推送" : "标签已创建", "success");
         bootstrap.Modal.getInstance(document.getElementById('tagModal')).hide();
+        
     } catch (e) {
         // handled
     } finally {
