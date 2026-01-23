@@ -219,7 +219,7 @@
                     <div class="col-md-6">
                         <div class="card">
                             <div class="card-body">
-                                <h5 class="card-title">Top 10 语言对比</h5>
+                                <h5 class="card-title">Top 10 语言行数明细</h5>
                                 <div id="langBarChart" style="height: 350px;"></div>
                             </div>
                         </div>
@@ -615,7 +615,7 @@
             
             const languages = data.languages || [];
             
-            // Pie Chart
+            // Pie Chart - 按代码行数展示
             if (!langPieChart) langPieChart = echarts.init(document.getElementById('langPieChart'));
             langPieChart.setOption({
                 tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
@@ -627,7 +627,7 @@
                 }]
             });
             
-            // Bar Chart
+            // Bar Chart - 按代码行数排序（与饼图一致）
             const top10 = languages.slice(0, 10);
             if (!langBarChart) langBarChart = echarts.init(document.getElementById('langBarChart'));
             langBarChart.setOption({
@@ -636,9 +636,9 @@
                 xAxis: { type: 'category', data: top10.map(l => l.name) },
                 yAxis: { type: 'value' },
                 series: [
-                    { name: '代码', type: 'bar', stack: 'total', data: top10.map(l => l.code), itemStyle: { color: '#5470c6' } },
-                    { name: '注释', type: 'bar', stack: 'total', data: top10.map(l => l.comment), itemStyle: { color: '#91cc75' } },
-                    { name: '空白', type: 'bar', stack: 'total', data: top10.map(l => l.blank), itemStyle: { color: '#fac858' } }
+                    { name: '代码', type: 'bar', data: top10.map(l => l.code), itemStyle: { color: '#5470c6' } },
+                    { name: '注释', type: 'bar', data: top10.map(l => l.comment), itemStyle: { color: '#91cc75' } },
+                    { name: '空白', type: 'bar', data: top10.map(l => l.blank), itemStyle: { color: '#fac858' } }
                 ]
             });
             
