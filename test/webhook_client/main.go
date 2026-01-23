@@ -29,7 +29,7 @@ func main() {
 		panic(err)
 	}
 	defer resp.Body.Close()
-	
+
 	respBody, _ := ioutil.ReadAll(resp.Body)
 	fmt.Printf("Status: %s\nBody: %s\n", resp.Status, string(respBody))
 }

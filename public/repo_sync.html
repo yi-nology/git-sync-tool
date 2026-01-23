@@ -176,7 +176,7 @@
 
         async function loadBranches() {
             try {
-                const res = await request(`/repos/${repoKey}/branches?page_size=1000`); // Increase limit to get all
+                const res = await request(`/branch/list?repo_key=${repoKey}&page_size=1000`); // Increase limit to get all
                 // res is {total: ..., list: [...]}
                 if (res && res.list) {
                     repoBranches = res.list.map(b => b.name);
@@ -223,7 +223,7 @@
         async function loadRepoInfo() {
             // Load all repos to find current (or add specific API)
             try {
-                const repos = await request('/repos');
+                const repos = await request('/repo/list');
                 currentRepo = repos.find(r => r.key === repoKey);
                 if (!currentRepo) {
                     alert("仓库不存在");
@@ -233,7 +233,7 @@
                 // document.getElementById('repoNameTitle').innerText = currentRepo.name; // Element removed
                 
                 // Scan remotes for dropdowns
-                const config = await request('/repos/scan', {
+                const config = await request('/repo/scan', {
                     method: 'POST',
                     body: {path: currentRepo.path}
                 });
@@ -295,7 +295,7 @@
         }
         
         function openWebhookModal(token) {
-            const url = `${window.location.origin}/api/webhooks/trigger?token=${token}`;
+            const url = `${window.location.origin}/api/v1/sync/webhook?token=${token}`;
             const curl = `curl -X POST "${url}"`;
             
             document.getElementById('webhookUrlInput').value = url;
@@ -341,7 +341,7 @@
         }
 
         function editTask(key) {
-            request(`/sync/tasks/${key}`)
+            request(`/sync/task?key=${key}`)
                 .then(task => {
                     const form = document.getElementById('taskForm');
                     form.id.value = task.key; 
@@ -399,8 +399,11 @@
                 enabled: form.enabled.checked
             };
             
-            const url = id ? `/sync/tasks/${id}` : `/sync/tasks`;
-            const method = id ? 'PUT' : 'POST';
+            const url = id ? `/sync/task/update` : `/sync/task/create`;
+            const method = 'POST';
+            if (id) {
+                data.key = id;
+            }
             
             try {
                 await request(url, {
@@ -418,7 +421,7 @@
         async function deleteTask(key) {
             if(!confirm("确定删除该同步规则吗？")) return;
             try {
-                await request(`/sync/tasks/${key}`, { method: 'DELETE' });
+                await request('/sync/task/delete', { method: 'POST', body: { key } });
                 loadTasks();
             } catch(e) {}
         }

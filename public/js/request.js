@@ -1,6 +1,6 @@
 // request.js - Universal Request Library
 
-const API_BASE = '/api';
+const API_BASE = '/api/v1';
 
 /**
  * Global Request Wrapper

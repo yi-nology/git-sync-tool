@@ -99,7 +99,7 @@ async function showAuditDetails(id) {
     new bootstrap.Modal(document.getElementById('auditDetailModal')).show();
     
     try {
-        const log = await request(`/audit/logs/${id}`);
+        const log = await request(`/audit/log?id=${id}`);
         
         if (log.details && log.details !== '{}' && log.details !== 'null') {
             try {

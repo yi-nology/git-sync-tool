@@ -1,12 +1,6 @@
-#!/usr/bin/env bash
-RUN_NAME="git_service"
-
+#!/bin/bash
+RUN_NAME=hertz_service
 mkdir -p output/bin
-cp script/* output/
+cp script/* output 2>/dev/null
 chmod +x output/bootstrap.sh
-
-if [ "$IS_SYSTEM_TEST_ENV" != "1" ]; then
-    go build -o output/bin/${RUN_NAME}
-else
-    go test -c -covermode=set -o output/bin/${RUN_NAME} -coverpkg=./...
-fi
+go build -o output/bin/${RUN_NAME}

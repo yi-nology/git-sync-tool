@@ -49,13 +49,13 @@ func (dao *CommitStatDAO) GetByRepoAndHashes(repoID uint, hashes []string) (map[
 		if end > len(hashes) {
 			end = len(hashes)
 		}
-		
+
 		var chunk []po.CommitStat
 		err := DB.Where("repo_id = ? AND commit_hash IN ?", repoID, hashes[i:end]).Find(&chunk).Error
 		if err != nil {
 			return nil, err
 		}
-		
+
 		for j := range chunk {
 			result[chunk[j].CommitHash] = &chunk[j]
 		}

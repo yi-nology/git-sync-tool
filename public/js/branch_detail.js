@@ -23,7 +23,7 @@ async function loadData() {
 
 async function checkUncommittedChanges() {
     try {
-        const res = await request(`/repos/${repoKey}/status`);
+        const res = await request(`/system/repo/status?repo_key=${repoKey}`);
         const status = res.status;
         const badge = document.getElementById('submit-badge');
         
@@ -148,8 +148,9 @@ async function deleteCurrentBranch() {
     if (!confirm(`确定要删除分支 "${branchName}" 吗？此操作不可撤销！`)) return;
     
     try {
-        await request(`/repos/${repoKey}/branches/${encodeURIComponent(branchName)}?force=true`, {
-            method: 'DELETE'
+        await request('/branch/delete', {
+            method: 'POST',
+            body: { repo_key: repoKey, name: branchName, force: true }
         });
         showToast("删除成功", "success");
         setTimeout(() => {
@@ -164,11 +165,13 @@ async function pushRemote() {
     if (!confirm(`确定要将分支 "${branchName}" 推送到远程 origin 吗？`)) return;
 
     try {
-        const res = await request(`/repos/${repoKey}/branches/${encodeURIComponent(branchName)}/push`, {
+        const res = await request('/branch/push', {
             method: 'POST',
-            body: JSON.stringify({
-                remotes: ['origin'] // Default to origin
-            })
+            body: {
+                repo_key: repoKey,
+                name: branchName,
+                remotes: ['origin']
+            }
         });
         showToast(res.message, "success");
     } catch (e) {
@@ -190,7 +193,7 @@ function openSubmitModal() {
 
 async function loadGitConfig() {
     try {
-        const res = await request(`/repos/${repoKey}/git-config`);
+        const res = await request(`/system/repo/git-config?repo_key=${repoKey}`);
         document.getElementById('author-name').value = res.name || '';
         document.getElementById('author-email').value = res.email || '';
     } catch (e) {
@@ -210,7 +213,7 @@ async function checkRepoStatus() {
     content.style.display = 'none';
 
     try {
-        const res = await request(`/repos/${repoKey}/status`);
+        const res = await request(`/system/repo/status?repo_key=${repoKey}`);
         const status = res.status;
         
         statusDisplay.textContent = status;
@@ -249,14 +252,15 @@ async function doSubmit() {
     btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> 提交中...';
 
     try {
-        const res = await request(`/repos/${repoKey}/submit`, {
+        const res = await request('/system/repo/submit', {
             method: 'POST',
-            body: JSON.stringify({
+            body: {
+                repo_key: repoKey,
                 message: msg,
                 push: push,
                 author_name: authorName,
                 author_email: authorEmail
-            })
+            }
         });
 
         showToast(res.message, res.warning ? 'warning' : 'success');

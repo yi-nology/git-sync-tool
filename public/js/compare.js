@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function loadBranches() {
     try {
-        const res = await request(`/repos/${repoKey}/branches?page_size=1000`);
+        const res = await request(`/branch/list?repo_key=${repoKey}&page_size=1000`);
         const branches = res.list || [];
         
         const srcSelect = document.getElementById('sourceBranch');
@@ -82,7 +82,7 @@ async function checkDiff(force = false) {
         // My API uses `git diff base target`.
         // So I should pass base=target, target=source to see changes introduced by source.
         
-        const res = await request(`/repos/${repoKey}/compare?base=${encodeURIComponent(target)}&target=${encodeURIComponent(source)}`);
+        const res = await request(`/branch/compare?repo_key=${repoKey}&base=${encodeURIComponent(target)}&target=${encodeURIComponent(source)}`);
         
         // Render Stats
         document.getElementById('stat-files').innerText = res.stat.FilesChanged;
@@ -140,7 +140,7 @@ async function loadFileDiff(filePath) {
     // Better to store ID, but for now ok.
     
     try {
-        const res = await request(`/repos/${repoKey}/diff?base=${encodeURIComponent(target)}&target=${encodeURIComponent(source)}&file=${encodeURIComponent(filePath)}`);
+        const res = await request(`/branch/diff?repo_key=${repoKey}&base=${encodeURIComponent(target)}&target=${encodeURIComponent(source)}&file=${encodeURIComponent(filePath)}`);
         
         const diffString = res.diff;
         if (!diffString) {
@@ -178,7 +178,7 @@ function downloadPatch() {
     const target = document.getElementById('targetBranch').value;
     if (!source || !target) return;
     
-    window.open(`/api/repos/${repoKey}/patch?base=${encodeURIComponent(target)}&target=${encodeURIComponent(source)}`, '_blank');
+    window.open(`/api/v1/branch/patch?repo_key=${repoKey}&base=${encodeURIComponent(target)}&target=${encodeURIComponent(source)}`, '_blank');
 }
 
 // Merge Logic
@@ -203,7 +203,7 @@ async function openMergeModal() {
     
     // Perform Dry Run
     try {
-        const res = await request(`/repos/${repoKey}/merge/check?base=${encodeURIComponent(source)}&target=${encodeURIComponent(target)}`);
+        const res = await request(`/branch/merge/check?repo_key=${repoKey}&base=${encodeURIComponent(source)}&target=${encodeURIComponent(target)}`);
         
         document.getElementById('mergeCheckResult').classList.add('d-none');
         
@@ -249,9 +249,9 @@ async function submitMerge() {
     btn.innerText = "合并中...";
     
     try {
-        const res = await request(`/repos/${repoKey}/merge`, {
+        const res = await request('/branch/merge', {
             method: 'POST',
-            body: { source, target, message }
+            body: { repo_key: repoKey, source, target, message }
         });
         
         // Handled by request logic? Wait, request.js throws on error?

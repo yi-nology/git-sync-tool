@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function loadRepoInfo() {
     try {
-        const repos = await request('/repos');
+        const repos = await request('/repo/list');
         const repo = repos.find(r => r.key === repoKey);
         if (repo) {
             document.getElementById('repo-path').innerText = `cd ${repo.path}`;
@@ -34,7 +34,7 @@ async function loadRepoInfo() {
 async function loadConflicts() {
     try {
         // Re-run the dry run check to get conflict list
-        const res = await request(`/repos/${repoKey}/merge/check?base=${encodeURIComponent(source)}&target=${encodeURIComponent(target)}`);
+        const res = await request(`/branch/merge/check?repo_key=${repoKey}&base=${encodeURIComponent(source)}&target=${encodeURIComponent(target)}`);
         
         const list = document.getElementById('conflict-list');
         list.innerHTML = '';

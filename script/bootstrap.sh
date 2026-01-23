@@ -1,21 +1,14 @@
-#! /usr/bin/env bash
+#!/bin/bash
+# script/bootstrap.sh - 服务启动脚本
 CURDIR=$(cd $(dirname $0); pwd)
-
-if [ "X$1" != "X" ]; then
-    RUNTIME_ROOT=$1
-else
-    RUNTIME_ROOT=${CURDIR}
-fi
+RUNTIME_ROOT=${1:-$CURDIR}
 
 export KITEX_RUNTIME_ROOT=$RUNTIME_ROOT
 export KITEX_LOG_DIR="$RUNTIME_ROOT/log"
 
-if [ ! -d "$KITEX_LOG_DIR/app" ]; then
-    mkdir -p "$KITEX_LOG_DIR/app"
-fi
+# 创建日志目录
+mkdir -p "$KITEX_LOG_DIR"
 
-if [ ! -d "$KITEX_LOG_DIR/rpc" ]; then
-    mkdir -p "$KITEX_LOG_DIR/rpc"
-fi
-
-exec "$CURDIR/bin/git_service"
+BinaryName=git-manage-service
+echo "Starting $BinaryName..."
+exec $CURDIR/bin/${BinaryName}

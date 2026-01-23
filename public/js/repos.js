@@ -17,7 +17,7 @@ async function loadRepos() {
         const tbody = document.getElementById('repo-list');
         if (!tbody) return; // Exit if not on repos page
 
-        const data = await request('/repos');
+        const data = await request('/repo/list');
         allRepos = data;
         tbody.innerHTML = '';
 
@@ -98,7 +98,7 @@ async function testCloneConnection() {
     resLabel.className = 'form-text text-muted';
     
     try {
-        const data = await request('/git/test-connection', {
+        const data = await request('/system/test-connection', {
             method: 'POST',
             body: { url }
         });
@@ -130,7 +130,7 @@ async function scanRepo(targetPathId = 'localPathInput', resultAreaId = 'scanRes
     }
 
     try {
-        const config = await request('/repos/scan', {
+        const config = await request('/repo/scan', {
             method: 'POST',
             body: { path }
         });
@@ -214,7 +214,7 @@ async function testRemoteConnection(rowId) {
     btn.disabled = true;
     
     try {
-        const data = await request('/git/test-connection', {
+        const data = await request('/system/test-connection', {
             method: 'POST',
             body: { url }
         });
@@ -448,7 +448,7 @@ async function submitRepo() {
             if (!data.name || !data.path) throw new Error("请填写完整信息");
 
             btn.innerText = '保存中...';
-            await request('/repos', {
+            await request('/repo/create', {
                 method: 'POST',
                 body: data
             });
@@ -480,7 +480,7 @@ async function submitRepo() {
             if (!data.remote_url || !data.local_path) throw new Error("请填写完整克隆信息");
 
             btn.innerText = '请求中...';
-            const result = await request('/repos/clone', {
+            const result = await request('/repo/clone', {
                 method: 'POST',
                 body: data
             });
@@ -506,7 +506,7 @@ function startClonePolling(taskId) {
     
     clonePollInterval = setInterval(async () => {
         try {
-            const task = await request(`/tasks/${taskId}`);
+            const task = await request(`/repo/task?task_id=${taskId}`);
             
             if (task.progress) {
                  logBox.innerHTML = task.progress.join('<br>');
@@ -668,9 +668,9 @@ async function updateRepo() {
     };
 
     try {
-        await request(`/repos/${repo.key}`, {
-            method: 'PUT',
-            body: data
+        await request('/repo/update', {
+            method: 'POST',
+            body: { ...data, key: repo.key }
         });
         
         showToast('仓库更新成功', 'success');
@@ -686,7 +686,7 @@ async function deleteRepo(key) {
         return;
     }
     try {
-        await request(`/repos/${key}`, { method: 'DELETE' });
+        await request('/repo/delete', { method: 'POST', body: { key } });
         showToast('仓库已删除', 'success');
         loadRepos();
     } catch (e) {

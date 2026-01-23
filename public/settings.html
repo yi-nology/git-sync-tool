@@ -59,8 +59,7 @@
 
         async function loadConfig() {
             try {
-                const res = await fetch(`${API_BASE}/config`);
-                const data = await res.json();
+                const data = await request('/system/config');
                 document.getElementById('debugModeSwitch').checked = data.debug_mode;
                 document.getElementById('global-author-name').value = data.author_name || '';
                 document.getElementById('global-author-email').value = data.author_email || '';
@@ -75,16 +74,14 @@
             const authorEmail = document.getElementById('global-author-email').value;
 
             try {
-                await fetch(`${API_BASE}/config`, {
+                await request('/system/config', {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
+                    body: {
                         debug_mode: debugMode,
                         author_name: authorName,
                         author_email: authorEmail
-                    })
+                    }
                 });
-                // Optional: show toast or alert
                 alert("配置保存成功");
             } catch (e) {
                 alert("保存失败: " + e.message);

@@ -1,0 +1,238 @@
+// idl/biz/branch.proto - 分支管理模块
+syntax = "proto3";
+
+package branch;
+
+option go_package = "github.com/yi-nology/git-manage-service/biz/model/biz/branch";
+
+import "api.proto";
+import "common.proto";
+
+// BranchService 分支管理服务
+service BranchService {
+  // List 获取分支列表
+  rpc List(ListBranchRequest) returns (ListBranchResponse) {
+    option (api.get) = "/api/v1/branch/list";
+  }
+  
+  // Create 创建分支
+  rpc Create(CreateBranchRequest) returns (common.EmptyResponse) {
+    option (api.post) = "/api/v1/branch/create";
+  }
+  
+  // Delete 删除分支
+  rpc Delete(DeleteBranchRequest) returns (common.EmptyResponse) {
+    option (api.post) = "/api/v1/branch/delete";
+  }
+  
+  // Update 更新分支（重命名/描述）
+  rpc Update(UpdateBranchRequest) returns (common.EmptyResponse) {
+    option (api.post) = "/api/v1/branch/update";
+  }
+  
+  // Checkout 切换分支
+  rpc Checkout(CheckoutBranchRequest) returns (common.EmptyResponse) {
+    option (api.post) = "/api/v1/branch/checkout";
+  }
+  
+  // Push 推送分支
+  rpc Push(PushBranchRequest) returns (common.EmptyResponse) {
+    option (api.post) = "/api/v1/branch/push";
+  }
+  
+  // Pull 拉取分支
+  rpc Pull(PullBranchRequest) returns (common.EmptyResponse) {
+    option (api.post) = "/api/v1/branch/pull";
+  }
+  
+  // Compare 比较分支
+  rpc Compare(CompareBranchRequest) returns (CompareBranchResponse) {
+    option (api.get) = "/api/v1/branch/compare";
+  }
+  
+  // Merge 合并分支
+  rpc Merge(MergeBranchRequest) returns (MergeBranchResponse) {
+    option (api.post) = "/api/v1/branch/merge";
+  }
+  
+  // MergeCheck 合并检查
+  rpc MergeCheck(MergeCheckRequest) returns (MergeCheckResponse) {
+    option (api.get) = "/api/v1/branch/merge/check";
+  }
+  
+  // GetDiff 获取差异内容
+  rpc GetDiff(GetDiffRequest) returns (GetDiffResponse) {
+    option (api.get) = "/api/v1/branch/diff";
+  }
+  
+  // GetPatch 获取补丁
+  rpc GetPatch(GetPatchRequest) returns (GetPatchResponse) {
+    option (api.get) = "/api/v1/branch/patch";
+  }
+}
+
+// Branch 分支实体
+message Branch {
+  string name = 1;
+  string commit_hash = 2;
+  string commit_message = 3;
+  string author = 4;
+  string date = 5;
+  bool is_current = 6;
+  string upstream = 7;
+  int32 ahead = 8;
+  int32 behind = 9;
+}
+
+// ListBranchRequest 列表请求
+message ListBranchRequest {
+  string repo_key = 1 [(api.query) = "repo_key"];
+  int32 page = 2 [(api.query) = "page"];
+  int32 page_size = 3 [(api.query) = "page_size"];
+  string keyword = 4 [(api.query) = "keyword"];
+}
+
+// ListBranchResponse 列表响应
+message ListBranchResponse {
+  common.BaseResponse base = 1;
+  repeated Branch branches = 2;
+  int64 total = 3;
+}
+
+// CreateBranchRequest 创建分支请求
+message CreateBranchRequest {
+  string repo_key = 1 [(api.body) = "repo_key"];
+  string name = 2 [(api.body) = "name"];
+  string base_ref = 3 [(api.body) = "base_ref"];
+}
+
+// DeleteBranchRequest 删除分支请求
+message DeleteBranchRequest {
+  string repo_key = 1 [(api.body) = "repo_key"];
+  string name = 2 [(api.body) = "name"];
+  bool force = 3 [(api.body) = "force"];
+}
+
+// UpdateBranchRequest 更新分支请求
+message UpdateBranchRequest {
+  string repo_key = 1 [(api.body) = "repo_key"];
+  string name = 2 [(api.body) = "name"];
+  string new_name = 3 [(api.body) = "new_name"];
+  string desc = 4 [(api.body) = "desc"];
+}
+
+// CheckoutBranchRequest 切换分支请求
+message CheckoutBranchRequest {
+  string repo_key = 1 [(api.body) = "repo_key"];
+  string name = 2 [(api.body) = "name"];
+}
+
+// PushBranchRequest 推送分支请求
+message PushBranchRequest {
+  string repo_key = 1 [(api.body) = "repo_key"];
+  string branch = 2 [(api.body) = "branch"];
+  string remote = 3 [(api.body) = "remote"];
+  bool force = 4 [(api.body) = "force"];
+}
+
+// PullBranchRequest 拉取分支请求
+message PullBranchRequest {
+  string repo_key = 1 [(api.body) = "repo_key"];
+  string branch = 2 [(api.body) = "branch"];
+  string remote = 3 [(api.body) = "remote"];
+}
+
+// CompareBranchRequest 比较分支请求
+message CompareBranchRequest {
+  string repo_key = 1 [(api.query) = "repo_key"];
+  string base = 2 [(api.query) = "base"];
+  string head = 3 [(api.query) = "head"];
+}
+
+// CompareBranchResponse 比较分支响应
+message CompareBranchResponse {
+  common.BaseResponse base_resp = 1;
+  int32 ahead = 2;
+  int32 behind = 3;
+  repeated CommitInfo commits = 4;
+  repeated FileDiff files = 5;
+}
+
+// CommitInfo 提交信息
+message CommitInfo {
+  string hash = 1;
+  string short_hash = 2;
+  string message = 3;
+  string author = 4;
+  string date = 5;
+}
+
+// FileDiff 文件差异
+message FileDiff {
+  string path = 1;
+  string status = 2;
+  int32 additions = 3;
+  int32 deletions = 4;
+}
+
+// MergeBranchRequest 合并分支请求
+message MergeBranchRequest {
+  string repo_key = 1 [(api.body) = "repo_key"];
+  string source_branch = 2 [(api.body) = "source_branch"];
+  string target_branch = 3 [(api.body) = "target_branch"];
+  string message = 4 [(api.body) = "message"];
+  bool no_ff = 5 [(api.body) = "no_ff"];
+  bool squash = 6 [(api.body) = "squash"];
+}
+
+// MergeBranchResponse 合并分支响应
+message MergeBranchResponse {
+  common.BaseResponse base = 1;
+  bool success = 2;
+  string merge_commit = 3;
+  repeated string conflicts = 4;
+}
+
+// MergeCheckRequest 合并检查请求
+message MergeCheckRequest {
+  string repo_key = 1 [(api.query) = "repo_key"];
+  string source_branch = 2 [(api.query) = "source_branch"];
+  string target_branch = 3 [(api.query) = "target_branch"];
+}
+
+// MergeCheckResponse 合并检查响应
+message MergeCheckResponse {
+  common.BaseResponse base = 1;
+  bool can_merge = 2;
+  bool has_conflicts = 3;
+  repeated string conflict_files = 4;
+  int32 commits_ahead = 5;
+  int32 files_changed = 6;
+}
+
+// GetDiffRequest 获取差异请求
+message GetDiffRequest {
+  string repo_key = 1 [(api.query) = "repo_key"];
+  string base = 2 [(api.query) = "base"];
+  string head = 3 [(api.query) = "head"];
+  string path = 4 [(api.query) = "path"];
+}
+
+// GetDiffResponse 获取差异响应
+message GetDiffResponse {
+  common.BaseResponse base = 1;
+  string diff = 2;
+}
+
+// GetPatchRequest 获取补丁请求
+message GetPatchRequest {
+  string repo_key = 1 [(api.query) = "repo_key"];
+  string base = 2 [(api.query) = "base"];
+  string head = 3 [(api.query) = "head"];
+}
+
+// GetPatchResponse 获取补丁响应
+message GetPatchResponse {
+  common.BaseResponse base = 1;
+  string patch = 2;
+}

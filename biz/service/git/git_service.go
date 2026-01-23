@@ -1159,3 +1159,45 @@ func (s *GitService) GetNextVersions(path string) (*NextVersionInfo, error) {
 		NextPatch: nextPatch,
 	}, nil
 }
+
+// AuthorInfo 作者信息
+type AuthorInfo struct {
+	Name  string `json:"name"`
+	Email string `json:"email"`
+}
+
+// GetAuthors 获取仓库的所有提交作者列表
+func (s *GitService) GetAuthors(path string) ([]AuthorInfo, error) {
+	r, err := s.openRepo(path)
+	if err != nil {
+		return nil, err
+	}
+
+	// 获取所有提交
+	iter, err := r.Log(&git.LogOptions{All: true})
+	if err != nil {
+		return nil, err
+	}
+
+	// 使用 map 去重
+	authorMap := make(map[string]AuthorInfo)
+
+	iter.ForEach(func(c *object.Commit) error {
+		key := c.Author.Name + "|" + c.Author.Email
+		if _, exists := authorMap[key]; !exists {
+			authorMap[key] = AuthorInfo{
+				Name:  c.Author.Name,
+				Email: c.Author.Email,
+			}
+		}
+		return nil
+	})
+
+	// 转换为切片
+	authors := make([]AuthorInfo, 0, len(authorMap))
+	for _, author := range authorMap {
+		authors = append(authors, author)
+	}
+
+	return authors, nil
+}
