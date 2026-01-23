@@ -298,7 +298,7 @@
 
         async function loadData() {
             try {
-                const repo = await request(`/repos/${repoKey}`);
+                const repo = await request(`/repo/detail?key=${repoKey}`);
                 if (!repo) {
                     showToast('仓库不存在', 'error');
                     return;
@@ -315,14 +315,14 @@
 
                 // Load Version
                 try {
-                    const version = await request(`/repos/${repoKey}/version`);
+                    const version = await request(`/version/current?repo_key=${repoKey}`);
                     document.getElementById('repoVersion').innerText = version;
                 } catch(e) {
                     document.getElementById('repoVersion').innerText = 'Unknown';
                     document.getElementById('repoVersion').classList.replace('bg-success', 'bg-secondary');
                 }
 
-                const config = await request('/repos/scan', {
+                const config = await request('/repo/scan', {
                     method: 'POST',
                     body: { path: repo.path }
                 });

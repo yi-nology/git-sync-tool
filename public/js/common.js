@@ -36,12 +36,14 @@ function copyCommand() {
 }
 
 async function loadSSHKeys(selectId = 'sshKeySelect') {
-    const res = await fetch(`${API_BASE}/system/ssh-keys`);
-    if (!res.ok) return;
-    const keys = await res.json();
-    const select = document.getElementById(selectId);
-    select.innerHTML = '<option value="">手动输入路径...</option>';
-    keys.forEach(key => {
-        select.innerHTML += `<option value="${key.path}">${key.name}</option>`;
-    });
+    try {
+        const keys = await request('/system/ssh-keys');
+        const select = document.getElementById(selectId);
+        select.innerHTML = '<option value="">手动输入路径...</option>';
+        (keys || []).forEach(key => {
+            select.innerHTML += `<option value="${key.path}">${key.name}</option>`;
+        });
+    } catch (e) {
+        console.error("Failed to load SSH keys", e);
+    }
 }

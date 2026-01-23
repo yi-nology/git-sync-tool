@@ -1,0 +1,62 @@
+// idl/biz/audit.proto - 审计日志模块
+syntax = "proto3";
+
+package audit;
+
+option go_package = "github.com/yi-nology/git-manage-service/biz/model/biz/audit";
+
+import "api.proto";
+import "common.proto";
+
+// AuditService 审计日志服务
+service AuditService {
+  // List 获取审计日志列表
+  rpc List(ListAuditLogRequest) returns (ListAuditLogResponse) {
+    option (api.get) = "/api/v1/audit/logs";
+  }
+  
+  // Get 获取审计日志详情
+  rpc Get(GetAuditLogRequest) returns (AuditLogResponse) {
+    option (api.get) = "/api/v1/audit/log";
+  }
+}
+
+// AuditLog 审计日志实体
+message AuditLog {
+  int64 id = 1;
+  string action = 2;
+  string target = 3;
+  string detail = 4;
+  string operator = 5;
+  string ip = 6;
+  string user_agent = 7;
+  string created_at = 8;
+}
+
+// ListAuditLogRequest 列表请求
+message ListAuditLogRequest {
+  string action = 1 [(api.query) = "action"];
+  string target = 2 [(api.query) = "target"];
+  string start_date = 3 [(api.query) = "start_date"];
+  string end_date = 4 [(api.query) = "end_date"];
+  int32 page = 5 [(api.query) = "page"];
+  int32 page_size = 6 [(api.query) = "page_size"];
+}
+
+// ListAuditLogResponse 列表响应
+message ListAuditLogResponse {
+  common.BaseResponse base = 1;
+  repeated AuditLog logs = 2;
+  common.PaginationMeta pagination = 3;
+}
+
+// GetAuditLogRequest 获取请求
+message GetAuditLogRequest {
+  int64 id = 1 [(api.query) = "id"];
+}
+
+// AuditLogResponse 详情响应
+message AuditLogResponse {
+  common.BaseResponse base = 1;
+  AuditLog log = 2;
+}

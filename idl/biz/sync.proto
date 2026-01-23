@@ -1,0 +1,185 @@
+// idl/biz/sync.proto - 同步任务模块
+syntax = "proto3";
+
+package sync;
+
+option go_package = "github.com/yi-nology/git-manage-service/biz/model/biz/sync";
+
+import "api.proto";
+import "common.proto";
+
+// SyncService 同步任务服务
+service SyncService {
+  // ListTasks 获取同步任务列表
+  rpc ListTasks(ListTasksRequest) returns (ListTasksResponse) {
+    option (api.get) = "/api/v1/sync/tasks";
+  }
+  
+  // GetTask 获取同步任务详情
+  rpc GetTask(GetTaskRequest) returns (TaskResponse) {
+    option (api.get) = "/api/v1/sync/task";
+  }
+  
+  // CreateTask 创建同步任务
+  rpc CreateTask(CreateTaskRequest) returns (TaskResponse) {
+    option (api.post) = "/api/v1/sync/task/create";
+  }
+  
+  // UpdateTask 更新同步任务
+  rpc UpdateTask(UpdateTaskRequest) returns (TaskResponse) {
+    option (api.post) = "/api/v1/sync/task/update";
+  }
+  
+  // DeleteTask 删除同步任务
+  rpc DeleteTask(DeleteTaskRequest) returns (common.EmptyResponse) {
+    option (api.post) = "/api/v1/sync/task/delete";
+  }
+  
+  // RunTask 手动触发同步任务
+  rpc RunTask(RunTaskRequest) returns (common.EmptyResponse) {
+    option (api.post) = "/api/v1/sync/run";
+  }
+  
+  // ExecuteSync 执行临时同步
+  rpc ExecuteSync(ExecuteSyncRequest) returns (ExecuteSyncResponse) {
+    option (api.post) = "/api/v1/sync/execute";
+  }
+  
+  // ListHistory 获取同步历史
+  rpc ListHistory(ListHistoryRequest) returns (ListHistoryResponse) {
+    option (api.get) = "/api/v1/sync/history";
+  }
+  
+  // DeleteHistory 删除同步历史
+  rpc DeleteHistory(DeleteHistoryRequest) returns (common.EmptyResponse) {
+    option (api.post) = "/api/v1/sync/history/delete";
+  }
+}
+
+// SyncTask 同步任务实体
+message SyncTask {
+  int64 id = 1;
+  string key = 2;
+  string source_repo_key = 3;
+  string source_repo_name = 4;
+  string source_remote = 5;
+  string source_branch = 6;
+  string target_repo_key = 7;
+  string target_repo_name = 8;
+  string target_remote = 9;
+  string target_branch = 10;
+  string push_options = 11;
+  string cron = 12;
+  bool enabled = 13;
+  string webhook_token = 14;
+  string created_at = 15;
+  string updated_at = 16;
+}
+
+// SyncRun 同步运行记录
+message SyncRun {
+  int64 id = 1;
+  string task_key = 2;
+  string status = 3;
+  string error = 4;
+  string started_at = 5;
+  string finished_at = 6;
+  string triggered_by = 7;
+}
+
+// ListTasksRequest 列表请求
+message ListTasksRequest {
+  string repo_key = 1 [(api.query) = "repo_key"];
+  int32 page = 2 [(api.query) = "page"];
+  int32 page_size = 3 [(api.query) = "page_size"];
+}
+
+// ListTasksResponse 列表响应
+message ListTasksResponse {
+  common.BaseResponse base = 1;
+  repeated SyncTask tasks = 2;
+  common.PaginationMeta pagination = 3;
+}
+
+// GetTaskRequest 获取任务请求
+message GetTaskRequest {
+  string key = 1 [(api.query) = "key"];
+}
+
+// TaskResponse 任务响应
+message TaskResponse {
+  common.BaseResponse base = 1;
+  SyncTask task = 2;
+}
+
+// CreateTaskRequest 创建任务请求
+message CreateTaskRequest {
+  string source_repo_key = 1 [(api.body) = "source_repo_key"];
+  string source_remote = 2 [(api.body) = "source_remote"];
+  string source_branch = 3 [(api.body) = "source_branch"];
+  string target_repo_key = 4 [(api.body) = "target_repo_key"];
+  string target_remote = 5 [(api.body) = "target_remote"];
+  string target_branch = 6 [(api.body) = "target_branch"];
+  string push_options = 7 [(api.body) = "push_options"];
+  string cron = 8 [(api.body) = "cron"];
+  bool enabled = 9 [(api.body) = "enabled"];
+}
+
+// UpdateTaskRequest 更新任务请求
+message UpdateTaskRequest {
+  string key = 1 [(api.body) = "key"];
+  string source_repo_key = 2 [(api.body) = "source_repo_key"];
+  string source_remote = 3 [(api.body) = "source_remote"];
+  string source_branch = 4 [(api.body) = "source_branch"];
+  string target_repo_key = 5 [(api.body) = "target_repo_key"];
+  string target_remote = 6 [(api.body) = "target_remote"];
+  string target_branch = 7 [(api.body) = "target_branch"];
+  string push_options = 8 [(api.body) = "push_options"];
+  string cron = 9 [(api.body) = "cron"];
+  bool enabled = 10 [(api.body) = "enabled"];
+}
+
+// DeleteTaskRequest 删除任务请求
+message DeleteTaskRequest {
+  string key = 1 [(api.body) = "key"];
+}
+
+// RunTaskRequest 运行任务请求
+message RunTaskRequest {
+  string task_key = 1 [(api.body) = "task_key"];
+}
+
+// ExecuteSyncRequest 执行同步请求
+message ExecuteSyncRequest {
+  string repo_key = 1 [(api.body) = "repo_key"];
+  string source_remote = 2 [(api.body) = "source_remote"];
+  string source_branch = 3 [(api.body) = "source_branch"];
+  string target_remote = 4 [(api.body) = "target_remote"];
+  string target_branch = 5 [(api.body) = "target_branch"];
+  string push_options = 6 [(api.body) = "push_options"];
+}
+
+// ExecuteSyncResponse 执行同步响应
+message ExecuteSyncResponse {
+  common.BaseResponse base = 1;
+  string task_key = 2;
+  string status = 3;
+}
+
+// ListHistoryRequest 历史列表请求
+message ListHistoryRequest {
+  string repo_key = 1 [(api.query) = "repo_key"];
+  string task_key = 2 [(api.query) = "task_key"];
+  int32 limit = 3 [(api.query) = "limit"];
+}
+
+// ListHistoryResponse 历史列表响应
+message ListHistoryResponse {
+  common.BaseResponse base = 1;
+  repeated SyncRun runs = 2;
+}
+
+// DeleteHistoryRequest 删除历史请求
+message DeleteHistoryRequest {
+  int64 id = 1 [(api.body) = "id"];
+}

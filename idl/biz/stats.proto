@@ -1,0 +1,141 @@
+// idl/biz/stats.proto - 统计分析模块
+syntax = "proto3";
+
+package stats;
+
+option go_package = "github.com/yi-nology/git-manage-service/biz/model/biz/stats";
+
+import "api.proto";
+import "common.proto";
+
+// StatsService 统计分析服务
+service StatsService {
+  // ListBranches 获取分支统计列表
+  rpc ListBranches(ListBranchesRequest) returns (ListBranchesResponse) {
+    option (api.get) = "/api/v1/stats/branches";
+  }
+  
+  // ListCommits 获取提交统计列表
+  rpc ListCommits(ListCommitsRequest) returns (ListCommitsResponse) {
+    option (api.get) = "/api/v1/stats/commits";
+  }
+  
+  // GetStats 获取统计分析
+  rpc GetStats(GetStatsRequest) returns (GetStatsResponse) {
+    option (api.get) = "/api/v1/stats/analyze";
+  }
+  
+  // ExportCSV 导出 CSV
+  rpc ExportCSV(ExportCSVRequest) returns (ExportCSVResponse) {
+    option (api.get) = "/api/v1/stats/export/csv";
+  }
+}
+
+// BranchStats 分支统计
+message BranchStats {
+  string repo_key = 1;
+  string repo_name = 2;
+  string branch = 3;
+  int64 total_commits = 4;
+  string last_commit_date = 5;
+  string last_author = 6;
+}
+
+// CommitStats 提交统计
+message CommitStats {
+  int64 id = 1;
+  string repo_key = 2;
+  string branch = 3;
+  string commit_hash = 4;
+  string author = 5;
+  string commit_date = 6;
+  int32 additions = 7;
+  int32 deletions = 8;
+  int32 files_changed = 9;
+}
+
+// StatsAnalysis 统计分析结果
+message StatsAnalysis {
+  int64 total_repos = 1;
+  int64 total_branches = 2;
+  int64 total_commits = 3;
+  repeated AuthorStats author_stats = 4;
+  repeated DailyStats daily_stats = 5;
+}
+
+// AuthorStats 作者统计
+message AuthorStats {
+  string author = 1;
+  int64 commits = 2;
+  int64 additions = 3;
+  int64 deletions = 4;
+}
+
+// DailyStats 每日统计
+message DailyStats {
+  string date = 1;
+  int64 commits = 2;
+  int64 additions = 3;
+  int64 deletions = 4;
+}
+
+// ListBranchesRequest 分支列表请求
+message ListBranchesRequest {
+  string repo_key = 1 [(api.query) = "repo_key"];
+  int32 page = 2 [(api.query) = "page"];
+  int32 page_size = 3 [(api.query) = "page_size"];
+}
+
+// ListBranchesResponse 分支列表响应
+message ListBranchesResponse {
+  common.BaseResponse base = 1;
+  repeated BranchStats branches = 2;
+  common.PaginationMeta pagination = 3;
+}
+
+// ListCommitsRequest 提交列表请求
+message ListCommitsRequest {
+  string repo_key = 1 [(api.query) = "repo_key"];
+  string branch = 2 [(api.query) = "branch"];
+  string author = 3 [(api.query) = "author"];
+  string start_date = 4 [(api.query) = "start_date"];
+  string end_date = 5 [(api.query) = "end_date"];
+  int32 page = 6 [(api.query) = "page"];
+  int32 page_size = 7 [(api.query) = "page_size"];
+}
+
+// ListCommitsResponse 提交列表响应
+message ListCommitsResponse {
+  common.BaseResponse base = 1;
+  repeated CommitStats commits = 2;
+  common.PaginationMeta pagination = 3;
+}
+
+// GetStatsRequest 统计分析请求
+message GetStatsRequest {
+  string repo_key = 1 [(api.query) = "repo_key"];
+  string branch = 2 [(api.query) = "branch"];
+  string start_date = 3 [(api.query) = "start_date"];
+  string end_date = 4 [(api.query) = "end_date"];
+}
+
+// GetStatsResponse 统计分析响应
+message GetStatsResponse {
+  common.BaseResponse base = 1;
+  StatsAnalysis analysis = 2;
+}
+
+// ExportCSVRequest 导出 CSV 请求
+message ExportCSVRequest {
+  string repo_key = 1 [(api.query) = "repo_key"];
+  string branch = 2 [(api.query) = "branch"];
+  string start_date = 3 [(api.query) = "start_date"];
+  string end_date = 4 [(api.query) = "end_date"];
+}
+
+// ExportCSVResponse 导出 CSV 响应
+message ExportCSVResponse {
+  common.BaseResponse base = 1;
+  string csv_content = 2;
+  string filename = 3;
+}

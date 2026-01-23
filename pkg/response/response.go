@@ -6,52 +6,81 @@ import (
 	"github.com/yi-nology/git-manage-service/pkg/errno"
 )
 
-// Response standard structure
+// Response 标准响应结构（符合 AGENT.md 规范）
 type Response struct {
-	Code    int32       `json:"code"`
-	Message string      `json:"message"`
-	Data    interface{} `json:"data,omitempty"`
+	Code  int32       `json:"code"`            // 业务状态码，0 表示成功
+	Msg   string      `json:"msg"`             // 操作提示消息
+	Error string      `json:"error,omitempty"` // 详细错误信息（调试用）
+	Data  interface{} `json:"data,omitempty"`  // 业务数据
 }
 
-// Success response
+// Success 成功响应
 func Success(c *app.RequestContext, data interface{}) {
 	c.JSON(consts.StatusOK, Response{
-		Code:    errno.Success.ErrCode,
-		Message: errno.Success.ErrMsg,
-		Data:    data,
+		Code: 0,
+		Msg:  "success",
+		Data: data,
 	})
 }
 
-// Accepted response (HTTP 202) - Used for async processing
+// Accepted 异步处理响应 (HTTP 202)
 func Accepted(c *app.RequestContext, msg string, data interface{}) {
 	c.JSON(consts.StatusAccepted, Response{
-		Code:    errno.Success.ErrCode,
-		Message: msg,
-		Data:    data,
+		Code: 0,
+		Msg:  msg,
+		Data: data,
 	})
 }
 
-// Error response
+// Error 错误响应
 func Error(c *app.RequestContext, err error) {
 	e := errno.ConvertErr(err)
 	c.JSON(consts.StatusOK, Response{
-		Code:    e.ErrCode,
-		Message: e.ErrMsg,
+		Code:  e.ErrCode,
+		Msg:   e.ErrMsg,
+		Error: err.Error(),
 	})
 }
 
-// Deprecated: Use Error instead. Kept for backward compatibility during refactor.
+// ErrorWithCode 带自定义错误码的错误响应
+func ErrorWithCode(c *app.RequestContext, code int32, msg string, err error) {
+	errStr := ""
+	if err != nil {
+		errStr = err.Error()
+	}
+	c.JSON(consts.StatusOK, Response{
+		Code:  code,
+		Msg:   msg,
+		Error: errStr,
+	})
+}
+
+// BadRequest 参数错误响应
 func BadRequest(c *app.RequestContext, msg string) {
 	Error(c, errno.ParamErr.WithMessage(msg))
 }
 
-// Deprecated: Use Error instead. Kept for backward compatibility during refactor.
+// NotFound 资源不存在响应
+func NotFound(c *app.RequestContext, msg string) {
+	Error(c, errno.NotFound.WithMessage(msg))
+}
+
+// InternalServerError 服务器内部错误响应
 func InternalServerError(c *app.RequestContext, msg string) {
 	Error(c, errno.ServiceErr.WithMessage(msg))
 }
 
-// Deprecated: Use Error instead. Kept for backward compatibility during refactor.
-func NotFound(c *app.RequestContext, msg string) {
-	// 404 is usually a client error, could map to ParamErr or a new NotFoundErr
-	Error(c, errno.ParamErr.WithMessage(msg))
+// Unauthorized 未授权响应
+func Unauthorized(c *app.RequestContext, msg string) {
+	Error(c, errno.Unauthorized.WithMessage(msg))
+}
+
+// Forbidden 禁止访问响应
+func Forbidden(c *app.RequestContext, msg string) {
+	Error(c, errno.Forbidden.WithMessage(msg))
+}
+
+// Conflict 冲突响应
+func Conflict(c *app.RequestContext, msg string) {
+	Error(c, errno.Conflict.WithMessage(msg))
 }

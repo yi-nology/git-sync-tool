@@ -65,7 +65,7 @@
 
         async function loadVersions() {
             try {
-                const versions = await request(`/repos/${repoKey}/versions`);
+                const versions = await request(`/version/list?repo_key=${repoKey}`);
                 const container = document.getElementById('versionList');
                 
                 if (!versions || versions.length === 0) {

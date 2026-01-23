@@ -1,0 +1,198 @@
+// idl/biz/repo.proto - 仓库管理模块
+syntax = "proto3";
+
+package repo;
+
+option go_package = "github.com/yi-nology/git-manage-service/biz/model/biz/repo";
+
+import "api.proto";
+import "common.proto";
+
+// RepoService 仓库管理服务
+service RepoService {
+  // List 获取仓库列表
+  rpc List(ListRepoRequest) returns (ListRepoResponse) {
+    option (api.get) = "/api/v1/repo/list";
+  }
+  
+  // Get 获取仓库详情
+  rpc Get(GetRepoRequest) returns (RepoResponse) {
+    option (api.get) = "/api/v1/repo/detail";
+  }
+  
+  // Create 注册仓库
+  rpc Create(CreateRepoRequest) returns (RepoResponse) {
+    option (api.post) = "/api/v1/repo/create";
+  }
+  
+  // Update 更新仓库
+  rpc Update(UpdateRepoRequest) returns (RepoResponse) {
+    option (api.post) = "/api/v1/repo/update";
+  }
+  
+  // Delete 删除仓库
+  rpc Delete(DeleteRepoRequest) returns (common.EmptyResponse) {
+    option (api.post) = "/api/v1/repo/delete";
+  }
+  
+  // Scan 扫描本地仓库
+  rpc Scan(ScanRepoRequest) returns (ScanRepoResponse) {
+    option (api.post) = "/api/v1/repo/scan";
+  }
+  
+  // Clone 克隆远程仓库
+  rpc Clone(CloneRepoRequest) returns (CloneRepoResponse) {
+    option (api.post) = "/api/v1/repo/clone";
+  }
+  
+  // Fetch 拉取远程更新
+  rpc Fetch(FetchRepoRequest) returns (common.EmptyResponse) {
+    option (api.post) = "/api/v1/repo/fetch";
+  }
+  
+  // GetCloneTask 获取克隆任务状态
+  rpc GetCloneTask(GetCloneTaskRequest) returns (CloneTaskResponse) {
+    option (api.get) = "/api/v1/repo/task";
+  }
+}
+
+// Repo 仓库实体
+message Repo {
+  int64 id = 1;
+  string key = 2;
+  string name = 3;
+  string path = 4;
+  string remote_url = 5;
+  string status = 6;
+  string auth_type = 7;
+  string config_source = 8;
+  repeated Remote remotes = 9;
+  string created_at = 10;
+  string updated_at = 11;
+}
+
+// Remote 远程仓库配置
+message Remote {
+  string name = 1;
+  string fetch_url = 2;
+  string push_url = 3;
+  bool is_mirror = 4;
+}
+
+// AuthInfo 认证信息
+message AuthInfo {
+  string auth_type = 1;
+  string auth_key = 2;
+  string auth_secret = 3;
+}
+
+// ListRepoRequest 列表请求
+message ListRepoRequest {
+  int32 page = 1 [(api.query) = "page"];
+  int32 page_size = 2 [(api.query) = "page_size"];
+}
+
+// ListRepoResponse 列表响应
+message ListRepoResponse {
+  common.BaseResponse base = 1;
+  repeated Repo repos = 2;
+  common.PaginationMeta pagination = 3;
+}
+
+// GetRepoRequest 获取仓库请求
+message GetRepoRequest {
+  string key = 1 [(api.query) = "key"];
+}
+
+// RepoResponse 仓库响应
+message RepoResponse {
+  common.BaseResponse base = 1;
+  Repo repo = 2;
+}
+
+// CreateRepoRequest 创建仓库请求
+message CreateRepoRequest {
+  string name = 1 [(api.body) = "name"];
+  string path = 2 [(api.body) = "path"];
+  string remote_url = 3 [(api.body) = "remote_url"];
+  string auth_type = 4 [(api.body) = "auth_type"];
+  string auth_key = 5 [(api.body) = "auth_key"];
+  string auth_secret = 6 [(api.body) = "auth_secret"];
+  string config_source = 7 [(api.body) = "config_source"];
+  repeated Remote remotes = 8 [(api.body) = "remotes"];
+  map<string, AuthInfo> remote_auths = 9 [(api.body) = "remote_auths"];
+}
+
+// UpdateRepoRequest 更新仓库请求
+message UpdateRepoRequest {
+  string key = 1 [(api.body) = "key"];
+  string name = 2 [(api.body) = "name"];
+  string path = 3 [(api.body) = "path"];
+  string remote_url = 4 [(api.body) = "remote_url"];
+  string auth_type = 5 [(api.body) = "auth_type"];
+  string auth_key = 6 [(api.body) = "auth_key"];
+  string auth_secret = 7 [(api.body) = "auth_secret"];
+  string config_source = 8 [(api.body) = "config_source"];
+  repeated Remote remotes = 9 [(api.body) = "remotes"];
+  map<string, AuthInfo> remote_auths = 10 [(api.body) = "remote_auths"];
+}
+
+// DeleteRepoRequest 删除仓库请求
+message DeleteRepoRequest {
+  string key = 1 [(api.body) = "key"];
+}
+
+// ScanRepoRequest 扫描仓库请求
+message ScanRepoRequest {
+  string path = 1 [(api.body) = "path"];
+}
+
+// ScanRepoResponse 扫描仓库响应
+message ScanRepoResponse {
+  common.BaseResponse base = 1;
+  string name = 2;
+  string path = 3;
+  string head_branch = 4;
+  repeated Remote remotes = 5;
+  repeated string branches = 6;
+}
+
+// CloneRepoRequest 克隆仓库请求
+message CloneRepoRequest {
+  string remote_url = 1 [(api.body) = "remote_url"];
+  string local_path = 2 [(api.body) = "local_path"];
+  string auth_type = 3 [(api.body) = "auth_type"];
+  string auth_key = 4 [(api.body) = "auth_key"];
+  string auth_secret = 5 [(api.body) = "auth_secret"];
+  string config_source = 6 [(api.body) = "config_source"];
+}
+
+// CloneRepoResponse 克隆仓库响应
+message CloneRepoResponse {
+  common.BaseResponse base = 1;
+  string task_id = 2;
+}
+
+// FetchRepoRequest 拉取远程请求
+message FetchRepoRequest {
+  string key = 1 [(api.body) = "key"];
+}
+
+// GetCloneTaskRequest 获取克隆任务请求
+message GetCloneTaskRequest {
+  string task_id = 1 [(api.query) = "task_id"];
+}
+
+// CloneTask 克隆任务
+message CloneTask {
+  string id = 1;
+  string status = 2;
+  string error = 3;
+  repeated string logs = 4;
+}
+
+// CloneTaskResponse 克隆任务响应
+message CloneTaskResponse {
+  common.BaseResponse base = 1;
+  CloneTask task = 2;
+}

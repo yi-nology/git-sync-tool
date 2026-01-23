@@ -1,0 +1,178 @@
+// idl/biz/system.proto - 系统配置模块
+syntax = "proto3";
+
+package system;
+
+option go_package = "github.com/yi-nology/git-manage-service/biz/model/biz/system";
+
+import "api.proto";
+import "common.proto";
+
+// SystemService 系统配置服务
+service SystemService {
+  // GetConfig 获取系统配置
+  rpc GetConfig(common.EmptyRequest) returns (ConfigResponse) {
+    option (api.get) = "/api/v1/system/config";
+  }
+  
+  // UpdateConfig 更新系统配置
+  rpc UpdateConfig(UpdateConfigRequest) returns (common.EmptyResponse) {
+    option (api.post) = "/api/v1/system/config";
+  }
+  
+  // ListDirs 列出目录
+  rpc ListDirs(ListDirsRequest) returns (ListDirsResponse) {
+    option (api.get) = "/api/v1/system/dirs";
+  }
+  
+  // ListSSHKeys 列出 SSH 密钥
+  rpc ListSSHKeys(common.EmptyRequest) returns (ListSSHKeysResponse) {
+    option (api.get) = "/api/v1/system/ssh-keys";
+  }
+  
+  // TestConnection 测试远程连接
+  rpc TestConnection(TestConnectionRequest) returns (TestConnectionResponse) {
+    option (api.post) = "/api/v1/system/test-connection";
+  }
+  
+  // GetRepoStatus 获取仓库工作区状态
+  rpc GetRepoStatus(GetRepoStatusRequest) returns (RepoStatusResponse) {
+    option (api.get) = "/api/v1/system/repo/status";
+  }
+  
+  // GetRepoGitConfig 获取仓库 Git 配置
+  rpc GetRepoGitConfig(GetRepoGitConfigRequest) returns (RepoGitConfigResponse) {
+    option (api.get) = "/api/v1/system/repo/git-config";
+  }
+  
+  // SubmitChanges 提交工作区变更
+  rpc SubmitChanges(SubmitChangesRequest) returns (common.EmptyResponse) {
+    option (api.post) = "/api/v1/system/repo/submit";
+  }
+}
+
+// SystemConfig 系统配置
+message SystemConfig {
+  string default_author = 1;
+  string default_email = 2;
+  string default_branch = 3;
+  bool auto_fetch = 4;
+  int32 fetch_interval = 5;
+}
+
+// DirEntry 目录条目
+message DirEntry {
+  string name = 1;
+  string path = 2;
+  bool is_dir = 3;
+  bool is_git_repo = 4;
+}
+
+// SSHKey SSH 密钥
+message SSHKey {
+  string name = 1;
+  string path = 2;
+  string type = 3;
+  string fingerprint = 4;
+}
+
+// RepoStatus 仓库状态
+message RepoStatus {
+  string current_branch = 1;
+  bool is_clean = 2;
+  repeated FileStatus staged = 3;
+  repeated FileStatus unstaged = 4;
+  repeated string untracked = 5;
+}
+
+// FileStatus 文件状态
+message FileStatus {
+  string path = 1;
+  string status = 2;
+}
+
+// RepoGitConfig 仓库 Git 配置
+message RepoGitConfig {
+  string user_name = 1;
+  string user_email = 2;
+  map<string, string> remotes = 3;
+}
+
+// ConfigResponse 配置响应
+message ConfigResponse {
+  common.BaseResponse base = 1;
+  SystemConfig config = 2;
+}
+
+// UpdateConfigRequest 更新配置请求
+message UpdateConfigRequest {
+  string default_author = 1 [(api.body) = "default_author"];
+  string default_email = 2 [(api.body) = "default_email"];
+  string default_branch = 3 [(api.body) = "default_branch"];
+  bool auto_fetch = 4 [(api.body) = "auto_fetch"];
+  int32 fetch_interval = 5 [(api.body) = "fetch_interval"];
+}
+
+// ListDirsRequest 列出目录请求
+message ListDirsRequest {
+  string path = 1 [(api.query) = "path"];
+}
+
+// ListDirsResponse 列出目录响应
+message ListDirsResponse {
+  common.BaseResponse base = 1;
+  repeated DirEntry entries = 2;
+  string current_path = 3;
+}
+
+// ListSSHKeysResponse 列出 SSH 密钥响应
+message ListSSHKeysResponse {
+  common.BaseResponse base = 1;
+  repeated SSHKey keys = 2;
+}
+
+// TestConnectionRequest 测试连接请求
+message TestConnectionRequest {
+  string url = 1 [(api.body) = "url"];
+  string auth_type = 2 [(api.body) = "auth_type"];
+  string auth_key = 3 [(api.body) = "auth_key"];
+  string auth_secret = 4 [(api.body) = "auth_secret"];
+}
+
+// TestConnectionResponse 测试连接响应
+message TestConnectionResponse {
+  common.BaseResponse base = 1;
+  bool success = 2;
+  string message = 3;
+}
+
+// GetRepoStatusRequest 获取仓库状态请求
+message GetRepoStatusRequest {
+  string repo_key = 1 [(api.query) = "repo_key"];
+}
+
+// RepoStatusResponse 仓库状态响应
+message RepoStatusResponse {
+  common.BaseResponse base = 1;
+  RepoStatus status = 2;
+}
+
+// GetRepoGitConfigRequest 获取仓库 Git 配置请求
+message GetRepoGitConfigRequest {
+  string repo_key = 1 [(api.query) = "repo_key"];
+}
+
+// RepoGitConfigResponse 仓库 Git 配置响应
+message RepoGitConfigResponse {
+  common.BaseResponse base = 1;
+  RepoGitConfig config = 2;
+}
+
+// SubmitChangesRequest 提交变更请求
+message SubmitChangesRequest {
+  string repo_key = 1 [(api.body) = "repo_key"];
+  string message = 2 [(api.body) = "message"];
+  repeated string files = 3 [(api.body) = "files"];
+  bool push = 4 [(api.body) = "push"];
+  string remote = 5 [(api.body) = "remote"];
+}

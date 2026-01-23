@@ -1,0 +1,66 @@
+// idl/biz/tag.proto - 标签管理模块
+syntax = "proto3";
+
+package tag;
+
+option go_package = "github.com/yi-nology/git-manage-service/biz/model/biz/tag";
+
+import "api.proto";
+import "common.proto";
+
+// TagService 标签管理服务
+service TagService {
+  // List 获取标签列表
+  rpc List(ListTagRequest) returns (ListTagResponse) {
+    option (api.get) = "/api/v1/tag/list";
+  }
+  
+  // Create 创建标签
+  rpc Create(CreateTagRequest) returns (common.EmptyResponse) {
+    option (api.post) = "/api/v1/tag/create";
+  }
+  
+  // Delete 删除标签
+  rpc Delete(DeleteTagRequest) returns (common.EmptyResponse) {
+    option (api.post) = "/api/v1/tag/delete";
+  }
+}
+
+// Tag 标签实体
+message Tag {
+  string name = 1;
+  string commit_hash = 2;
+  string message = 3;
+  string tagger = 4;
+  string date = 5;
+  bool is_annotated = 6;
+}
+
+// ListTagRequest 列表请求
+message ListTagRequest {
+  string repo_key = 1 [(api.query) = "repo_key"];
+  int32 page = 2 [(api.query) = "page"];
+  int32 page_size = 3 [(api.query) = "page_size"];
+}
+
+// ListTagResponse 列表响应
+message ListTagResponse {
+  common.BaseResponse base = 1;
+  repeated Tag tags = 2;
+  int64 total = 3;
+}
+
+// CreateTagRequest 创建标签请求
+message CreateTagRequest {
+  string repo_key = 1 [(api.body) = "repo_key"];
+  string name = 2 [(api.body) = "name"];
+  string ref = 3 [(api.body) = "ref"];
+  string message = 4 [(api.body) = "message"];
+  bool annotated = 5 [(api.body) = "annotated"];
+}
+
+// DeleteTagRequest 删除标签请求
+message DeleteTagRequest {
+  string repo_key = 1 [(api.body) = "repo_key"];
+  string name = 2 [(api.body) = "name"];
+}

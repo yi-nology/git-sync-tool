@@ -1,0 +1,80 @@
+// idl/biz/version.proto - 版本管理模块
+syntax = "proto3";
+
+package version;
+
+option go_package = "github.com/yi-nology/git-manage-service/biz/model/biz/version";
+
+import "api.proto";
+import "common.proto";
+
+// VersionService 版本管理服务
+service VersionService {
+  // GetVersion 获取当前版本
+  rpc GetVersion(GetVersionRequest) returns (VersionResponse) {
+    option (api.get) = "/api/v1/version/current";
+  }
+  
+  // ListVersions 获取版本历史
+  rpc ListVersions(ListVersionsRequest) returns (ListVersionsResponse) {
+    option (api.get) = "/api/v1/version/list";
+  }
+  
+  // GetNextVersions 获取下一个版本建议
+  rpc GetNextVersions(GetNextVersionsRequest) returns (NextVersionsResponse) {
+    option (api.get) = "/api/v1/version/next";
+  }
+}
+
+// VersionInfo 版本信息
+message VersionInfo {
+  string tag = 1;
+  string commit_hash = 2;
+  string message = 3;
+  string tagger = 4;
+  string date = 5;
+}
+
+// NextVersionInfo 下一版本建议
+message NextVersionInfo {
+  string current = 1;
+  string next_major = 2;
+  string next_minor = 3;
+  string next_patch = 4;
+}
+
+// GetVersionRequest 获取版本请求
+message GetVersionRequest {
+  string repo_key = 1 [(api.query) = "repo_key"];
+}
+
+// VersionResponse 版本响应
+message VersionResponse {
+  common.BaseResponse base = 1;
+  string version = 2;
+}
+
+// ListVersionsRequest 版本列表请求
+message ListVersionsRequest {
+  string repo_key = 1 [(api.query) = "repo_key"];
+  int32 page = 2 [(api.query) = "page"];
+  int32 page_size = 3 [(api.query) = "page_size"];
+}
+
+// ListVersionsResponse 版本列表响应
+message ListVersionsResponse {
+  common.BaseResponse base = 1;
+  repeated VersionInfo versions = 2;
+  int64 total = 3;
+}
+
+// GetNextVersionsRequest 获取下一版本请求
+message GetNextVersionsRequest {
+  string repo_key = 1 [(api.query) = "repo_key"];
+}
+
+// NextVersionsResponse 下一版本响应
+message NextVersionsResponse {
+  common.BaseResponse base = 1;
+  NextVersionInfo info = 2;
+}

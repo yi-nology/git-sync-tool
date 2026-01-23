@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/yi-nology/git-manage-service/biz/dal/db"
-	gitSvc "github.com/yi-nology/git-manage-service/biz/service/git"
 	"github.com/yi-nology/git-manage-service/biz/kitex_gen/git"
+	gitSvc "github.com/yi-nology/git-manage-service/biz/service/git"
 )
 
 // GitServiceImpl implements the last service interface defined in the IDL.

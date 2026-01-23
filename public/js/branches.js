@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
 async function loadRepoInfo() {
     try {
         // Use GET /repos/:key
-        const repo = await request(`/repos/${repoKey}`);
+        const repo = await request(`/repo/detail?key=${repoKey}`);
         if (repo) {
             currentRepo = repo;
             // document.getElementById('repo-title').innerText = `${repo.name} - 分支管理`;
@@ -26,7 +26,7 @@ async function loadRepoInfo() {
             
             // Load Remotes for filtering
             try {
-                const config = await request('/repos/scan', {
+                const config = await request('/repo/scan', {
                     method: 'POST',
                     body: { path: repo.path }
                 });
@@ -50,7 +50,7 @@ async function loadBranches() {
     const keyword = document.getElementById('searchInput').value;
     
     try {
-        const res = await request(`/repos/${repoKey}/branches?keyword=${encodeURIComponent(keyword)}&page_size=1000`);
+        const res = await request(`/branch/list?repo_key=${repoKey}&keyword=${encodeURIComponent(keyword)}&page_size=1000`);
         allBranches = res.list || [];
         console.log("Branches loaded:", allBranches.length);
 
@@ -69,7 +69,7 @@ async function fetchAll() {
     }
 
     try {
-        await request(`/repos/${repoKey}/fetch`, { method: 'POST' });
+        await request('/repo/fetch', { method: 'POST', body: { repo_key: repoKey } });
         showToast("远端已刷新", "success");
         loadBranches();
     } catch (e) {
@@ -238,9 +238,9 @@ async function submitCreate() {
     btn.disabled = true;
 
     try {
-        await request(`/repos/${repoKey}/branches`, {
+        await request('/branch/create', {
             method: 'POST',
-            body: { name, base_ref: base }
+            body: { repo_key: repoKey, name, base_ref: base }
         });
         showToast("分支创建成功", "success");
         bootstrap.Modal.getInstance(document.getElementById('createModal')).hide();
@@ -276,9 +276,9 @@ async function submitRename() {
     btn.disabled = true;
 
     try {
-        await request(`/repos/${repoKey}/branches/${encodeURIComponent(oldName)}`, {
-            method: 'PUT',
-            body: { new_name: newName, desc: desc }
+        await request('/branch/update', {
+            method: 'POST',
+            body: { repo_key: repoKey, name: oldName, new_name: newName, desc: desc }
         });
         showToast("更新成功", "success");
         bootstrap.Modal.getInstance(document.getElementById('renameModal')).hide();
@@ -294,8 +294,9 @@ async function deleteBranch(name) {
     if (!confirm(`确定要删除分支 "${name}" 吗？\n注意：未合并的改动将会丢失！`)) return;
 
     try {
-        await request(`/repos/${repoKey}/branches/${encodeURIComponent(name)}?force=true`, {
-            method: 'DELETE'
+        await request('/branch/delete', {
+            method: 'POST',
+            body: { repo_key: repoKey, name, force: true }
         });
         showToast("删除成功", "success");
         loadBranches();
@@ -308,8 +309,9 @@ async function checkoutBranch(name) {
     if (!confirm(`确定要切换到分支 "${name}" 吗？\n请确保当前工作区已提交，否则可能会失败。`)) return;
 
     try {
-        await request(`/repos/${repoKey}/branches/${encodeURIComponent(name)}/checkout`, {
-            method: 'POST'
+        await request('/branch/checkout', {
+            method: 'POST',
+            body: { repo_key: repoKey, name }
         });
         showToast(`已切换到 ${name}`, "success");
         loadBranches();
@@ -331,7 +333,7 @@ async function syncBranch(branch, isCurrent = true) {
     if (!confirm(msg)) return;
     
     try {
-        await request(`/repos/${repoKey}/branches/${encodeURIComponent(branch)}/pull`, { method: 'POST' });
+        await request('/branch/pull', { method: 'POST', body: { repo_key: repoKey, name: branch } });
         showToast("同步成功", "success");
         loadBranches();
     } catch (e) {
@@ -353,7 +355,7 @@ async function openPushModal(branch) {
         // Let's use the repo info we loaded in currentRepo global or fetch again.
         
         // Actually currentRepo only has basic info. Let's fetch detail.
-        const config = await request('/repos/scan', {
+        const config = await request('/repo/scan', {
             method: 'POST',
             body: { path: currentRepo.path }
         });
@@ -396,9 +398,9 @@ async function submitPush() {
     btn.innerText = "推送中...";
     
     try {
-        await request(`/repos/${repoKey}/branches/${encodeURIComponent(branch)}/push`, {
+        await request('/branch/push', {
             method: 'POST',
-            body: { remotes }
+            body: { repo_key: repoKey, name: branch, remotes }
         });
         showToast("推送成功", "success");
         bootstrap.Modal.getInstance(document.getElementById('pushModal')).hide();
@@ -433,7 +435,7 @@ async function openTagModal(ref) {
     
     // Fetch suggested versions
     try {
-        const info = await request(`/repos/${repoKey}/version/next`);
+        const info = await request(`/version/next?repo_key=${repoKey}`);
         if (info) {
             nextVersions = info;
             document.getElementById('badge-patch').innerText = info.next_patch;
@@ -450,7 +452,7 @@ async function openTagModal(ref) {
 
     // Load remotes in background
     try {
-        const config = await request('/repos/scan', {
+        const config = await request('/repo/scan', {
             method: 'POST',
             body: { path: currentRepo.path }
         });
@@ -521,6 +523,7 @@ async function submitCreateTag() {
     
     try {
         const body = {
+            repo_key: repoKey,
             tag_name: tagName,
             ref: ref,
             message: message
@@ -529,7 +532,7 @@ async function submitCreateTag() {
             body.push_remote = remote;
         }
         
-        await request(`/repos/${repoKey}/tags`, {
+        await request('/tag/create', {
             method: 'POST',
             body: body
         });

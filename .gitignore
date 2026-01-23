@@ -1,20 +1,37 @@
-# Binaries
-git-sync-tool
-git-manage-service
-
-# Database
-git_sync.db
-
-# OS
+*.o
+*.a
+*.so
+_obj
+_test
+*.[568vq]
+[568vq].out
+*.cgo1.go
+*.cgo2.c
+_cgo_defun.c
+_cgo_gotypes.go
+_cgo_export.*
+_testmain.go
+*.exe
+*.exe~
+*.test
+*.prof
+*.rar
+*.zip
+*.gz
+*.psd
+*.bmd
+*.cfg
+*.pptx
+*.log
+*nohup.out
+*settings.pyc
+*.sublime-project
+*.sublime-workspace
+!.gitkeep
 .DS_Store
-
-# Test Data (Git Repos)
-test/origin/
-test/ky/
-test/local/
-output/
-.trae/
-
-# Environment
-.env
-.idea
+/.idea
+/.vscode
+/output
+*.local.yml
+dumped_hertz_remote_config.json
+		  

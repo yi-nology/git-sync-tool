@@ -139,7 +139,7 @@
 
         async function loadRepoInfo() {
             try {
-                const repo = await request(`/repos/${repoKey}`);
+                const repo = await request(`/repo/detail?key=${repoKey}`);
                 if (repo) {
                     currentRepo = repo;
                     document.getElementById('sidebarRepoName').innerText = repo.name;
@@ -148,7 +148,7 @@
                 
                 // Load Version
                 try {
-                    const version = await request(`/repos/${repoKey}/version`);
+                    const version = await request(`/version/current?repo_key=${repoKey}`);
                     document.getElementById('breadcrumbCurrent').innerHTML = `${document.getElementById('breadcrumbCurrent').innerText} <span class="badge bg-info ms-2 font-monospace small" title="项目版本">${version}</span>`;
                 } catch(e) {
                     console.warn("Version load failed", e);
