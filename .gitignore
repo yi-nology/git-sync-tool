@@ -32,6 +32,10 @@ _testmain.go
 /.idea
 /.vscode
 /output
+/dist
 *.local.yml
 dumped_hertz_remote_config.json
-		  
+git-manage-service
+*.db
+.qoder/
+.hz

@@ -1,0 +1,150 @@
+name: Release Build
+
+on:
+  push:
+    tags:
+      - 'v*'  # 当推送 v* 格式的 tag 时触发（如 v1.0.0）
+  workflow_dispatch:  # 允许手动触发
+
+permissions:
+  contents: write  # 需要写权限来创建 release
+
+jobs:
+  build:
+    name: Build and Release
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          # Linux AMD64
+          - goos: linux
+            goarch: amd64
+            output: git-manage-service-linux-amd64
+          # Linux ARM64
+          - goos: linux
+            goarch: arm64
+            output: git-manage-service-linux-arm64
+          # macOS AMD64 (Intel)
+          - goos: darwin
+            goarch: amd64
+            output: git-manage-service-darwin-amd64
+          # macOS ARM64 (Apple Silicon)
+          - goos: darwin
+            goarch: arm64
+            output: git-manage-service-darwin-arm64
+          # Windows AMD64
+          - goos: windows
+            goarch: amd64
+            output: git-manage-service-windows-amd64.exe
+          # Windows ARM64
+          - goos: windows
+            goarch: arm64
+            output: git-manage-service-windows-arm64.exe
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+          cache: true
+
+      - name: Get dependencies
+        run: go mod download
+
+      - name: Build binary
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: 0
+        run: |
+          mkdir -p dist
+          go build -ldflags="-s -w -X main.Version=${{ github.ref_name }} -X main.BuildTime=$(date -u '+%Y-%m-%d_%H:%M:%S')" \
+            -o dist/${{ matrix.output }} \
+            main.go
+
+      - name: Create archive
+        run: |
+          cd dist
+          if [[ "${{ matrix.goos }}" == "windows" ]]; then
+            zip ${{ matrix.output }}.zip ${{ matrix.output }}
+            echo "ASSET=${{ matrix.output }}.zip" >> $GITHUB_ENV
+          else
+            tar -czf ${{ matrix.output }}.tar.gz ${{ matrix.output }}
+            echo "ASSET=${{ matrix.output }}.tar.gz" >> $GITHUB_ENV
+          fi
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.output }}
+          path: dist/${{ env.ASSET }}
+          retention-days: 5
+
+  release:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Display structure of downloaded files
+        run: ls -R artifacts
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: artifacts/**/*
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          body: |
+            ## 🚀 Release ${{ github.ref_name }}
+            
+            ### 📦 下载说明
+            
+            根据你的操作系统选择对应的文件：
+            
+            - **Linux (AMD64)**: `git-manage-service-linux-amd64.tar.gz`
+            - **Linux (ARM64)**: `git-manage-service-linux-arm64.tar.gz`
+            - **macOS (Intel)**: `git-manage-service-darwin-amd64.tar.gz`
+            - **macOS (Apple Silicon)**: `git-manage-service-darwin-arm64.tar.gz`
+            - **Windows (AMD64)**: `git-manage-service-windows-amd64.exe.zip`
+            - **Windows (ARM64)**: `git-manage-service-windows-arm64.exe.zip`
+            
+            ### 📝 安装方式
+            
+            #### Linux / macOS
+            ```bash
+            # 解压
+            tar -xzf git-manage-service-*.tar.gz
+            
+            # 添加执行权限
+            chmod +x git-manage-service-*
+            
+            # 运行
+            ./git-manage-service-*
+            ```
+            
+            #### Windows
+            ```powershell
+            # 解压 zip 文件
+            # 双击运行或在命令行中执行
+            .\git-manage-service-windows-amd64.exe
+            ```
+            
+            ### 🔧 配置
+            
+            首次运行前，请参考 [配置文档](https://github.com/${{ github.repository }}/blob/main/deploy/CONFIG_GUIDE.md) 进行配置。
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

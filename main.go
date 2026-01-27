@@ -44,16 +44,24 @@ var (
 	version = flag.Bool("version", false, "显示版本信息")
 )
 
+var (
+	// 这些变量在编译时通过 -ldflags 注入
+	Version   = "dev"     // 版本号，如 v1.0.0
+	BuildTime = "unknown" // 构建时间
+	GitCommit = "unknown" // Git commit hash
+)
+
 const (
-	AppVersion = "2.0.0"
-	AppName    = "git-manage-service"
+	AppName = "git-manage-service"
 )
 
 func main() {
 	flag.Parse()
 
 	if *version {
-		fmt.Printf("%s version %s\n", AppName, AppVersion)
+		fmt.Printf("%s version %s\n", AppName, Version)
+		fmt.Printf("Build time: %s\n", BuildTime)
+		fmt.Printf("Git commit: %s\n", GitCommit)
 		return
 	}
 
