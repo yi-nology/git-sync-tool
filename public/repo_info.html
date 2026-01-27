@@ -14,55 +14,290 @@
 </head>
 <body>
     <div class="container-fluid">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h4 class="mb-0">基本信息</h4>
-            <button class="btn btn-primary" onclick="openEditCurrentRepo()">
-                <i class="bi bi-pencil-square"></i> 编辑仓库
-            </button>
-        </div>
-        
-        <div class="card mb-4">
-            <div class="card-body">
-                <div class="row mb-3">
-                    <label class="col-sm-2 col-form-label fw-bold">仓库名称</label>
-                    <div class="col-sm-10">
-                        <input type="text" readonly class="form-control-plaintext" id="repoName" value="加载中...">
-                    </div>
+        <!-- Tab Navigation -->
+        <ul class="nav nav-tabs mb-4" id="repoDetailTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="info-tab" data-bs-toggle="tab" data-bs-target="#repo-info" type="button" role="tab">
+                    <i class="bi bi-info-circle"></i> 基本信息
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="git-metrics-tab" data-bs-toggle="tab" data-bs-target="#git-metrics" type="button" role="tab">
+                    <i class="bi bi-git"></i> Git有效提交度量
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="code-metrics-tab" data-bs-toggle="tab" data-bs-target="#code-metrics" type="button" role="tab">
+                    <i class="bi bi-code-slash"></i> 真实工程代码度量
+                </button>
+            </li>
+        </ul>
+
+        <!-- Tab Content -->
+        <div class="tab-content" id="repoDetailTabContent">
+            <!-- Tab 1: 基本信息 -->
+            <div class="tab-pane fade show active" id="repo-info" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4 class="mb-0">基本信息</h4>
+                    <button class="btn btn-primary" onclick="openEditCurrentRepo()">
+                        <i class="bi bi-pencil-square"></i> 编辑仓库
+                    </button>
                 </div>
-                <div class="row mb-3">
-                    <label class="col-sm-2 col-form-label fw-bold">当前版本</label>
-                    <div class="col-sm-10">
-                         <span id="repoVersion" class="badge bg-success font-monospace p-2">loading...</span>
-                    </div>
-                </div>
-                <div class="row mb-3">
-                    <label class="col-sm-2 col-form-label fw-bold">本地路径</label>
-                    <div class="col-sm-10">
-                        <input type="text" readonly class="form-control-plaintext font-monospace" id="repoPath" value="...">
-                    </div>
-                </div>
-                <div class="row mb-3">
-                    <label class="col-sm-2 col-form-label fw-bold">Repo Key</label>
-                    <div class="col-sm-10">
-                        <div class="input-group">
-                            <input type="text" readonly class="form-control font-monospace bg-light" id="repoKey">
-                            <button class="btn btn-outline-secondary" onclick="copyKey()"><i class="bi bi-copy"></i></button>
+                
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <label class="col-sm-2 col-form-label fw-bold">仓库名称</label>
+                            <div class="col-sm-10">
+                                <input type="text" readonly class="form-control-plaintext" id="repoName" value="加载中...">
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <label class="col-sm-2 col-form-label fw-bold">当前版本</label>
+                            <div class="col-sm-10">
+                                 <span id="repoVersion" class="badge bg-success font-monospace p-2">loading...</span>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <label class="col-sm-2 col-form-label fw-bold">本地路径</label>
+                            <div class="col-sm-10">
+                                <input type="text" readonly class="form-control-plaintext font-monospace" id="repoPath" value="...">
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <label class="col-sm-2 col-form-label fw-bold">Repo Key</label>
+                            <div class="col-sm-10">
+                                <div class="input-group">
+                                    <input type="text" readonly class="form-control font-monospace bg-light" id="repoKey">
+                                    <button class="btn btn-outline-secondary" onclick="copyKey()"><i class="bi bi-copy"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <label class="col-sm-2 col-form-label fw-bold">配置来源</label>
+                            <div class="col-sm-10">
+                                <input type="text" readonly class="form-control-plaintext" id="repoSource" value="...">
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="row mb-3">
-                    <label class="col-sm-2 col-form-label fw-bold">配置来源</label>
-                    <div class="col-sm-10">
-                        <input type="text" readonly class="form-control-plaintext" id="repoSource" value="...">
+
+                <h4 class="mb-4">远程配置</h4>
+                <div class="card">
+                    <div class="card-body">
+                        <div id="remoteList">加载中...</div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <h4 class="mb-4">远程配置</h4>
-        <div class="card">
-            <div class="card-body">
-                <div id="remoteList">加载中...</div>
+            <!-- Tab 2: Git有效提交度量 -->
+            <div class="tab-pane fade" id="git-metrics" role="tabpanel">
+                <div class="row mb-3">
+                    <div class="col-md-2">
+                        <label class="form-label">选择分支</label>
+                        <select class="form-select" id="statsBranchSelect" onchange="loadStatsData()"></select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">选择提交人</label>
+                        <select class="form-select" id="statsAuthorSelect" onchange="loadStatsData()">
+                            <option value="">全部</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                         <label class="form-label">开始日期</label>
+                         <input type="date" class="form-control" id="statsSince">
+                    </div>
+                    <div class="col-md-2">
+                         <label class="form-label">结束日期</label>
+                         <input type="date" class="form-control" id="statsUntil">
+                    </div>
+                    <div class="col-md-1 d-flex align-items-end">
+                        <button class="btn btn-primary w-100" onclick="loadStatsData()"><i class="bi bi-search"></i></button>
+                    </div>
+                    <div class="col-md-1 d-flex align-items-end">
+                        <button class="btn btn-outline-success w-100" onclick="exportStatsCSV()" title="导出 CSV"><i class="bi bi-download"></i></button>
+                    </div>
+                </div>
+
+                <!-- Dashboard -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card text-center text-bg-primary mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title">总有效行数</h5>
+                                <h2 class="display-6" id="totalLines">0</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-center text-bg-success mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title">活跃贡献者</h5>
+                                <h2 class="display-6" id="totalAuthors">0</h2>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">贡献分布 (有效行数)</h5>
+                                <div id="pieChart" style="height: 350px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">贡献趋势 (近30天)</h5>
+                                <div id="lineChart" style="height: 350px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Commits Table -->
+                <div class="card">
+                    <div class="card-header">提交历史 (最近 100 条)</div>
+                    <div class="card-body">
+                         <table class="table table-sm table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Hash</th>
+                                    <th>作者</th>
+                                    <th>时间</th>
+                                    <th>信息</th>
+                                </tr>
+                            </thead>
+                            <tbody id="commitsList">
+                                <tr><td colspan="4" class="text-center">请选择分支进行分析</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 3: 真实工程代码度量 -->
+            <div class="tab-pane fade" id="code-metrics" role="tabpanel">
+                <div class="row mb-3">
+                    <div class="col-md-2">
+                        <label class="form-label">选择分支</label>
+                        <select class="form-select" id="lineStatsBranchSelect">
+                            <option value="">当前工作区</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">提交人筛选</label>
+                        <select class="form-select" id="lineStatsAuthorSelect">
+                            <option value="">全部</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">开始日期</label>
+                        <input type="date" class="form-control" id="lineStatsSince">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">结束日期</label>
+                        <input type="date" class="form-control" id="lineStatsUntil">
+                    </div>
+                    <div class="col-md-1 d-flex align-items-end">
+                        <button class="btn btn-primary w-100" onclick="loadLineStats()" title="查询"><i class="bi bi-search"></i></button>
+                    </div>
+                    <div class="col-md-1 d-flex align-items-end">
+                        <button class="btn btn-outline-secondary w-100" data-bs-toggle="modal" data-bs-target="#excludeConfigModal" title="排除配置"><i class="bi bi-gear"></i></button>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button class="btn btn-outline-success" onclick="exportLineStatsCSV()"><i class="bi bi-download"></i> 导出 CSV</button>
+                    </div>
+                    <div class="col-md-10">
+                        <small class="text-muted">
+                            <i class="bi bi-info-circle"></i> 提示：选择分支/提交人/时间范围后将使用 git blame 分析代码归属，统计速度会较慢
+                        </small>
+                    </div>
+                </div>
+
+                <!-- Code Stats Dashboard -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card text-center text-bg-primary mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title">代码行数</h5>
+                                <h2 class="display-6" id="codeLines">0</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-center text-bg-info mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title">注释行数</h5>
+                                <h2 class="display-6" id="commentLines">0</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-center text-bg-secondary mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title">空白行数</h5>
+                                <h2 class="display-6" id="blankLines">0</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-center text-bg-success mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title">文件总数</h5>
+                                <h2 class="display-6" id="totalFiles">0</h2>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Code Charts -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">语言分布 (代码行数)</h5>
+                                <div id="langPieChart" style="height: 350px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">Top 10 语言行数明细</h5>
+                                <div id="langBarChart" style="height: 350px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Language Table -->
+                <div class="card">
+                    <div class="card-header">语言统计详情</div>
+                    <div class="card-body">
+                         <table class="table table-sm table-hover">
+                            <thead>
+                                <tr>
+                                    <th>语言</th>
+                                    <th class="text-end">文件数</th>
+                                    <th class="text-end">代码行</th>
+                                    <th class="text-end">注释行</th>
+                                    <th class="text-end">空白行</th>
+                                    <th class="text-end">总行数</th>
+                                </tr>
+                            </thead>
+                            <tbody id="langStatsList">
+                                <tr><td colspan="6" class="text-center">请选择仓库进行分析</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -279,7 +514,36 @@
         </div>
     </div>
 
+    <!-- Exclude Config Modal -->
+    <div class="modal fade" id="excludeConfigModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">配置排除规则</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">排除目录 (每行一个)</label>
+                        <textarea class="form-control" rows="8" id="excludeDirs" placeholder="node_modules&#10;vendor&#10;dist"></textarea>
+                        <small class="text-muted">这些目录将被排除在统计之外</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">排除文件模式 (每行一个)</label>
+                        <textarea class="form-control" rows="6" id="excludePatterns" placeholder="*.min.js&#10;*.lock&#10;*.pb.go"></textarea>
+                        <small class="text-muted">匹配这些模式的文件将被排除</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="saveExcludeConfig()">保存并重新统计</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="vendor/js/bootstrap.bundle.min.js"></script>
+    <script src="vendor/js/echarts.min.js"></script>
     <script src="js/request.js"></script>
     <script src="js/toast.js"></script>
     <script src="js/common.js"></script>
@@ -291,9 +555,32 @@
         const repoKey = urlParams.get('repo_key');
         let currentRepo = null;
 
+        // Stats variables
+        let pieChart = null;
+        let lineChart = null;
+        let langPieChart = null;
+        let langBarChart = null;
+        let allAuthors = [];
+        let lineStatsData = null;
+        let excludeConfig = { exclude_dirs: [], exclude_patterns: [] };
+
         document.addEventListener('DOMContentLoaded', () => {
             initToastContainer();
             loadData();
+        });
+
+        // Tab 切换时加载数据
+        document.getElementById('git-metrics-tab').addEventListener('shown.bs.tab', () => {
+            if (!pieChart) {
+                loadStatsBranches();
+            }
+        });
+
+        document.getElementById('code-metrics-tab').addEventListener('shown.bs.tab', () => {
+            if (!langPieChart) {
+                loadLineStatsBranches();
+                loadExcludeConfig();
+            }
         });
 
         async function loadData() {
@@ -372,20 +659,437 @@
             }
         }
         
-        // Override loadRepos from repos.js to do nothing or reload current
-        // Actually repos.js loadRepos checks for #repo-list, which doesn't exist here, so it's safe.
-        // We can optionally hook into updateRepo success to reload current page data.
-        
-        // Hooking into updateRepo success via overriding showToast? No, too hacky.
-        // repos.js calls loadRepos() after update.
-        // We can define loadRepos locally to reload our data!
-        // This will override the global loadRepos function from repos.js if defined after?
-        // JS functions are hoisted or overwritten.
-        
-        // Let's redefine loadRepos to reload our view
+        // Override loadRepos from repos.js to reload current page data
         window.loadRepos = async function() {
             await loadData();
         };
+
+        // ==================== Git有效提交度量 ====================
+        
+        async function loadStatsBranches() {
+            if (!repoKey) return;
+            
+            try {
+                const branches = await request(`/stats/branches?repo_key=${repoKey}`);
+                const select = document.getElementById('statsBranchSelect');
+                select.innerHTML = '';
+                branches.forEach(b => {
+                    select.innerHTML += `<option value="${b}">${b}</option>`;
+                });
+                
+                if (branches.includes('main')) select.value = 'main';
+                else if (branches.includes('master')) select.value = 'master';
+                
+                loadStatsData();
+            } catch (e) {
+                // Handled by request.js
+            }
+        }
+        
+        async function loadStatsData() {
+            const branch = document.getElementById('statsBranchSelect').value;
+            const author = document.getElementById('statsAuthorSelect').value;
+            const since = document.getElementById('statsSince').value;
+            const until = document.getElementById('statsUntil').value;
+            
+            if (!repoKey || !branch) return;
+            
+            const btn = document.querySelector('#git-metrics button[onclick="loadStatsData()"]');
+            if (btn) btn.disabled = true;
+
+            try {
+                let url = `/stats/analyze?repo_key=${repoKey}&branch=${encodeURIComponent(branch)}&since=${since}&until=${until}`;
+                const data = await request(url);
+                
+                allAuthors = data.authors;
+                updateAuthorDropdown();
+                renderStats(data);
+                loadCommits(repoKey, branch, since, until, author);
+            } catch (e) {
+                // Handled
+            } finally {
+                if (btn) btn.disabled = false;
+            }
+        }
+        
+        function updateAuthorDropdown() {
+            const select = document.getElementById('statsAuthorSelect');
+            const current = select.value;
+            const authors = allAuthors.map(a => a.name).sort();
+            
+            let html = '<option value="">全部</option>';
+            authors.forEach(name => {
+                html += `<option value="${name}">${name}</option>`;
+            });
+            select.innerHTML = html;
+            select.value = current;
+        }
+        
+        function renderStats(data) {
+            const selectedAuthor = document.getElementById('statsAuthorSelect').value;
+            
+            let displayAuthors = data.authors;
+            let displayTotal = data.total_lines;
+            
+            if (selectedAuthor) {
+                displayAuthors = data.authors.filter(a => a.name === selectedAuthor);
+                displayTotal = displayAuthors.reduce((sum, a) => sum + a.total_lines, 0);
+            }
+            
+            document.getElementById('totalLines').innerText = displayTotal.toLocaleString();
+            document.getElementById('totalAuthors').innerText = displayAuthors.length;
+            
+            // 渲染贡献分布饼图
+            if (!pieChart) pieChart = echarts.init(document.getElementById('pieChart'));
+            if (displayAuthors.length === 0 || displayTotal === 0) {
+                pieChart.setOption({
+                    title: {
+                        text: '暂无数据',
+                        left: 'center',
+                        top: 'center',
+                        textStyle: { color: '#999', fontSize: 16 }
+                    },
+                    series: [{ type: 'pie', data: [] }]
+                }, true);
+            } else {
+                pieChart.setOption({
+                    title: { text: '' },
+                    tooltip: { trigger: 'item' },
+                    series: [{
+                        type: 'pie',
+                        radius: '50%',
+                        data: displayAuthors.map(a => ({value: a.total_lines, name: a.name})),
+                        emphasis: { itemStyle: { shadowBlur: 10, shadowOffsetX: 0, shadowColor: 'rgba(0, 0, 0, 0.5)' } }
+                    }]
+                }, true);
+            }
+            
+            // 渲染贡献趋势图
+            const { dates, values } = processTrendData(displayAuthors);
+            if (!lineChart) lineChart = echarts.init(document.getElementById('lineChart'));
+            
+            const option = {
+                tooltip: { trigger: 'axis' },
+                xAxis: { type: 'category', data: dates },
+                yAxis: { type: 'value' },
+                series: [{
+                    data: values,
+                    type: 'line',
+                    smooth: true,
+                    name: '新增/修改行数',
+                    areaStyle: {}
+                }]
+            };
+
+            if (dates.length === 0) {
+                option.title = { text: '暂无趋势数据', left: 'center', textStyle: { color: '#999', fontSize: 16 } };
+            } else {
+                option.title = { text: '' };
+            }
+
+            lineChart.setOption(option, true);
+        }
+
+        function processTrendData(authors) {
+            const dateMap = new Map();
+            
+            authors.forEach(author => {
+                if (author.time_trend) {
+                    Object.entries(author.time_trend).forEach(([date, count]) => {
+                        dateMap.set(date, (dateMap.get(date) || 0) + count);
+                    });
+                }
+            });
+            
+            const sortedDates = Array.from(dateMap.keys()).sort();
+            const values = sortedDates.map(date => dateMap.get(date));
+            
+            return { dates: sortedDates, values };
+        }
+        
+        async function loadCommits(repoKey, branch, since, until, authorFilter) {
+            try {
+                const commits = await request(`/stats/commits?repo_key=${repoKey}&branch=${encodeURIComponent(branch)}&since=${since}&until=${until}`);
+                const tbody = document.getElementById('commitsList');
+                tbody.innerHTML = '';
+                
+                if (!commits || commits.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">无提交记录</td></tr>';
+                    return;
+                }
+
+                let filtered = commits;
+                if (authorFilter) {
+                    filtered = commits.filter(c => c.author === authorFilter);
+                }
+
+                filtered.slice(0, 100).forEach(c => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><span class="font-monospace" title="${c.hash}">${c.hash.substring(0,7)}</span></td>
+                        <td>${c.author}</td>
+                        <td>${new Date(c.date).toLocaleString()}</td>
+                        <td class="text-break">${c.message}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (e) {
+                // Handled
+            }
+        }
+        
+        function exportStatsCSV() {
+            const branch = document.getElementById('statsBranchSelect').value;
+            const author = document.getElementById('statsAuthorSelect').value;
+            const since = document.getElementById('statsSince').value;
+            const until = document.getElementById('statsUntil').value;
+            
+            if (!repoKey || !branch) {
+                showToast("请先选择分支", "warning");
+                return;
+            }
+            let url = `/api/v1/stats/export/csv?repo_key=${repoKey}&branch=${encodeURIComponent(branch)}&since=${since}&until=${until}`;
+            if (author) {
+                url += `&author=${encodeURIComponent(author)}`;
+            }
+            window.location.href = url;
+        }
+
+        // ==================== 真实工程代码度量 ====================
+        
+        async function loadLineStatsBranches() {
+            const branchSelect = document.getElementById('lineStatsBranchSelect');
+            const authorSelect = document.getElementById('lineStatsAuthorSelect');
+            
+            if (!repoKey) {
+                branchSelect.innerHTML = '<option value="">当前工作区</option>';
+                authorSelect.innerHTML = '<option value="">全部</option>';
+                return;
+            }
+            
+            try {
+                const [branches, authors] = await Promise.all([
+                    request(`/stats/branches?repo_key=${repoKey}`),
+                    request(`/stats/authors?repo_key=${repoKey}`)
+                ]);
+                
+                branchSelect.innerHTML = '<option value="">当前工作区</option>';
+                branches.forEach(b => {
+                    branchSelect.innerHTML += `<option value="${b}">${b}</option>`;
+                });
+                
+                authorSelect.innerHTML = '<option value="">全部</option>';
+                authors.sort((a, b) => a.name.localeCompare(b.name)).forEach(a => {
+                    authorSelect.innerHTML += `<option value="${a.name}">${a.name} &lt;${a.email}&gt;</option>`;
+                });
+            } catch (e) {
+                // Handled
+            }
+        }
+        
+        async function loadExcludeConfig() {
+            try {
+                const config = await request('/stats/lines/config');
+                excludeConfig = config;
+                document.getElementById('excludeDirs').value = (config.exclude_dirs || []).join('\n');
+                document.getElementById('excludePatterns').value = (config.exclude_patterns || []).join('\n');
+            } catch (e) {
+                // Use defaults
+            }
+        }
+        
+        async function loadLineStats() {
+            if (!repoKey) return;
+            
+            const branch = document.getElementById('lineStatsBranchSelect').value;
+            const author = document.getElementById('lineStatsAuthorSelect').value;
+            const since = document.getElementById('lineStatsSince').value;
+            const until = document.getElementById('lineStatsUntil').value;
+            
+            const btn = document.querySelector('#code-metrics button[onclick="loadLineStats()"]');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+            }
+
+            try {
+                let url = `/stats/lines?repo_key=${repoKey}`;
+                if (branch) url += `&branch=${encodeURIComponent(branch)}`;
+                if (author) url += `&author=${encodeURIComponent(author)}`;
+                if (since) url += `&since=${since}`;
+                if (until) url += `&until=${until}`;
+                
+                const data = await request(url);
+                
+                if (data.status === 'processing') {
+                    showToast(`${data.progress || '正在统计中...'}`, 'info');
+                    setTimeout(() => loadLineStats(), 2000);
+                    return;
+                }
+                
+                lineStatsData = data;
+                renderLineStats(data);
+            } catch (e) {
+                // Handled
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-search"></i>';
+                }
+            }
+        }
+        
+        function renderLineStats(data) {
+            document.getElementById('codeLines').innerText = (data.code_lines || 0).toLocaleString();
+            document.getElementById('commentLines').innerText = (data.comment_lines || 0).toLocaleString();
+            document.getElementById('blankLines').innerText = (data.blank_lines || 0).toLocaleString();
+            document.getElementById('totalFiles').innerText = (data.total_files || 0).toLocaleString();
+            
+            const languages = data.languages || [];
+            
+            // 渲染饼图
+            if (!langPieChart) langPieChart = echarts.init(document.getElementById('langPieChart'));
+            if (languages.length === 0) {
+                langPieChart.setOption({
+                    title: {
+                        text: '暂无数据',
+                        left: 'center',
+                        top: 'center',
+                        textStyle: { color: '#999', fontSize: 16 }
+                    },
+                    series: [{ type: 'pie', data: [] }]
+                }, true);
+            } else {
+                langPieChart.setOption({
+                    title: { text: '' },
+                    tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
+                    series: [{
+                        type: 'pie',
+                        radius: ['40%', '70%'],
+                        data: languages.slice(0, 10).map(l => ({value: l.code, name: l.name})),
+                        emphasis: { itemStyle: { shadowBlur: 10 } }
+                    }]
+                }, true);
+            }
+            
+            // 渲染柱状图
+            const top10 = languages.slice(0, 10);
+            if (!langBarChart) langBarChart = echarts.init(document.getElementById('langBarChart'));
+            if (top10.length === 0) {
+                langBarChart.setOption({
+                    title: {
+                        text: '暂无数据',
+                        left: 'center',
+                        top: 'center',
+                        textStyle: { color: '#999', fontSize: 16 }
+                    },
+                    xAxis: { type: 'category', data: [] },
+                    yAxis: { type: 'value' },
+                    series: []
+                }, true);
+            } else {
+                langBarChart.setOption({
+                    title: { text: '' },
+                    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+                    legend: { data: ['代码', '注释', '空白'] },
+                    xAxis: { type: 'category', data: top10.map(l => l.name) },
+                    yAxis: { type: 'value' },
+                    series: [
+                        { name: '代码', type: 'bar', data: top10.map(l => l.code), itemStyle: { color: '#5470c6' } },
+                        { name: '注释', type: 'bar', data: top10.map(l => l.comment), itemStyle: { color: '#91cc75' } },
+                        { name: '空白', type: 'bar', data: top10.map(l => l.blank), itemStyle: { color: '#fac858' } }
+                    ]
+                }, true);
+            }
+            
+            const tbody = document.getElementById('langStatsList');
+            tbody.innerHTML = '';
+            
+            if (languages.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">暂无数据</td></tr>';
+                return;
+            }
+            
+            languages.forEach(lang => {
+                const total = lang.code + lang.comment + lang.blank;
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${lang.name}</strong></td>
+                    <td class="text-end">${lang.files.toLocaleString()}</td>
+                    <td class="text-end">${lang.code.toLocaleString()}</td>
+                    <td class="text-end">${lang.comment.toLocaleString()}</td>
+                    <td class="text-end">${lang.blank.toLocaleString()}</td>
+                    <td class="text-end">${total.toLocaleString()}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+            
+            const totalRow = document.createElement('tr');
+            totalRow.className = 'table-secondary fw-bold';
+            totalRow.innerHTML = `
+                <td>合计</td>
+                <td class="text-end">${data.total_files.toLocaleString()}</td>
+                <td class="text-end">${data.code_lines.toLocaleString()}</td>
+                <td class="text-end">${data.comment_lines.toLocaleString()}</td>
+                <td class="text-end">${data.blank_lines.toLocaleString()}</td>
+                <td class="text-end">${data.total_lines.toLocaleString()}</td>
+            `;
+            tbody.appendChild(totalRow);
+        }
+        
+        async function saveExcludeConfig() {
+            if (!repoKey) {
+                showToast("请先选择仓库", "warning");
+                return;
+            }
+            
+            const excludeDirs = document.getElementById('excludeDirs').value
+                .split('\n')
+                .map(s => s.trim())
+                .filter(s => s);
+            const excludePatterns = document.getElementById('excludePatterns').value
+                .split('\n')
+                .map(s => s.trim())
+                .filter(s => s);
+            
+            try {
+                await request('/stats/lines/config', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        repo_key: repoKey,
+                        exclude_dirs: excludeDirs,
+                        exclude_patterns: excludePatterns
+                    })
+                });
+                
+                showToast("配置已保存", "success");
+                bootstrap.Modal.getInstance(document.getElementById('excludeConfigModal')).hide();
+                
+                loadLineStats();
+            } catch (e) {
+                // Handled
+            }
+        }
+        
+        function exportLineStatsCSV() {
+            if (!repoKey) {
+                showToast("请先选择仓库", "warning");
+                return;
+            }
+            
+            const branch = document.getElementById('lineStatsBranchSelect').value;
+            const author = document.getElementById('lineStatsAuthorSelect').value;
+            const since = document.getElementById('lineStatsSince').value;
+            const until = document.getElementById('lineStatsUntil').value;
+            
+            let url = `/api/v1/stats/lines/export/csv?repo_key=${repoKey}`;
+            if (branch) url += `&branch=${encodeURIComponent(branch)}`;
+            if (author) url += `&author=${encodeURIComponent(author)}`;
+            if (since) url += `&since=${since}`;
+            if (until) url += `&until=${until}`;
+            
+            window.location.href = url;
+        }
         
     </script>
 </body>
