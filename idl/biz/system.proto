@@ -106,16 +106,15 @@ message ConfigResponse {
 
 // UpdateConfigRequest 更新配置请求
 message UpdateConfigRequest {
-  string default_author = 1 [(api.body) = "default_author"];
-  string default_email = 2 [(api.body) = "default_email"];
-  string default_branch = 3 [(api.body) = "default_branch"];
-  bool auto_fetch = 4 [(api.body) = "auto_fetch"];
-  int32 fetch_interval = 5 [(api.body) = "fetch_interval"];
+  bool debug_mode = 1 [(api.body) = "debug_mode"];
+  string author_name = 2 [(api.body) = "author_name"];
+  string author_email = 3 [(api.body) = "author_email"];
 }
 
 // ListDirsRequest 列出目录请求
 message ListDirsRequest {
   string path = 1 [(api.query) = "path"];
+  string search = 2 [(api.query) = "search"];
 }
 
 // ListDirsResponse 列出目录响应
@@ -175,4 +174,6 @@ message SubmitChangesRequest {
   repeated string files = 3 [(api.body) = "files"];
   bool push = 4 [(api.body) = "push"];
   string remote = 5 [(api.body) = "remote"];
+  string author_name = 6 [(api.body) = "author_name"];
+  string author_email = 7 [(api.body) = "author_email"];
 }

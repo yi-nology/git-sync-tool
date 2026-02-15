@@ -64,6 +64,78 @@ func (s *GitService) getAuth(authType, authKey, authSecret string) (transport.Au
 	return nil, nil
 }
 
+// getAuthFromInfo 从AuthInfo结构获取认证方法，支持本地密钥和数据库密钥
+func (s *GitService) getAuthFromInfo(authInfo domain.AuthInfo) (transport.AuthMethod, error) {
+	if authInfo.Type == "ssh" {
+		if authInfo.Source == "database" && authInfo.SSHKeyID > 0 {
+			// 从数据库加载密钥 - 需要在调用方提供私钥内容
+			return nil, fmt.Errorf("database key loading should be handled by caller with GetAuthFromDBKey")
+		}
+		// Source == "local" 或为空，使用文件路径
+		if authInfo.Key != "" {
+			publicKeys, err := ssh.NewPublicKeysFromFile("git", authInfo.Key, authInfo.Secret)
+			if err != nil {
+				return nil, err
+			}
+			publicKeys.HostKeyCallback = ssh2.InsecureIgnoreHostKey()
+			return publicKeys, nil
+		}
+	} else if authInfo.Type == "http" && authInfo.Key != "" {
+		return &http.BasicAuth{
+			Username: authInfo.Key,
+			Password: authInfo.Secret,
+		}, nil
+	}
+	return nil, nil
+}
+
+// GetAuthFromDBKey 从数据库密钥内容创建认证方法
+func (s *GitService) GetAuthFromDBKey(privateKey, passphrase string) (transport.AuthMethod, error) {
+	publicKeys, err := ssh.NewPublicKeys("git", []byte(privateKey), passphrase)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse private key: %v", err)
+	}
+	publicKeys.HostKeyCallback = ssh2.InsecureIgnoreHostKey()
+	return publicKeys, nil
+}
+
+// TestRemoteConnectionWithDBKey 使用数据库密钥测试远程连接
+func (s *GitService) TestRemoteConnectionWithDBKey(url, privateKey, passphrase string) error {
+	auth, err := s.GetAuthFromDBKey(privateKey, passphrase)
+	if err != nil {
+		return err
+	}
+
+	ep, err := transport.NewEndpoint(url)
+	if err != nil {
+		return fmt.Errorf("invalid URL: %v", err)
+	}
+
+	// 使用 git ls-remote 命令测试连接
+	// go-git 的内部 transport client 不直接暴露，使用命令行方式更可靠
+	r, err := git.Init(nil, nil)
+	if err != nil {
+		return fmt.Errorf("failed to init memory repo: %v", err)
+	}
+
+	remote, err := r.CreateRemote(&config.RemoteConfig{
+		Name: "test",
+		URLs: []string{ep.String()},
+	})
+	if err != nil {
+		return fmt.Errorf("failed to create remote: %v", err)
+	}
+
+	_, err = remote.List(&git.ListOptions{
+		Auth: auth,
+	})
+	if err != nil {
+		return fmt.Errorf("connection failed: %v", err)
+	}
+
+	return nil
+}
+
 func (s *GitService) detectSSHAuth(urlStr string) transport.AuthMethod {
 	// Simple check for SSH
 	// git@... or ssh://...
@@ -155,6 +227,10 @@ func (s *GitService) Fetch(path, remote string, progress io.Writer) error {
 		RemoteName: remote,
 		Auth:       auth,
 		Progress:   progress,
+		RefSpecs: []config.RefSpec{
+			config.RefSpec("+refs/heads/*:refs/remotes/" + remote + "/*"),
+			config.RefSpec("+refs/tags/*:refs/tags/*"),
+		},
 	})
 	if err == git.NoErrAlreadyUpToDate {
 		return nil
@@ -636,6 +712,24 @@ func (s *GitService) AddAll(path string) error {
 	return err
 }
 
+// AddFiles stages specific files for commit
+func (s *GitService) AddFiles(path string, files []string) error {
+	r, err := s.openRepo(path)
+	if err != nil {
+		return err
+	}
+	w, err := r.Worktree()
+	if err != nil {
+		return err
+	}
+	for _, f := range files {
+		if _, err := w.Add(f); err != nil {
+			return fmt.Errorf("failed to add %s: %w", f, err)
+		}
+	}
+	return nil
+}
+
 func (s *GitService) Commit(path, message, authorName, authorEmail string) error {
 	r, err := s.openRepo(path)
 	if err != nil {
@@ -1015,6 +1109,43 @@ func (s *GitService) PushTag(path, remoteName, tagName, authType, authKey, authS
 	return err
 }
 
+func (s *GitService) DeleteTag(path, tagName string) error {
+	r, err := s.openRepo(path)
+	if err != nil {
+		return err
+	}
+	return r.DeleteTag(tagName)
+}
+
+func (s *GitService) DeleteRemoteTag(path, remoteName, tagName, authType, authKey, authSecret string) error {
+	r, err := s.openRepo(path)
+	if err != nil {
+		return err
+	}
+
+	auth, _ := s.getAuth(authType, authKey, authSecret)
+	if auth == nil {
+		rem, err := r.Remote(remoteName)
+		if err == nil {
+			urls := rem.Config().URLs
+			if len(urls) > 0 {
+				auth = s.detectSSHAuth(urls[0])
+			}
+		}
+	}
+
+	refSpec := config.RefSpec(fmt.Sprintf(":refs/tags/%s", tagName))
+	err = r.Push(&git.PushOptions{
+		RemoteName: remoteName,
+		RefSpecs:   []config.RefSpec{refSpec},
+		Auth:       auth,
+	})
+	if err == git.NoErrAlreadyUpToDate {
+		return nil
+	}
+	return err
+}
+
 func (s *GitService) GetTags(path string) ([]string, error) {
 	r, err := s.openRepo(path)
 	if err != nil {
@@ -1200,4 +1331,413 @@ func (s *GitService) GetAuthors(path string) ([]AuthorInfo, error) {
 	}
 
 	return authors, nil
+}
+
+// CherryPick 执行cherry-pick操作
+func (s *GitService) CherryPick(path, commitHash string, noCommit bool) (string, []string, error) {
+	args := []string{"cherry-pick"}
+	if noCommit {
+		args = append(args, "-n")
+	}
+	args = append(args, commitHash)
+
+	output, err := s.RunCommand(path, args...)
+	if err != nil {
+		// 检查是否是冲突
+		if strings.Contains(output, "conflict") || strings.Contains(output, "CONFLICT") {
+			// 获取冲突文件列表
+			conflicts := s.getConflictFiles(path)
+			return "", conflicts, fmt.Errorf("cherry-pick conflict")
+		}
+		return "", nil, err
+	}
+
+	// 获取新的commit hash
+	if !noCommit {
+		newHash, _ := s.RunCommand(path, "rev-parse", "HEAD")
+		return newHash, nil, nil
+	}
+	return "", nil, nil
+}
+
+// CherryPickAbort 中止cherry-pick
+func (s *GitService) CherryPickAbort(path string) error {
+	_, err := s.RunCommand(path, "cherry-pick", "--abort")
+	return err
+}
+
+// Rebase 执行rebase操作
+func (s *GitService) Rebase(path, upstream, onto string) (bool, []string, error) {
+	args := []string{"rebase"}
+	if onto != "" {
+		args = append(args, "--onto", onto)
+	}
+	args = append(args, upstream)
+
+	output, err := s.RunCommand(path, args...)
+	if err != nil {
+		// 检查是否是冲突
+		if strings.Contains(output, "conflict") || strings.Contains(output, "CONFLICT") {
+			conflicts := s.getConflictFiles(path)
+			return false, conflicts, nil
+		}
+		return false, nil, err
+	}
+	return true, nil, nil
+}
+
+// RebaseAbort 中止rebase
+func (s *GitService) RebaseAbort(path string) error {
+	_, err := s.RunCommand(path, "rebase", "--abort")
+	return err
+}
+
+// RebaseContinue 继续rebase
+func (s *GitService) RebaseContinue(path string) (bool, []string, error) {
+	output, err := s.RunCommand(path, "rebase", "--continue")
+	if err != nil {
+		if strings.Contains(output, "conflict") || strings.Contains(output, "CONFLICT") {
+			conflicts := s.getConflictFiles(path)
+			return false, conflicts, nil
+		}
+		return false, nil, err
+	}
+	return true, nil, nil
+}
+
+// RebaseSkip 跳过当前commit
+func (s *GitService) RebaseSkip(path string) error {
+	_, err := s.RunCommand(path, "rebase", "--skip")
+	return err
+}
+
+// IsRebaseInProgress 检查是否有进行中的rebase
+func (s *GitService) IsRebaseInProgress(path string) bool {
+	// 检查 .git/rebase-merge 或 .git/rebase-apply 目录
+	gitDir := filepath.Join(path, ".git")
+	if _, err := os.Stat(filepath.Join(gitDir, "rebase-merge")); err == nil {
+		return true
+	}
+	if _, err := os.Stat(filepath.Join(gitDir, "rebase-apply")); err == nil {
+		return true
+	}
+	return false
+}
+
+// getConflictFiles 获取冲突文件列表
+func (s *GitService) getConflictFiles(path string) []string {
+	output, err := s.RunCommand(path, "diff", "--name-only", "--diff-filter=U")
+	if err != nil {
+		return nil
+	}
+	if output == "" {
+		return nil
+	}
+	return strings.Split(strings.TrimSpace(output), "\n")
+}
+
+// StashEntry Stash条目
+type StashEntry struct {
+	Index   int    `json:"index"`
+	Ref     string `json:"ref"`
+	Message string `json:"message"`
+	Branch  string `json:"branch"`
+	Date    string `json:"date"`
+}
+
+// StashList 列出stash
+func (s *GitService) StashList(path string) ([]StashEntry, error) {
+	output, err := s.RunCommand(path, "stash", "list", "--format=%gd|%gs|%ci")
+	if err != nil {
+		return nil, err
+	}
+
+	if output == "" {
+		return []StashEntry{}, nil
+	}
+
+	var entries []StashEntry
+	lines := strings.Split(output, "\n")
+	for i, line := range lines {
+		if line == "" {
+			continue
+		}
+		parts := strings.SplitN(line, "|", 3)
+		entry := StashEntry{
+			Index: i,
+			Ref:   fmt.Sprintf("stash@{%d}", i),
+		}
+		if len(parts) >= 1 {
+			entry.Ref = parts[0]
+		}
+		if len(parts) >= 2 {
+			entry.Message = parts[1]
+		}
+		if len(parts) >= 3 {
+			entry.Date = parts[2]
+		}
+		entries = append(entries, entry)
+	}
+
+	return entries, nil
+}
+
+// StashSave 保存stash
+func (s *GitService) StashSave(path, message string, includeUntracked bool) error {
+	args := []string{"stash", "push"}
+	if message != "" {
+		args = append(args, "-m", message)
+	}
+	if includeUntracked {
+		args = append(args, "-u")
+	}
+	_, err := s.RunCommand(path, args...)
+	return err
+}
+
+// StashApply 应用stash
+func (s *GitService) StashApply(path string, index int) error {
+	ref := fmt.Sprintf("stash@{%d}", index)
+	_, err := s.RunCommand(path, "stash", "apply", ref)
+	return err
+}
+
+// StashPop 弹出stash（应用并删除）
+func (s *GitService) StashPop(path string, index int) error {
+	ref := fmt.Sprintf("stash@{%d}", index)
+	_, err := s.RunCommand(path, "stash", "pop", ref)
+	return err
+}
+
+// StashDrop 删除stash
+func (s *GitService) StashDrop(path string, index int) error {
+	ref := fmt.Sprintf("stash@{%d}", index)
+	_, err := s.RunCommand(path, "stash", "drop", ref)
+	return err
+}
+
+// StashClear 清空所有stash
+func (s *GitService) StashClear(path string) error {
+	_, err := s.RunCommand(path, "stash", "clear")
+	return err
+}
+
+// ===================== Submodule 管理 =====================
+
+// SubmoduleInfo Submodule信息
+type SubmoduleInfo struct {
+	Name   string `json:"name"`
+	Path   string `json:"path"`
+	URL    string `json:"url"`
+	Branch string `json:"branch"`
+	Commit string `json:"commit"`
+	Status string `json:"status"` // initialized, uninitialized, modified
+}
+
+// SubmoduleStatusItem Submodule状态项
+type SubmoduleStatusItem struct {
+	Path        string `json:"path"`
+	Commit      string `json:"commit"`
+	Status      string `json:"status"`      // +, -, U, 空
+	Description string `json:"description"` // 状态描述
+}
+
+// SubmoduleList 列出所有submodule
+func (s *GitService) SubmoduleList(path string) ([]SubmoduleInfo, error) {
+	r, err := s.openRepo(path)
+	if err != nil {
+		return nil, err
+	}
+
+	w, err := r.Worktree()
+	if err != nil {
+		return nil, err
+	}
+
+	submodules, err := w.Submodules()
+	if err != nil {
+		return nil, err
+	}
+
+	var result []SubmoduleInfo
+	for _, sm := range submodules {
+		cfg := sm.Config()
+		status, err := sm.Status()
+
+		info := SubmoduleInfo{
+			Name:   cfg.Name,
+			Path:   cfg.Path,
+			URL:    cfg.URL,
+			Branch: cfg.Branch,
+		}
+
+		if err == nil && status != nil {
+			info.Commit = status.Current.String()
+			if !status.IsClean() {
+				info.Status = "modified"
+			} else if status.Current.IsZero() {
+				info.Status = "uninitialized"
+			} else {
+				info.Status = "initialized"
+			}
+		} else {
+			info.Status = "unknown"
+		}
+
+		result = append(result, info)
+	}
+
+	return result, nil
+}
+
+// SubmoduleAdd 添加submodule
+func (s *GitService) SubmoduleAdd(path, url, subPath, branch string) error {
+	args := []string{"submodule", "add"}
+	if branch != "" {
+		args = append(args, "-b", branch)
+	}
+	args = append(args, url, subPath)
+
+	_, err := s.RunCommand(path, args...)
+	return err
+}
+
+// SubmoduleInit 初始化submodule
+func (s *GitService) SubmoduleInit(path, subPath string) error {
+	args := []string{"submodule", "init"}
+	if subPath != "" {
+		args = append(args, subPath)
+	}
+
+	_, err := s.RunCommand(path, args...)
+	return err
+}
+
+// SubmoduleUpdate 更新submodule
+func (s *GitService) SubmoduleUpdate(path, subPath string, init, recursive, remote bool) error {
+	args := []string{"submodule", "update"}
+	if init {
+		args = append(args, "--init")
+	}
+	if recursive {
+		args = append(args, "--recursive")
+	}
+	if remote {
+		args = append(args, "--remote")
+	}
+	if subPath != "" {
+		args = append(args, "--", subPath)
+	}
+
+	_, err := s.RunCommand(path, args...)
+	return err
+}
+
+// SubmoduleSync 同步submodule URL
+func (s *GitService) SubmoduleSync(path, subPath string, recursive bool) error {
+	args := []string{"submodule", "sync"}
+	if recursive {
+		args = append(args, "--recursive")
+	}
+	if subPath != "" {
+		args = append(args, "--", subPath)
+	}
+
+	_, err := s.RunCommand(path, args...)
+	return err
+}
+
+// SubmoduleRemove 移除submodule
+func (s *GitService) SubmoduleRemove(path, subPath string, force bool) error {
+	// git submodule deinit
+	args := []string{"submodule", "deinit"}
+	if force {
+		args = append(args, "-f")
+	}
+	args = append(args, subPath)
+
+	if _, err := s.RunCommand(path, args...); err != nil {
+		return fmt.Errorf("deinit failed: %w", err)
+	}
+
+	// git rm
+	rmArgs := []string{"rm"}
+	if force {
+		rmArgs = append(rmArgs, "-f")
+	}
+	rmArgs = append(rmArgs, subPath)
+
+	if _, err := s.RunCommand(path, rmArgs...); err != nil {
+		return fmt.Errorf("rm failed: %w", err)
+	}
+
+	// 删除 .git/modules 中的缓存目录
+	modulesDir := filepath.Join(path, ".git", "modules", subPath)
+	if _, err := os.Stat(modulesDir); err == nil {
+		if err := os.RemoveAll(modulesDir); err != nil {
+			return fmt.Errorf("remove modules cache failed: %w", err)
+		}
+	}
+
+	return nil
+}
+
+// SubmoduleStatus 获取submodule状态
+func (s *GitService) SubmoduleStatus(path string, recursive bool) ([]SubmoduleStatusItem, error) {
+	args := []string{"submodule", "status"}
+	if recursive {
+		args = append(args, "--recursive")
+	}
+
+	output, err := s.RunCommand(path, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	if output == "" {
+		return []SubmoduleStatusItem{}, nil
+	}
+
+	var items []SubmoduleStatusItem
+	lines := strings.Split(output, "\n")
+	for _, line := range lines {
+		if line == "" {
+			continue
+		}
+
+		item := SubmoduleStatusItem{}
+
+		// 解析状态标记
+		if len(line) > 0 {
+			switch line[0] {
+			case '+':
+				item.Status = "+"
+				item.Description = "has new commits"
+				line = line[1:]
+			case '-':
+				item.Status = "-"
+				item.Description = "not initialized"
+				line = line[1:]
+			case 'U':
+				item.Status = "U"
+				item.Description = "has conflicts"
+				line = line[1:]
+			case ' ':
+				item.Status = ""
+				item.Description = "up to date"
+				line = line[1:]
+			}
+		}
+
+		// 解析commit和path
+		parts := strings.Fields(strings.TrimSpace(line))
+		if len(parts) >= 2 {
+			item.Commit = parts[0]
+			item.Path = parts[1]
+		}
+
+		items = append(items, item)
+	}
+
+	return items, nil
 }

@@ -64,3 +64,10 @@ func (d *SyncTaskDAO) FindEnabledWithCron() ([]po.SyncTask, error) {
 	err := DB.Where("enabled = ? AND cron != ''", true).Find(&tasks).Error
 	return tasks, err
 }
+
+func (d *SyncTaskDAO) FindByWebhookToken(token string) (*po.SyncTask, error) {
+	var task po.SyncTask
+	err := DB.Preload("SourceRepo").Preload("TargetRepo").
+		Where("webhook_token = ? AND webhook_token != ''", token).First(&task).Error
+	return &task, err
+}

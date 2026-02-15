@@ -1,0 +1,99 @@
+// idl/biz/commit.proto - Commit搜索模块
+syntax = "proto3";
+
+package commit;
+
+option go_package = "github.com/yi-nology/git-manage-service/biz/model/biz/commit";
+
+import "api.proto";
+import "common.proto";
+
+// CommitService Commit服务
+service CommitService {
+  // SearchCommits 搜索提交
+  rpc SearchCommits(SearchCommitsRequest) returns (SearchCommitsResponse) {
+    option (api.get) = "/api/v1/commit/search";
+  }
+  
+  // GetCommit 获取提交详情
+  rpc GetCommit(GetCommitRequest) returns (GetCommitResponse) {
+    option (api.get) = "/api/v1/commit/detail";
+  }
+  
+  // GetCommitDiff 获取提交的diff
+  rpc GetCommitDiff(GetCommitDiffRequest) returns (GetCommitDiffResponse) {
+    option (api.get) = "/api/v1/commit/diff";
+  }
+}
+
+// CommitDetail 提交详情
+message CommitDetail {
+  string hash = 1;
+  string short_hash = 2;
+  string message = 3;
+  string author_name = 4;
+  string author_email = 5;
+  string author_date = 6;
+  string committer_name = 7;
+  string committer_email = 8;
+  string committer_date = 9;
+  repeated string parent_hashes = 10;
+  int32 files_changed = 11;
+  int32 additions = 12;
+  int32 deletions = 13;
+}
+
+// SearchCommitsRequest 搜索提交请求
+message SearchCommitsRequest {
+  string repo_key = 1 [(api.query) = "repo_key"];
+  string ref = 2 [(api.query) = "ref"];              // 分支/tag/commit，默认HEAD
+  string author = 3 [(api.query) = "author"];        // 作者过滤
+  string keyword = 4 [(api.query) = "keyword"];      // 消息关键词
+  string since = 5 [(api.query) = "since"];          // 开始时间 (YYYY-MM-DD)
+  string until = 6 [(api.query) = "until"];          // 结束时间 (YYYY-MM-DD)
+  string path = 7 [(api.query) = "path"];            // 文件路径过滤
+  int32 page = 8 [(api.query) = "page"];
+  int32 page_size = 9 [(api.query) = "page_size"];
+}
+
+// SearchCommitsResponse 搜索提交响应
+message SearchCommitsResponse {
+  common.BaseResponse base = 1;
+  repeated CommitDetail commits = 2;
+  int64 total = 3;
+}
+
+// GetCommitRequest 获取提交详情请求
+message GetCommitRequest {
+  string repo_key = 1 [(api.query) = "repo_key"];
+  string hash = 2 [(api.query) = "hash"];
+}
+
+// GetCommitResponse 获取提交详情响应
+message GetCommitResponse {
+  common.BaseResponse base = 1;
+  CommitDetail commit = 2;
+  repeated FileChange files = 3;
+}
+
+// FileChange 文件变更
+message FileChange {
+  string path = 1;
+  string status = 2;    // added, modified, deleted, renamed
+  int32 additions = 3;
+  int32 deletions = 4;
+  string old_path = 5;  // 重命名时的旧路径
+}
+
+// GetCommitDiffRequest 获取提交diff请求
+message GetCommitDiffRequest {
+  string repo_key = 1 [(api.query) = "repo_key"];
+  string hash = 2 [(api.query) = "hash"];
+  string file = 3 [(api.query) = "file"];  // 可选，指定文件
+}
+
+// GetCommitDiffResponse 获取提交diff响应
+message GetCommitDiffResponse {
+  common.BaseResponse base = 1;
+  string diff = 2;
+}

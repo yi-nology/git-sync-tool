@@ -69,6 +69,26 @@ service BranchService {
   rpc GetPatch(GetPatchRequest) returns (GetPatchResponse) {
     option (api.get) = "/api/v1/branch/patch";
   }
+  
+  // CherryPick 选择性合并提交
+  rpc CherryPick(CherryPickRequest) returns (CherryPickResponse) {
+    option (api.post) = "/api/v1/branch/cherry-pick";
+  }
+  
+  // Rebase 变基操作
+  rpc Rebase(RebaseRequest) returns (RebaseResponse) {
+    option (api.post) = "/api/v1/branch/rebase";
+  }
+  
+  // RebaseAbort 中止变基
+  rpc RebaseAbort(RebaseAbortRequest) returns (common.EmptyResponse) {
+    option (api.post) = "/api/v1/branch/rebase/abort";
+  }
+  
+  // RebaseContinue 继续变基
+  rpc RebaseContinue(RebaseContinueRequest) returns (RebaseResponse) {
+    option (api.post) = "/api/v1/branch/rebase/continue";
+  }
 }
 
 // Branch 分支实体
@@ -130,15 +150,15 @@ message CheckoutBranchRequest {
 // PushBranchRequest 推送分支请求
 message PushBranchRequest {
   string repo_key = 1 [(api.body) = "repo_key"];
-  string branch = 2 [(api.body) = "branch"];
-  string remote = 3 [(api.body) = "remote"];
+  string name = 2 [(api.body) = "name"];
+  repeated string remotes = 3 [(api.body) = "remotes"];
   bool force = 4 [(api.body) = "force"];
 }
 
 // PullBranchRequest 拉取分支请求
 message PullBranchRequest {
   string repo_key = 1 [(api.body) = "repo_key"];
-  string branch = 2 [(api.body) = "branch"];
+  string name = 2 [(api.body) = "name"];
   string remote = 3 [(api.body) = "remote"];
 }
 
@@ -146,7 +166,7 @@ message PullBranchRequest {
 message CompareBranchRequest {
   string repo_key = 1 [(api.query) = "repo_key"];
   string base = 2 [(api.query) = "base"];
-  string head = 3 [(api.query) = "head"];
+  string target = 3 [(api.query) = "target"];
 }
 
 // CompareBranchResponse 比较分支响应
@@ -178,8 +198,8 @@ message FileDiff {
 // MergeBranchRequest 合并分支请求
 message MergeBranchRequest {
   string repo_key = 1 [(api.body) = "repo_key"];
-  string source_branch = 2 [(api.body) = "source_branch"];
-  string target_branch = 3 [(api.body) = "target_branch"];
+  string source = 2 [(api.body) = "source"];
+  string target = 3 [(api.body) = "target"];
   string message = 4 [(api.body) = "message"];
   bool no_ff = 5 [(api.body) = "no_ff"];
   bool squash = 6 [(api.body) = "squash"];
@@ -196,8 +216,8 @@ message MergeBranchResponse {
 // MergeCheckRequest 合并检查请求
 message MergeCheckRequest {
   string repo_key = 1 [(api.query) = "repo_key"];
-  string source_branch = 2 [(api.query) = "source_branch"];
-  string target_branch = 3 [(api.query) = "target_branch"];
+  string base = 2 [(api.query) = "base"];
+  string target = 3 [(api.query) = "target"];
 }
 
 // MergeCheckResponse 合并检查响应
@@ -214,8 +234,8 @@ message MergeCheckResponse {
 message GetDiffRequest {
   string repo_key = 1 [(api.query) = "repo_key"];
   string base = 2 [(api.query) = "base"];
-  string head = 3 [(api.query) = "head"];
-  string path = 4 [(api.query) = "path"];
+  string target = 3 [(api.query) = "target"];
+  string file = 4 [(api.query) = "file"];
 }
 
 // GetDiffResponse 获取差异响应
@@ -228,11 +248,53 @@ message GetDiffResponse {
 message GetPatchRequest {
   string repo_key = 1 [(api.query) = "repo_key"];
   string base = 2 [(api.query) = "base"];
-  string head = 3 [(api.query) = "head"];
+  string target = 3 [(api.query) = "target"];
 }
 
 // GetPatchResponse 获取补丁响应
 message GetPatchResponse {
   common.BaseResponse base = 1;
   string patch = 2;
+}
+
+// CherryPickRequest Cherry-pick请求
+message CherryPickRequest {
+  string repo_key = 1 [(api.body) = "repo_key"];
+  string commit_hash = 2 [(api.body) = "commit_hash"];
+  bool no_commit = 3 [(api.body) = "no_commit"];  // 只应用更改，不自动提交
+}
+
+// CherryPickResponse Cherry-pick响应
+message CherryPickResponse {
+  common.BaseResponse base = 1;
+  bool success = 2;
+  string new_commit = 3;          // 新产生的commit hash
+  repeated string conflicts = 4;  // 冲突文件列表
+}
+
+// RebaseRequest Rebase请求
+message RebaseRequest {
+  string repo_key = 1 [(api.body) = "repo_key"];
+  string upstream = 2 [(api.body) = "upstream"];      // 上游分支，如 origin/main
+  string onto = 3 [(api.body) = "onto"];              // 可选，变基到指定commit
+  bool interactive = 4 [(api.body) = "interactive"];  // 是否交互式（暂不支持）
+}
+
+// RebaseResponse Rebase响应
+message RebaseResponse {
+  common.BaseResponse base = 1;
+  bool success = 2;
+  bool in_progress = 3;           // 是否有进行中的rebase
+  repeated string conflicts = 4;  // 冲突文件列表
+  string current_commit = 5;      // 当前处理的commit
+}
+
+// RebaseAbortRequest 中止Rebase请求
+message RebaseAbortRequest {
+  string repo_key = 1 [(api.body) = "repo_key"];
+}
+
+// RebaseContinueRequest 继续Rebase请求
+message RebaseContinueRequest {
+  string repo_key = 1 [(api.body) = "repo_key"];
 }

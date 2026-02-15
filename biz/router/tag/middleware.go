@@ -40,3 +40,8 @@ func _listMw() []app.HandlerFunc {
 	// your code...
 	return nil
 }
+
+func _pushMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}

@@ -2,6 +2,18 @@
   <div class="settings-page">
     <h2>系统设置</h2>
 
+    <el-card header="SSH 密钥管理" class="mb-4">
+      <p>管理用于 Git 仓库认证的 SSH 密钥，支持将密钥存储在数据库中。</p>
+      <el-button type="primary" @click="$router.push('/settings/ssh-keys')">
+        <el-icon><Key /></el-icon>
+        管理 SSH 密钥
+      </el-button>
+    </el-card>
+
+    <el-card header="通知渠道管理" class="mb-4">
+      <NotificationManager />
+    </el-card>
+
     <el-card header="系统配置" class="mb-4">
       <el-form :model="config" label-width="140px" v-loading="loading">
         <el-form-item label="调试模式">
@@ -35,8 +47,10 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
+import { Key } from '@element-plus/icons-vue'
 import { getSystemConfig, updateSystemConfig } from '@/api/modules/system'
 import type { SystemConfig } from '@/types/stats'
+import NotificationManager from '@/components/settings/NotificationManager.vue'
 
 const loading = ref(false)
 const saving = ref(false)

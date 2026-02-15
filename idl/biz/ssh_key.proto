@@ -1,0 +1,106 @@
+// idl/biz/ssh_key.proto - 数据库SSH密钥管理模块
+syntax = "proto3";
+
+package sshkey;
+
+option go_package = "github.com/yi-nology/git-manage-service/biz/model/biz/sshkey";
+
+import "api.proto";
+import "common.proto";
+
+// SSHKeyService 数据库SSH密钥管理服务
+service SSHKeyService {
+  // ListDBSSHKeys 列出数据库中的SSH密钥
+  rpc ListDBSSHKeys(common.EmptyRequest) returns (ListDBSSHKeysResponse) {
+    option (api.get) = "/api/v1/system/db-ssh-keys";
+  }
+  
+  // CreateDBSSHKey 创建SSH密钥
+  rpc CreateDBSSHKey(CreateDBSSHKeyRequest) returns (DBSSHKeyResponse) {
+    option (api.post) = "/api/v1/system/db-ssh-keys";
+  }
+  
+  // GetDBSSHKey 获取SSH密钥详情
+  rpc GetDBSSHKey(GetDBSSHKeyRequest) returns (DBSSHKeyResponse) {
+    option (api.get) = "/api/v1/system/db-ssh-keys/:id";
+  }
+  
+  // UpdateDBSSHKey 更新SSH密钥
+  rpc UpdateDBSSHKey(UpdateDBSSHKeyRequest) returns (DBSSHKeyResponse) {
+    option (api.put) = "/api/v1/system/db-ssh-keys/:id";
+  }
+  
+  // DeleteDBSSHKey 删除SSH密钥
+  rpc DeleteDBSSHKey(DeleteDBSSHKeyRequest) returns (common.EmptyResponse) {
+    option (api.delete) = "/api/v1/system/db-ssh-keys/:id";
+  }
+  
+  // TestDBSSHKey 测试SSH密钥连接
+  rpc TestDBSSHKey(TestDBSSHKeyRequest) returns (TestDBSSHKeyResponse) {
+    option (api.post) = "/api/v1/system/db-ssh-keys/:id/test";
+  }
+}
+
+// DBSSHKey 数据库SSH密钥信息
+message DBSSHKey {
+  uint64 id = 1;
+  string name = 2;
+  string description = 3;
+  string public_key = 4;
+  string key_type = 5;
+  bool has_passphrase = 6;
+  string created_at = 7;
+  string updated_at = 8;
+}
+
+// CreateDBSSHKeyRequest 创建请求
+message CreateDBSSHKeyRequest {
+  string name = 1 [(api.body) = "name"];
+  string description = 2 [(api.body) = "description"];
+  string private_key = 3 [(api.body) = "private_key"];
+  string public_key = 4 [(api.body) = "public_key"];
+  string passphrase = 5 [(api.body) = "passphrase"];
+}
+
+// GetDBSSHKeyRequest 获取详情请求
+message GetDBSSHKeyRequest {
+  uint64 id = 1 [(api.path) = "id"];
+}
+
+// UpdateDBSSHKeyRequest 更新请求
+message UpdateDBSSHKeyRequest {
+  uint64 id = 1 [(api.path) = "id"];
+  string description = 2 [(api.body) = "description"];
+  string private_key = 3 [(api.body) = "private_key"];
+  string passphrase = 4 [(api.body) = "passphrase"];
+}
+
+// DeleteDBSSHKeyRequest 删除请求
+message DeleteDBSSHKeyRequest {
+  uint64 id = 1 [(api.path) = "id"];
+}
+
+// TestDBSSHKeyRequest 测试连接请求
+message TestDBSSHKeyRequest {
+  uint64 id = 1 [(api.path) = "id"];
+  string url = 2 [(api.body) = "url"];
+}
+
+// ListDBSSHKeysResponse 列表响应
+message ListDBSSHKeysResponse {
+  common.BaseResponse base = 1;
+  repeated DBSSHKey keys = 2;
+}
+
+// DBSSHKeyResponse 单个密钥响应
+message DBSSHKeyResponse {
+  common.BaseResponse base = 1;
+  DBSSHKey key = 2;
+}
+
+// TestDBSSHKeyResponse 测试连接响应
+message TestDBSSHKeyResponse {
+  common.BaseResponse base = 1;
+  bool success = 2;
+  string message = 3;
+}

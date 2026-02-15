@@ -10,29 +10,36 @@ import (
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
 	"github.com/yi-nology/git-manage-service/biz/dal/db"
 	"github.com/yi-nology/git-manage-service/biz/model/api"
+	auditModel "github.com/yi-nology/git-manage-service/biz/model/biz/audit"
 	"github.com/yi-nology/git-manage-service/pkg/response"
 )
 
 // List .
 // @router /api/v1/audit/logs [GET]
 func List(ctx context.Context, c *app.RequestContext) {
-	page, _ := strconv.Atoi(c.Query("page"))
+	var req auditModel.ListAuditLogRequest
+	if err := c.BindAndValidate(&req); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	page := int(req.Page)
 	if page < 1 {
 		page = 1
 	}
-	pageSize, _ := strconv.Atoi(c.Query("page_size"))
+	pageSize := int(req.PageSize)
 	if pageSize < 1 {
 		pageSize = 20
 	}
 
 	dao := db.NewAuditLogDAO()
-	logs, err := dao.FindPage(page, pageSize)
+	logs, err := dao.FindPageWithFilters(page, pageSize, req.Action, req.Target, req.StartDate, req.EndDate)
 	if err != nil {
 		response.InternalServerError(c, err.Error())
 		return
 	}
 
-	total, _ := dao.Count()
+	total, _ := dao.CountWithFilters(req.Action, req.Target, req.StartDate, req.EndDate)
 
 	dtos := make([]api.AuditLogDTO, len(logs))
 	for i, log := range logs {

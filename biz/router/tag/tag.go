@@ -26,6 +26,7 @@ func Register(r *server.Hertz) {
 				_tag.POST("/create", append(_createMw(), tag.Create)...)
 				_tag.POST("/delete", append(_deleteMw(), tag.Delete)...)
 				_tag.GET("/list", append(_listMw(), tag.List)...)
+				_tag.POST("/push", append(_pushMw(), tag.Push)...)
 			}
 		}
 	}

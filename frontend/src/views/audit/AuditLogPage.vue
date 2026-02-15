@@ -6,6 +6,13 @@
     </div>
 
     <el-card>
+      <div class="filter-bar">
+        <el-input v-model="filterAction" placeholder="操作类型" clearable style="width: 140px" @clear="loadLogs" @keyup.enter="loadLogs" />
+        <el-input v-model="filterTarget" placeholder="目标对象" clearable style="width: 200px" @clear="loadLogs" @keyup.enter="loadLogs" />
+        <el-date-picker v-model="filterDateRange" type="daterange" range-separator="~" start-placeholder="开始日期" end-placeholder="结束日期" value-format="YYYY-MM-DD" style="width: 280px" @change="loadLogs" />
+        <el-button type="primary" @click="loadLogs" :icon="Search">搜索</el-button>
+      </div>
+
       <el-table :data="logs" v-loading="loading" stripe border>
         <el-table-column prop="created_at" label="时间" width="180">
           <template #default="{ row }">{{ formatDate(row.created_at) }}</template>
@@ -54,7 +61,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { Warning, RefreshRight } from '@element-plus/icons-vue'
+import { Warning, RefreshRight, Search } from '@element-plus/icons-vue'
 import { getAuditLogs } from '@/api/modules/audit'
 import type { AuditLogDTO } from '@/types/stats'
 import { formatDate } from '@/utils/format'
@@ -64,6 +71,10 @@ const logs = ref<AuditLogDTO[]>([])
 const totalCount = ref(0)
 const currentPage = ref(1)
 const pageSize = 20
+
+const filterAction = ref('')
+const filterTarget = ref('')
+const filterDateRange = ref<[string, string] | null>(null)
 
 const showDetailDialog = ref(false)
 const detailContent = ref('')
@@ -82,7 +93,14 @@ onMounted(() => {
 async function loadLogs() {
   loading.value = true
   try {
-    const res = await getAuditLogs({ page: currentPage.value, page_size: pageSize })
+    const res = await getAuditLogs({
+      page: currentPage.value,
+      page_size: pageSize,
+      action: filterAction.value || undefined,
+      target: filterTarget.value || undefined,
+      start_date: filterDateRange.value?.[0] || undefined,
+      end_date: filterDateRange.value?.[1] || undefined,
+    })
     logs.value = res.items || []
     totalCount.value = res.total || 0
   } finally {
@@ -119,6 +137,13 @@ function showDetail(details: string) {
   justify-content: space-between;
   align-items: center;
   margin-top: 16px;
+}
+.filter-bar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  align-items: center;
 }
 .detail-content {
   background: #f5f7fa;

@@ -36,7 +36,11 @@ func (s *GitService) ListBranchesWithInfo(path string) ([]domain.BranchInfo, err
 	var branches []domain.BranchInfo
 
 	err = iter.ForEach(func(ref *plumbing.Reference) error {
-		if !ref.Name().IsBranch() && !ref.Name().IsRemote() {
+		// 只处理本地分支 (refs/heads/*) 和远程跟踪分支 (refs/remotes/*)
+		isBranch := ref.Name().IsBranch()
+		isRemote := ref.Name().IsRemote()
+
+		if !isBranch && !isRemote {
 			return nil
 		}
 
@@ -46,6 +50,16 @@ func (s *GitService) ListBranchesWithInfo(path string) ([]domain.BranchInfo, err
 		b := domain.BranchInfo{
 			Name: name,
 			Hash: hash.String(),
+		}
+
+		// 明确判断分支类型
+		if isBranch {
+			b.Type = "local"
+		} else if isRemote {
+			b.Type = "remote"
+		} else {
+			// 不应该到这里，但保险起见跳过
+			return nil
 		}
 
 		if hash == headHash && ref.Name().IsBranch() {

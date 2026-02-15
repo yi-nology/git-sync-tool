@@ -24,6 +24,11 @@ service TagService {
   rpc Delete(DeleteTagRequest) returns (common.EmptyResponse) {
     option (api.post) = "/api/v1/tag/delete";
   }
+
+  // Push 推送标签到远端
+  rpc Push(PushTagRequest) returns (common.EmptyResponse) {
+    option (api.post) = "/api/v1/tag/push";
+  }
 }
 
 // Tag 标签实体
@@ -57,10 +62,20 @@ message CreateTagRequest {
   string ref = 3 [(api.body) = "ref"];
   string message = 4 [(api.body) = "message"];
   bool annotated = 5 [(api.body) = "annotated"];
+  string push_remote = 6 [(api.body) = "push_remote"];
 }
 
 // DeleteTagRequest 删除标签请求
 message DeleteTagRequest {
   string repo_key = 1 [(api.body) = "repo_key"];
   string name = 2 [(api.body) = "name"];
+  bool delete_remote = 3 [(api.body) = "delete_remote"];
+  string remote_name = 4 [(api.body) = "remote_name"];
+}
+
+// PushTagRequest 推送标签请求
+message PushTagRequest {
+  string repo_key = 1 [(api.body) = "repo_key"];
+  string tag_name = 2 [(api.body) = "tag_name"];
+  string remote_name = 3 [(api.body) = "remote_name"];
 }

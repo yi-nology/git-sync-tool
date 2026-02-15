@@ -68,3 +68,11 @@ export function getTagList(repoKey: string) {
 export function createTag(data: CreateTagReq) {
   return request.post('/tag/create', data)
 }
+
+export function deleteTag(data: { repo_key: string; name: string; delete_remote?: boolean; remote_name?: string }) {
+  return request.post('/tag/delete', data)
+}
+
+export function pushTag(data: { repo_key: string; tag_name: string; remote_name: string }) {
+  return request.post('/tag/push', data)
+}

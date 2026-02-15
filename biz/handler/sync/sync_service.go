@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/yi-nology/git-manage-service/biz/dal/db"
 	"github.com/yi-nology/git-manage-service/biz/model/api"
+	syncModel "github.com/yi-nology/git-manage-service/biz/model/biz/sync"
 	"github.com/yi-nology/git-manage-service/biz/model/po"
 	"github.com/yi-nology/git-manage-service/biz/service/audit"
 	syncSvc "github.com/yi-nology/git-manage-service/biz/service/sync"
@@ -19,14 +20,19 @@ import (
 // ListTasks .
 // @router /api/v1/sync/tasks [GET]
 func ListTasks(ctx context.Context, c *app.RequestContext) {
-	repoKey := c.Query("repo_key")
+	var req syncModel.ListTasksRequest
+	if err := c.BindAndValidate(&req); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
 	var tasks []po.SyncTask
 	var err error
 
 	taskDAO := db.NewSyncTaskDAO()
 
-	if repoKey != "" {
-		tasks, err = taskDAO.FindByRepoKey(repoKey)
+	if req.RepoKey != "" {
+		tasks, err = taskDAO.FindByRepoKey(req.RepoKey)
 	} else {
 		tasks, err = taskDAO.FindAllWithRepos()
 	}
@@ -45,13 +51,18 @@ func ListTasks(ctx context.Context, c *app.RequestContext) {
 // GetTask .
 // @router /api/v1/sync/task [GET]
 func GetTask(ctx context.Context, c *app.RequestContext) {
-	key := c.Query("key")
-	if key == "" {
+	var req syncModel.GetTaskRequest
+	if err := c.BindAndValidate(&req); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	if req.Key == "" {
 		response.BadRequest(c, "key is required")
 		return
 	}
 
-	task, err := db.NewSyncTaskDAO().FindByKey(key)
+	task, err := db.NewSyncTaskDAO().FindByKey(req.Key)
 	if err != nil {
 		response.NotFound(c, "task not found")
 		return
@@ -62,31 +73,39 @@ func GetTask(ctx context.Context, c *app.RequestContext) {
 // CreateTask .
 // @router /api/v1/sync/task/create [POST]
 func CreateTask(ctx context.Context, c *app.RequestContext) {
-	var req po.SyncTask
+	var req syncModel.CreateTaskRequest
 	if err := c.BindAndValidate(&req); err != nil {
 		response.BadRequest(c, err.Error())
 		return
 	}
 
-	req.Key = uuid.New().String()
+	task := po.SyncTask{
+		Key:           uuid.New().String(),
+		SourceRepoKey: req.SourceRepoKey,
+		SourceRemote:  req.SourceRemote,
+		SourceBranch:  req.SourceBranch,
+		TargetRepoKey: req.TargetRepoKey,
+		TargetRemote:  req.TargetRemote,
+		TargetBranch:  req.TargetBranch,
+		PushOptions:   req.PushOptions,
+		Cron:          req.Cron,
+		Enabled:       req.Enabled,
+	}
 
-	if err := db.NewSyncTaskDAO().Create(&req); err != nil {
+	if err := db.NewSyncTaskDAO().Create(&task); err != nil {
 		response.InternalServerError(c, err.Error())
 		return
 	}
 
-	syncSvc.CronSvc.UpdateTask(req)
-	audit.AuditSvc.Log(c, "CREATE", "task:"+req.Key, req)
-	response.Success(c, api.NewSyncTaskDTO(req))
+	syncSvc.CronSvc.UpdateTask(task)
+	audit.AuditSvc.Log(c, "CREATE", "task:"+task.Key, task)
+	response.Success(c, api.NewSyncTaskDTO(task))
 }
 
 // UpdateTask .
 // @router /api/v1/sync/task/update [POST]
 func UpdateTask(ctx context.Context, c *app.RequestContext) {
-	var req struct {
-		Key string `json:"key"`
-		po.SyncTask
-	}
+	var req syncModel.UpdateTaskRequest
 	if err := c.BindAndValidate(&req); err != nil {
 		response.BadRequest(c, err.Error())
 		return
@@ -122,9 +141,7 @@ func UpdateTask(ctx context.Context, c *app.RequestContext) {
 // DeleteTask .
 // @router /api/v1/sync/task/delete [POST]
 func DeleteTask(ctx context.Context, c *app.RequestContext) {
-	var req struct {
-		Key string `json:"key"`
-	}
+	var req syncModel.DeleteTaskRequest
 	if err := c.BindAndValidate(&req); err != nil {
 		response.BadRequest(c, err.Error())
 		return
@@ -147,7 +164,7 @@ func DeleteTask(ctx context.Context, c *app.RequestContext) {
 // RunTask .
 // @router /api/v1/sync/run [POST]
 func RunTask(ctx context.Context, c *app.RequestContext) {
-	var req api.RunSyncReq
+	var req syncModel.RunTaskRequest
 	if err := c.BindAndValidate(&req); err != nil {
 		response.BadRequest(c, err.Error())
 		return
@@ -165,7 +182,7 @@ func RunTask(ctx context.Context, c *app.RequestContext) {
 // ExecuteSync .
 // @router /api/v1/sync/execute [POST]
 func ExecuteSync(ctx context.Context, c *app.RequestContext) {
-	var req api.ExecuteSyncReq
+	var req syncModel.ExecuteSyncRequest
 	if err := c.BindAndValidate(&req); err != nil {
 		response.BadRequest(c, err.Error())
 		return
@@ -202,23 +219,35 @@ func ExecuteSync(ctx context.Context, c *app.RequestContext) {
 // ListHistory .
 // @router /api/v1/sync/history [GET]
 func ListHistory(ctx context.Context, c *app.RequestContext) {
-	repoKey := c.Query("repo_key")
+	var req syncModel.ListHistoryRequest
+	if err := c.BindAndValidate(&req); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	limit := int(req.Limit)
+	if limit < 1 {
+		limit = 50
+	}
+
 	var runs []po.SyncRun
 	var err error
 
 	runDAO := db.NewSyncRunDAO()
 
-	if repoKey != "" {
-		taskKeys, _ := db.NewSyncTaskDAO().GetKeysByRepoKey(repoKey)
+	if req.TaskKey != "" {
+		runs, err = runDAO.FindByTaskKeys([]string{req.TaskKey}, limit)
+	} else if req.RepoKey != "" {
+		taskKeys, _ := db.NewSyncTaskDAO().GetKeysByRepoKey(req.RepoKey)
 
 		if len(taskKeys) > 0 {
-			runs, err = runDAO.FindByTaskKeys(taskKeys, 50)
+			runs, err = runDAO.FindByTaskKeys(taskKeys, limit)
 		} else {
 			response.Success(c, []api.SyncRunDTO{})
 			return
 		}
 	} else {
-		runs, err = runDAO.FindLatest(50)
+		runs, err = runDAO.FindLatest(limit)
 	}
 
 	if err != nil {
@@ -235,21 +264,20 @@ func ListHistory(ctx context.Context, c *app.RequestContext) {
 // DeleteHistory .
 // @router /api/v1/sync/history/delete [POST]
 func DeleteHistory(ctx context.Context, c *app.RequestContext) {
-	var req struct {
-		ID int `json:"id"`
-	}
+	var req syncModel.DeleteHistoryRequest
 	if err := c.BindAndValidate(&req); err != nil {
 		// Also try query param for backwards compatibility
 		idStr := c.Query("id")
 		if idStr != "" {
-			req.ID, _ = strconv.Atoi(idStr)
+			id, _ := strconv.Atoi(idStr)
+			req.Id = int64(id)
 		} else {
 			response.BadRequest(c, err.Error())
 			return
 		}
 	}
 
-	if err := db.NewSyncRunDAO().Delete(uint(req.ID)); err != nil {
+	if err := db.NewSyncRunDAO().Delete(uint(req.Id)); err != nil {
 		response.InternalServerError(c, err.Error())
 		return
 	}

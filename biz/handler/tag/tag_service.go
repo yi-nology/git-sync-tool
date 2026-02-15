@@ -9,6 +9,7 @@ import (
 
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/yi-nology/git-manage-service/biz/dal/db"
+	tagModel "github.com/yi-nology/git-manage-service/biz/model/biz/tag"
 	"github.com/yi-nology/git-manage-service/biz/service/git"
 	"github.com/yi-nology/git-manage-service/pkg/response"
 )
@@ -41,13 +42,7 @@ func List(ctx context.Context, c *app.RequestContext) {
 // Create .
 // @router /api/v1/tag/create [POST]
 func Create(ctx context.Context, c *app.RequestContext) {
-	var req struct {
-		RepoKey    string `json:"repo_key"`
-		TagName    string `json:"tag_name"`
-		Ref        string `json:"ref"`
-		Message    string `json:"message"`
-		PushRemote string `json:"push_remote"`
-	}
+	var req tagModel.CreateTagRequest
 	if err := c.BindAndValidate(&req); err != nil {
 		response.BadRequest(c, err.Error())
 		return
@@ -62,7 +57,7 @@ func Create(ctx context.Context, c *app.RequestContext) {
 	svc := git.NewGitService()
 	authorName, authorEmail, _ := svc.GetGlobalGitUser()
 
-	tagName := req.TagName
+	tagName := req.Name
 	// Auto-increment version logic
 	if tagName == "auto" {
 		latest, err := svc.GetLatestVersion(repo.Path)
@@ -96,23 +91,63 @@ func Create(ctx context.Context, c *app.RequestContext) {
 // Delete .
 // @router /api/v1/tag/delete [POST]
 func Delete(ctx context.Context, c *app.RequestContext) {
-	var req struct {
-		RepoKey string `json:"repo_key"`
-		TagName string `json:"tag_name"`
-	}
+	var req tagModel.DeleteTagRequest
 	if err := c.BindAndValidate(&req); err != nil {
 		response.BadRequest(c, err.Error())
 		return
 	}
 
-	_, err := db.NewRepoDAO().FindByKey(req.RepoKey)
+	repo, err := db.NewRepoDAO().FindByKey(req.RepoKey)
 	if err != nil {
 		response.NotFound(c, "repo not found")
 		return
 	}
 
-	// Note: DeleteTag not implemented in git service yet
-	response.BadRequest(c, "tag deletion not supported")
+	svc := git.NewGitService()
+
+	// Delete remote tag first if requested
+	if req.DeleteRemote && req.RemoteName != "" {
+		if err := svc.DeleteRemoteTag(repo.Path, req.RemoteName, req.Name, "none", "", ""); err != nil {
+			response.InternalServerError(c, "failed to delete remote tag: "+err.Error())
+			return
+		}
+	}
+
+	// Delete local tag
+	if err := svc.DeleteTag(repo.Path, req.Name); err != nil {
+		response.InternalServerError(c, "failed to delete local tag: "+err.Error())
+		return
+	}
+
+	response.Success(c, nil)
+}
+
+// Push .
+// @router /api/v1/tag/push [POST]
+func Push(ctx context.Context, c *app.RequestContext) {
+	var req tagModel.PushTagRequest
+	if err := c.BindAndValidate(&req); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	if req.RemoteName == "" {
+		req.RemoteName = "origin"
+	}
+
+	repo, err := db.NewRepoDAO().FindByKey(req.RepoKey)
+	if err != nil {
+		response.NotFound(c, "repo not found")
+		return
+	}
+
+	svc := git.NewGitService()
+	if err := svc.PushTag(repo.Path, req.RemoteName, req.TagName, "none", "", ""); err != nil {
+		response.InternalServerError(c, "failed to push tag: "+err.Error())
+		return
+	}
+
+	response.Success(c, nil)
 }
 
 func incrementVersion(v string) string {
