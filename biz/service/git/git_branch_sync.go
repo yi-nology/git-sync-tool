@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
@@ -225,22 +226,39 @@ func (s *GitService) PushBranchWithDBKey(path, remote, branch, privateKey, passp
 	if err != nil {
 		return fmt.Errorf("failed to create temp key file: %v", err)
 	}
-	defer os.Remove(tmpFile.Name())
+	tmpKeyPath := tmpFile.Name()
+	defer os.Remove(tmpKeyPath)
 
-	if _, err := tmpFile.WriteString(privateKey); err != nil {
+	// 确保私钥以换行符结尾
+	keyContent := privateKey
+	if !strings.HasSuffix(keyContent, "\n") {
+		keyContent += "\n"
+	}
+
+	if _, err := tmpFile.WriteString(keyContent); err != nil {
 		tmpFile.Close()
 		return fmt.Errorf("failed to write key file: %v", err)
 	}
 	tmpFile.Close()
 
-	if err := os.Chmod(tmpFile.Name(), 0600); err != nil {
+	if err := os.Chmod(tmpKeyPath, 0600); err != nil {
 		return fmt.Errorf("failed to set key file permissions: %v", err)
 	}
 
-	sshCmd := fmt.Sprintf("ssh -i %s -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null", tmpFile.Name())
+	// 获取 remote URL 直接推送，避免 mirror 配置冲突
+	urlCmd := exec.Command("git", "remote", "get-url", remote)
+	urlCmd.Dir = path
+	urlOutput, err := urlCmd.Output()
+	if err != nil {
+		return fmt.Errorf("failed to get remote URL: %v", err)
+	}
+	remoteURL := strings.TrimSpace(string(urlOutput))
 
-	// git push remote branch
-	cmd := exec.Command("git", "push", remote, branch)
+	sshCmd := fmt.Sprintf("ssh -i %s -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o IdentitiesOnly=yes", tmpKeyPath)
+
+	// git push <url> refs/heads/branch:refs/heads/branch
+	refSpec := fmt.Sprintf("refs/heads/%s:refs/heads/%s", branch, branch)
+	cmd := exec.Command("git", "push", remoteURL, refSpec)
 	cmd.Dir = path
 	cmd.Env = append(os.Environ(), "GIT_SSH_COMMAND="+sshCmd)
 
@@ -281,6 +299,43 @@ func (s *GitService) PullBranchWithDBKey(path, remote, branch, privateKey, passp
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("git pull failed: %v, output: %s", err, string(output))
+	}
+
+	return nil
+}
+
+// FetchAllWithDBKey fetches all remotes using database SSH key (native git command)
+func (s *GitService) FetchAllWithDBKey(path, privateKey, passphrase string) error {
+	tmpFile, err := os.CreateTemp("", "git_ssh_key_*")
+	if err != nil {
+		return fmt.Errorf("failed to create temp key file: %v", err)
+	}
+	defer os.Remove(tmpFile.Name())
+
+	keyContent := privateKey
+	if !strings.HasSuffix(keyContent, "\n") {
+		keyContent += "\n"
+	}
+
+	if _, err := tmpFile.WriteString(keyContent); err != nil {
+		tmpFile.Close()
+		return fmt.Errorf("failed to write key file: %v", err)
+	}
+	tmpFile.Close()
+
+	if err := os.Chmod(tmpFile.Name(), 0600); err != nil {
+		return fmt.Errorf("failed to set key file permissions: %v", err)
+	}
+
+	sshCmd := fmt.Sprintf("ssh -i %s -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o IdentitiesOnly=yes", tmpFile.Name())
+
+	cmd := exec.Command("git", "fetch", "--all")
+	cmd.Dir = path
+	cmd.Env = append(os.Environ(), "GIT_SSH_COMMAND="+sshCmd)
+
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("git fetch --all failed: %v, output: %s", err, string(output))
 	}
 
 	return nil

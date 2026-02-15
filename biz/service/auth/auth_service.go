@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"crypto/x509"
+	"encoding/pem"
 	"fmt"
 
 	"github.com/go-git/go-git/v5/plumbing/transport"
@@ -105,6 +107,7 @@ func (s *AuthService) resolveLocalSSHKey(keyPath, passphrase string) (transport.
 }
 
 // GetDBSSHKeyContent 获取数据库SSH密钥的私钥内容（用于原生git命令）
+// 统一解析并重新编码为无密码的PKCS8 PEM格式，确保ssh命令能正确加载
 func (s *AuthService) GetDBSSHKeyContent(sshKeyID uint) (privateKey, passphrase string, err error) {
 	sshKey, err := s.sshKeyDAO.FindByID(sshKeyID)
 	if err != nil {
@@ -115,7 +118,43 @@ func (s *AuthService) GetDBSSHKeyContent(sshKeyID uint) (privateKey, passphrase 
 		return "", "", fmt.Errorf("SSH key %d has no private key content", sshKeyID)
 	}
 
-	return sshKey.PrivateKey, sshKey.Passphrase, nil
+	// 统一解析密钥并重新编码为无密码的标准PEM格式
+	// 这样可以避免 passphrase 问题和格式兼容性问题
+	decoded, err := normalizePrivateKey(sshKey.PrivateKey, sshKey.Passphrase)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to normalize private key: %w", err)
+	}
+
+	return decoded, "", nil
+}
+
+// normalizePrivateKey 解析私钥并重新编码为无密码的标准PKCS8 PEM格式
+func normalizePrivateKey(privateKeyPEM, passphrase string) (string, error) {
+	keyBytes := []byte(privateKeyPEM)
+
+	var rawKey interface{}
+	var err error
+
+	if passphrase != "" {
+		rawKey, err = ssh2.ParseRawPrivateKeyWithPassphrase(keyBytes, []byte(passphrase))
+	} else {
+		rawKey, err = ssh2.ParseRawPrivateKey(keyBytes)
+	}
+	if err != nil {
+		return "", fmt.Errorf("parse private key: %w", err)
+	}
+
+	pkcs8Bytes, err := x509.MarshalPKCS8PrivateKey(rawKey)
+	if err != nil {
+		return "", fmt.Errorf("marshal private key to PKCS8: %w", err)
+	}
+
+	pemBlock := &pem.Block{
+		Type:  "PRIVATE KEY",
+		Bytes: pkcs8Bytes,
+	}
+
+	return string(pem.EncodeToMemory(pemBlock)), nil
 }
 
 // GetAuthInfoForRemote 从仓库配置获取指定远程的认证信息

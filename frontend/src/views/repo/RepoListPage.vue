@@ -15,13 +15,6 @@
           <el-text type="info" size="small" class="mono-text">{{ row.path }}</el-text>
         </template>
       </el-table-column>
-      <el-table-column prop="config_source" label="配置来源" width="110">
-        <template #default="{ row }">
-          <el-tag size="small" :type="row.config_source === 'database' ? 'warning' : 'info'">
-            {{ row.config_source === 'database' ? '数据库' : '本地文件' }}
-          </el-tag>
-        </template>
-      </el-table-column>
       <el-table-column prop="remote_url" label="远程" min-width="180">
         <template #default="{ row }">
           <el-text size="small" truncated>{{ row.remote_url || '-' }}</el-text>
@@ -84,12 +77,6 @@
               </el-form-item>
             </div>
 
-            <el-form-item label="配置来源">
-              <el-select v-model="localForm.config_source">
-                <el-option label="本地配置文件 (.git/config)" value="local" />
-                <el-option label="数据库托管" value="database" />
-              </el-select>
-            </el-form-item>
           </el-form>
         </el-tab-pane>
 
@@ -215,7 +202,6 @@ const sshKeys = ref<string[]>([])
 const localForm = ref({
   name: '',
   path: '',
-  config_source: 'local',
 })
 
 const cloneForm = ref({
@@ -324,7 +310,6 @@ async function handleSubmitRepo() {
       await createRepo({
         name: localForm.value.name,
         path: localForm.value.path,
-        config_source: localForm.value.config_source,
         auth_type: 'none',
         remotes,
         remote_auths: {},
@@ -345,7 +330,6 @@ async function handleSubmitRepo() {
         auth_type: cloneForm.value.auth_type === 'none' ? undefined : cloneForm.value.auth_type,
         auth_key: cloneForm.value.auth_key || undefined,
         auth_secret: cloneForm.value.auth_secret || undefined,
-        config_source: 'database',
       })
       startClonePolling(result.task_id)
     }
@@ -379,7 +363,7 @@ function startClonePolling(taskId: string) {
 }
 
 function resetForms() {
-  localForm.value = { name: '', path: '', config_source: 'local' }
+  localForm.value = { name: '', path: '' }
   cloneForm.value = { remote_url: '', local_path: '', name: '', auth_type: 'none', auth_key: '', auth_secret: '' }
   scanResult.value = null
   connectionResult.value = null

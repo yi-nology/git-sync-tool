@@ -10,14 +10,13 @@ import (
 
 type Repo struct {
 	gorm.Model
-	Key          string `gorm:"uniqueIndex" json:"key"`
-	Name         string `gorm:"uniqueIndex" json:"name"`
-	Path         string `json:"path"`
-	RemoteURL    string `json:"remote_url"`
-	AuthType     string `json:"auth_type"`     // ssh, http, none
-	AuthKey      string `json:"auth_key"`      // SSH Key Path or Username
-	AuthSecret   string `json:"auth_secret"`   // Passphrase or Password (Encrypted in DB)
-	ConfigSource string `json:"config_source"` // local, database
+	Key        string `gorm:"uniqueIndex" json:"key"`
+	Name       string `gorm:"uniqueIndex" json:"name"`
+	Path       string `json:"path"`
+	RemoteURL  string `json:"remote_url"`
+	AuthType   string `json:"auth_type"`   // ssh, http, none
+	AuthKey    string `json:"auth_key"`    // SSH Key Path or Username
+	AuthSecret string `json:"auth_secret"` // Passphrase or Password (Encrypted in DB)
 
 	RemoteAuthsJSON string                     `json:"-"`                     // Stored in DB
 	RemoteAuths     map[string]domain.AuthInfo `gorm:"-" json:"remote_auths"` // Memory & API
