@@ -60,6 +60,12 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/settings/SettingsPage.vue'),
         meta: { title: '系统设置' },
       },
+      {
+        path: 'settings/ssh-keys',
+        name: 'SSHKeys',
+        component: () => import('@/views/settings/SSHKeysPage.vue'),
+        meta: { title: 'SSH 密钥管理' },
+      },
     ],
   },
 ]

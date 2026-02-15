@@ -6,19 +6,6 @@ import (
 	"github.com/yi-nology/git-manage-service/biz/model/po"
 )
 
-type RunSyncReq struct {
-	TaskKey string `json:"task_key"`
-}
-
-type ExecuteSyncReq struct {
-	RepoKey      string `json:"repo_key"`
-	SourceRemote string `json:"source_remote"` // "local", "origin", etc
-	SourceBranch string `json:"source_branch"`
-	TargetRemote string `json:"target_remote"`
-	TargetBranch string `json:"target_branch"`
-	PushOptions  string `json:"push_options"`
-}
-
 type SyncTaskDTO struct {
 	ID            uint      `json:"id"`
 	Key           string    `json:"key"`

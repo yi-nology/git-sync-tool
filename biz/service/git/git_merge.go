@@ -216,8 +216,8 @@ func (s *GitService) MergeDryRun(path, source, target string) (*MergeResult, err
 	}, nil
 }
 
-// Merge performs the actual merge
-func (s *GitService) Merge(path, source, target, message string) error {
+// Merge performs the actual merge with optional no-ff and squash strategies
+func (s *GitService) Merge(path, source, target, message string, noFF, squash bool) error {
 	// 1. Checkout target
 	if err := s.CheckoutBranch(path, target); err != nil {
 		return fmt.Errorf("checkout target failed: %v", err)
@@ -226,6 +226,12 @@ func (s *GitService) Merge(path, source, target, message string) error {
 	// 2. Merge source
 	// We use RunCommand because go-git does not support full merge logic yet
 	args := []string{"merge", source}
+	if noFF {
+		args = append(args, "--no-ff")
+	}
+	if squash {
+		args = append(args, "--squash")
+	}
 	if message != "" {
 		args = append(args, "-m", message)
 	}
@@ -236,6 +242,19 @@ func (s *GitService) Merge(path, source, target, message string) error {
 		// We should abort to restore state
 		s.RunCommand(path, "merge", "--abort")
 		return fmt.Errorf("merge failed (aborted): %v. Output: %s", err, out)
+	}
+
+	// If squash, we need to commit separately
+	if squash {
+		commitArgs := []string{"commit"}
+		if message != "" {
+			commitArgs = append(commitArgs, "-m", message)
+		} else {
+			commitArgs = append(commitArgs, "-m", fmt.Sprintf("Squash merge %s into %s", source, target))
+		}
+		if out, err := s.RunCommand(path, commitArgs...); err != nil {
+			return fmt.Errorf("squash commit failed: %v. Output: %s", err, out)
+		}
 	}
 
 	return nil

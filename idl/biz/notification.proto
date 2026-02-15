@@ -1,0 +1,121 @@
+// idl/biz/notification.proto - 通知服务模块
+syntax = "proto3";
+
+package notification;
+
+option go_package = "github.com/yi-nology/git-manage-service/biz/model/biz/notification";
+
+import "api.proto";
+import "common.proto";
+
+// NotificationService 通知服务
+service NotificationService {
+  // ListChannels 列出通知渠道
+  rpc ListChannels(ListChannelsRequest) returns (ListChannelsResponse) {
+    option (api.get) = "/api/v1/notification/channels";
+  }
+  
+  // GetChannel 获取通知渠道详情
+  rpc GetChannel(GetChannelRequest) returns (GetChannelResponse) {
+    option (api.get) = "/api/v1/notification/channel";
+  }
+  
+  // CreateChannel 创建通知渠道
+  rpc CreateChannel(CreateChannelRequest) returns (ChannelResponse) {
+    option (api.post) = "/api/v1/notification/channel/create";
+  }
+  
+  // UpdateChannel 更新通知渠道
+  rpc UpdateChannel(UpdateChannelRequest) returns (ChannelResponse) {
+    option (api.post) = "/api/v1/notification/channel/update";
+  }
+  
+  // DeleteChannel 删除通知渠道
+  rpc DeleteChannel(DeleteChannelRequest) returns (common.EmptyResponse) {
+    option (api.post) = "/api/v1/notification/channel/delete";
+  }
+  
+  // TestChannel 测试通知渠道
+  rpc TestChannel(TestChannelRequest) returns (TestChannelResponse) {
+    option (api.post) = "/api/v1/notification/channel/test";
+  }
+}
+
+// NotificationChannel 通知渠道
+message NotificationChannel {
+  int64 id = 1;
+  string name = 2;              // 渠道名称
+  string type = 3;              // 渠道类型: email, dingtalk, wechat, webhook
+  string config = 4;            // JSON配置
+  bool enabled = 5;             // 是否启用
+  bool notify_on_success = 6;   // 成功时通知
+  bool notify_on_failure = 7;   // 失败时通知
+  string created_at = 8;
+  string updated_at = 9;
+}
+
+// ListChannelsRequest 列出通知渠道请求
+message ListChannelsRequest {
+  string type = 1 [(api.query) = "type"];
+}
+
+// ListChannelsResponse 列出通知渠道响应
+message ListChannelsResponse {
+  common.BaseResponse base = 1;
+  repeated NotificationChannel channels = 2;
+}
+
+// GetChannelRequest 获取渠道详情请求
+message GetChannelRequest {
+  int64 id = 1 [(api.query) = "id"];
+}
+
+// GetChannelResponse 获取渠道详情响应
+message GetChannelResponse {
+  common.BaseResponse base = 1;
+  NotificationChannel channel = 2;
+}
+
+// CreateChannelRequest 创建渠道请求
+message CreateChannelRequest {
+  string name = 1 [(api.body) = "name"];
+  string type = 2 [(api.body) = "type"];
+  string config = 3 [(api.body) = "config"];
+  bool enabled = 4 [(api.body) = "enabled"];
+  bool notify_on_success = 5 [(api.body) = "notify_on_success"];
+  bool notify_on_failure = 6 [(api.body) = "notify_on_failure"];
+}
+
+// UpdateChannelRequest 更新渠道请求
+message UpdateChannelRequest {
+  int64 id = 1 [(api.body) = "id"];
+  string name = 2 [(api.body) = "name"];
+  string config = 3 [(api.body) = "config"];
+  bool enabled = 4 [(api.body) = "enabled"];
+  bool notify_on_success = 5 [(api.body) = "notify_on_success"];
+  bool notify_on_failure = 6 [(api.body) = "notify_on_failure"];
+}
+
+// DeleteChannelRequest 删除渠道请求
+message DeleteChannelRequest {
+  int64 id = 1 [(api.body) = "id"];
+}
+
+// ChannelResponse 渠道操作响应
+message ChannelResponse {
+  common.BaseResponse base = 1;
+  NotificationChannel channel = 2;
+}
+
+// TestChannelRequest 测试渠道请求
+message TestChannelRequest {
+  int64 id = 1 [(api.body) = "id"];
+  string message = 2 [(api.body) = "message"];
+}
+
+// TestChannelResponse 测试渠道响应
+message TestChannelResponse {
+  common.BaseResponse base = 1;
+  bool success = 2;
+  string error = 3;
+}

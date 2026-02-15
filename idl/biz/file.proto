@@ -1,0 +1,93 @@
+// idl/biz/file.proto - 文件浏览模块
+syntax = "proto3";
+
+package file;
+
+option go_package = "github.com/yi-nology/git-manage-service/biz/model/biz/file";
+
+import "api.proto";
+import "common.proto";
+
+// FileService 文件浏览服务
+service FileService {
+  // GetTree 获取目录树
+  rpc GetTree(GetTreeRequest) returns (GetTreeResponse) {
+    option (api.get) = "/api/v1/file/tree";
+  }
+  
+  // GetBlob 获取文件内容
+  rpc GetBlob(GetBlobRequest) returns (GetBlobResponse) {
+    option (api.get) = "/api/v1/file/blob";
+  }
+  
+  // GetFileHistory 获取文件历史
+  rpc GetFileHistory(GetFileHistoryRequest) returns (GetFileHistoryResponse) {
+    option (api.get) = "/api/v1/file/history";
+  }
+}
+
+// TreeEntry 目录树条目
+message TreeEntry {
+  string name = 1;       // 文件/目录名
+  string path = 2;       // 完整路径
+  string type = 3;       // "file" 或 "dir"
+  int64 size = 4;        // 文件大小（字节）
+  string mode = 5;       // 文件权限模式
+  string hash = 6;       // blob/tree hash
+}
+
+// GetTreeRequest 获取目录树请求
+message GetTreeRequest {
+  string repo_key = 1 [(api.query) = "repo_key"];
+  string ref = 2 [(api.query) = "ref"];      // 分支名/tag/commit hash
+  string path = 3 [(api.query) = "path"];    // 目录路径，空为根目录
+  bool recursive = 4 [(api.query) = "recursive"]; // 是否递归获取
+}
+
+// GetTreeResponse 获取目录树响应
+message GetTreeResponse {
+  common.BaseResponse base = 1;
+  repeated TreeEntry entries = 2;
+  string current_ref = 3;   // 解析后的ref
+  string current_path = 4;  // 当前路径
+}
+
+// GetBlobRequest 获取文件内容请求
+message GetBlobRequest {
+  string repo_key = 1 [(api.query) = "repo_key"];
+  string ref = 2 [(api.query) = "ref"];      // 分支名/tag/commit hash
+  string path = 3 [(api.query) = "path"];    // 文件路径
+}
+
+// GetBlobResponse 获取文件内容响应
+message GetBlobResponse {
+  common.BaseResponse base = 1;
+  string content = 2;       // 文件内容（base64编码如果是二进制）
+  string encoding = 3;      // "utf-8" 或 "base64"
+  int64 size = 4;           // 文件大小
+  bool is_binary = 5;       // 是否是二进制文件
+  string mime_type = 6;     // MIME类型
+}
+
+// GetFileHistoryRequest 获取文件历史请求
+message GetFileHistoryRequest {
+  string repo_key = 1 [(api.query) = "repo_key"];
+  string ref = 2 [(api.query) = "ref"];
+  string path = 3 [(api.query) = "path"];
+  int32 limit = 4 [(api.query) = "limit"];
+}
+
+// FileCommit 文件提交记录
+message FileCommit {
+  string hash = 1;
+  string short_hash = 2;
+  string message = 3;
+  string author = 4;
+  string date = 5;
+}
+
+// GetFileHistoryResponse 获取文件历史响应
+message GetFileHistoryResponse {
+  common.BaseResponse base = 1;
+  repeated FileCommit commits = 2;
+}

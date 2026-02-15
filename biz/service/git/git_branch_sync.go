@@ -204,6 +204,10 @@ func (s *GitService) FetchAll(path string) error {
 
 		err := remote.Fetch(&git.FetchOptions{
 			Auth: auth,
+			RefSpecs: []config.RefSpec{
+				config.RefSpec("+refs/heads/*:refs/remotes/" + remote.Config().Name + "/*"),
+				config.RefSpec("+refs/tags/*:refs/tags/*"),
+			},
 		})
 		if err != nil && err != git.NoErrAlreadyUpToDate {
 			// Log error but continue?

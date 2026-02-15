@@ -13,6 +13,7 @@ import (
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/yi-nology/git-manage-service/biz/dal/db"
 	"github.com/yi-nology/git-manage-service/biz/model/api"
+	systemModel "github.com/yi-nology/git-manage-service/biz/model/biz/system"
 	"github.com/yi-nology/git-manage-service/biz/service/audit"
 	"github.com/yi-nology/git-manage-service/biz/service/git"
 	"github.com/yi-nology/git-manage-service/pkg/configs"
@@ -35,7 +36,7 @@ func GetConfig(ctx context.Context, c *app.RequestContext) {
 // UpdateConfig .
 // @router /api/v1/system/config [POST]
 func UpdateConfig(ctx context.Context, c *app.RequestContext) {
-	var req api.ConfigReq
+	var req systemModel.UpdateConfigRequest
 	if err := c.BindAndValidate(&req); err != nil {
 		response.BadRequest(c, err.Error())
 		return
@@ -59,7 +60,7 @@ func UpdateConfig(ctx context.Context, c *app.RequestContext) {
 // ListDirs .
 // @router /api/v1/system/dirs [GET]
 func ListDirs(ctx context.Context, c *app.RequestContext) {
-	var req api.ListDirsReq
+	var req systemModel.ListDirsRequest
 	if err := c.BindAndValidate(&req); err != nil {
 		response.BadRequest(c, err.Error())
 		return
@@ -142,14 +143,14 @@ func ListSSHKeys(ctx context.Context, c *app.RequestContext) {
 // TestConnection .
 // @router /api/v1/system/test-connection [POST]
 func TestConnection(ctx context.Context, c *app.RequestContext) {
-	var req api.TestConnectionReq
+	var req systemModel.TestConnectionRequest
 	if err := c.BindAndValidate(&req); err != nil {
 		response.BadRequest(c, err.Error())
 		return
 	}
 
 	gitSvc := git.NewGitService()
-	if err := gitSvc.TestRemoteConnection(req.URL); err != nil {
+	if err := gitSvc.TestRemoteConnection(req.Url); err != nil {
 		response.Success(c, map[string]string{"status": "failed", "error": err.Error()})
 		return
 	}
@@ -209,13 +210,7 @@ func GetRepoGitConfig(ctx context.Context, c *app.RequestContext) {
 // SubmitChanges .
 // @router /api/v1/system/repo/submit [POST]
 func SubmitChanges(ctx context.Context, c *app.RequestContext) {
-	var req struct {
-		RepoKey     string `json:"repo_key"`
-		Message     string `json:"message"`
-		Push        bool   `json:"push"`
-		AuthorName  string `json:"author_name"`
-		AuthorEmail string `json:"author_email"`
-	}
+	var req systemModel.SubmitChangesRequest
 	if err := c.BindAndValidate(&req); err != nil {
 		response.BadRequest(c, err.Error())
 		return
@@ -234,9 +229,17 @@ func SubmitChanges(ctx context.Context, c *app.RequestContext) {
 
 	gitSvc := git.NewGitService()
 
-	if err := gitSvc.AddAll(repo.Path); err != nil {
-		response.InternalServerError(c, "Failed to stage files: "+err.Error())
-		return
+	// Selective file staging or add all
+	if len(req.Files) > 0 {
+		if err := gitSvc.AddFiles(repo.Path, req.Files); err != nil {
+			response.InternalServerError(c, "Failed to stage files: "+err.Error())
+			return
+		}
+	} else {
+		if err := gitSvc.AddAll(repo.Path); err != nil {
+			response.InternalServerError(c, "Failed to stage files: "+err.Error())
+			return
+		}
 	}
 
 	status, _ := gitSvc.GetStatus(repo.Path)
@@ -262,6 +265,7 @@ func SubmitChanges(ctx context.Context, c *app.RequestContext) {
 	audit.AuditSvc.Log(c, "SUBMIT_CHANGES", "repo:"+repo.Key, map[string]interface{}{
 		"message": req.Message,
 		"push":    req.Push,
+		"files":   req.Files,
 	})
 
 	response.Success(c, map[string]string{"message": msg})

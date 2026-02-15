@@ -175,13 +175,24 @@
     </el-dialog>
 
     <!-- Create Tag Dialog -->
-    <el-dialog v-model="showTagDialog" title="打标签 (Tag)" width="500px" destroy-on-close>
-      <el-form :model="tagForm" label-width="90px">
+    <el-dialog v-model="showTagDialog" title="打标签 (Tag)" width="550px" destroy-on-close>
+      <el-form :model="tagForm" label-width="100px">
         <el-form-item label="目标引用">
           <el-input :model-value="tagForm.ref" disabled />
         </el-form-item>
+        <el-form-item label="版本类型">
+          <el-radio-group v-model="tagForm.versionType" @change="handleTagVersionTypeChange">
+            <el-radio-button value="patch">Patch</el-radio-button>
+            <el-radio-button value="minor">Minor</el-radio-button>
+            <el-radio-button value="major">Major</el-radio-button>
+            <el-radio-button value="custom">自定义</el-radio-button>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item label="当前版本" v-if="tagNextVersion">
+          <el-tag type="info" size="small">{{ tagNextVersion.current || '无' }}</el-tag>
+        </el-form-item>
         <el-form-item label="标签名" required>
-          <el-input v-model="tagForm.tag_name" placeholder="v1.0.0" />
+          <el-input v-model="tagForm.name" :disabled="tagForm.versionType !== 'custom'" placeholder="v1.0.0" />
         </el-form-item>
         <el-form-item label="说明">
           <el-input v-model="tagForm.message" type="textarea" :rows="2" />
@@ -208,6 +219,8 @@ import { ArrowLeft, Plus, Delete, Edit, Select, Top, Bottom, Switch, Download, C
 import { getBranchList, createBranch, deleteBranch, updateBranch, checkoutBranch, pushBranch, pullBranch, createTag } from '@/api/modules/branch'
 import { fetchRepo, scanRepo } from '@/api/modules/repo'
 import { getRepoDetail } from '@/api/modules/repo'
+import { getNextVersion } from '@/api/modules/version'
+import type { NextVersionInfo } from '@/api/modules/version'
 import type { BranchInfo } from '@/types/branch'
 import { formatRelativeTime } from '@/utils/format'
 
@@ -235,7 +248,8 @@ const pushBranchName = ref('')
 const pushRemotes = ref<string[]>([])
 
 const showTagDialog = ref(false)
-const tagForm = ref({ ref: '', tag_name: '', message: '', push_remote: '' })
+const tagForm = ref({ ref: '', name: '', message: '', push_remote: '', versionType: 'patch' as 'patch' | 'minor' | 'major' | 'custom' })
+const tagNextVersion = ref<NextVersionInfo | null>(null)
 
 onMounted(async () => {
   await loadBranches()
@@ -409,19 +423,42 @@ async function handleDeleteBranch(name: string) {
 }
 
 function openTagDialog(branchName: string) {
-  tagForm.value = { ref: branchName, tag_name: '', message: '', push_remote: '' }
+  tagForm.value = { ref: branchName, name: '', message: '', push_remote: '', versionType: 'patch' }
+  tagNextVersion.value = null
   showTagDialog.value = true
+  getNextVersion(repoKey).then(info => {
+    tagNextVersion.value = info
+    handleTagVersionTypeChange('patch')
+  }).catch(() => { /* ignore */ })
+}
+
+function handleTagVersionTypeChange(type: string | number | boolean) {
+  if (!tagNextVersion.value) return
+  switch (type) {
+    case 'patch':
+      tagForm.value.name = tagNextVersion.value.next_patch
+      break
+    case 'minor':
+      tagForm.value.name = tagNextVersion.value.next_minor
+      break
+    case 'major':
+      tagForm.value.name = tagNextVersion.value.next_major
+      break
+    case 'custom':
+      tagForm.value.name = ''
+      break
+  }
 }
 
 async function handleCreateTag() {
-  if (!tagForm.value.tag_name) {
+  if (!tagForm.value.name) {
     ElMessage.warning('请输入标签名')
     return
   }
   try {
     await createTag({
       repo_key: repoKey,
-      tag_name: tagForm.value.tag_name,
+      name: tagForm.value.name,
       ref: tagForm.value.ref,
       message: tagForm.value.message || undefined,
       push_remote: tagForm.value.push_remote || undefined,

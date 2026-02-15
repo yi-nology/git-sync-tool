@@ -8,7 +8,7 @@ export function getStatsAnalyze(repoKey: string, params?: { branch?: string; aut
 }
 
 export function getStatsAuthors(repoKey: string) {
-  return request.get<unknown, string[]>('/stats/authors', { params: { repo_key: repoKey } })
+  return request.get<unknown, { name: string; email: string }[]>('/stats/authors', { params: { repo_key: repoKey } })
 }
 
 export function getStatsBranches(repoKey: string) {

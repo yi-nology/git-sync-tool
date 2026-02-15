@@ -1,5 +1,6 @@
 export interface BranchInfo {
   name: string
+  type: 'local' | 'remote'
   is_current: boolean
   hash: string
   author: string
@@ -22,7 +23,8 @@ export interface MergeReq {
   source: string
   target: string
   message?: string
-  strategy?: string
+  no_ff?: boolean
+  squash?: boolean
 }
 
 export interface MergeCheckResult {
@@ -48,7 +50,7 @@ export interface DiffFile {
 
 export interface CreateTagReq {
   repo_key: string
-  tag_name: string
+  name: string
   ref: string
   message?: string
   push_remote?: string

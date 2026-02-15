@@ -1,0 +1,42 @@
+// idl/biz/webhook.proto - Webhook触发模块
+syntax = "proto3";
+
+package webhook;
+
+option go_package = "github.com/yi-nology/git-manage-service/biz/model/biz/webhook";
+
+import "api.proto";
+import "common.proto";
+
+// WebhookService Webhook服务
+service WebhookService {
+  // TriggerSync 通过Webhook触发同步任务
+  rpc TriggerSync(TriggerSyncRequest) returns (TriggerSyncResponse) {
+    option (api.post) = "/api/webhooks/task-sync";
+  }
+  
+  // TriggerSyncByToken 通过任务Token触发同步（无需全局签名）
+  rpc TriggerSyncByToken(TriggerSyncByTokenRequest) returns (TriggerSyncResponse) {
+    option (api.post) = "/api/webhooks/trigger/:token";
+  }
+}
+
+// TriggerSyncRequest 触发同步请求
+message TriggerSyncRequest {
+  string task_key = 1 [(api.body) = "task_key"];
+  string task_id = 2 [(api.body) = "task_id"];  // 兼容task_id或task_key
+}
+
+// TriggerSyncByTokenRequest 通过Token触发同步请求
+message TriggerSyncByTokenRequest {
+  string token = 1 [(api.path) = "token"];
+}
+
+// TriggerSyncResponse 触发同步响应
+message TriggerSyncResponse {
+  common.BaseResponse base = 1;
+  string run_id = 2;      // 执行记录ID
+  string task_key = 3;    // 任务Key
+  string status = 4;      // 状态：started/queued/failed
+  string message = 5;     // 消息
+}

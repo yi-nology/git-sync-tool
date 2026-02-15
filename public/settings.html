@@ -9,10 +9,15 @@
     <style>
         .container { max_width: 1000px; margin-top: 20px; }
         .card { margin-bottom: 20px; }
+        .channel-card { border-left: 4px solid #6c757d; transition: all 0.2s; }
+        .channel-card.enabled { border-left-color: #198754; }
+        .channel-card:hover { box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15); }
+        .channel-type-badge { font-size: 0.75rem; }
     </style>
 </head>
 <body>
     <div class="container">
+        <!-- 系统配置 Card -->
         <div class="card">
             <div class="card-body">
                 <h5 class="card-title">系统配置</h5>
@@ -24,6 +29,7 @@
             </div>
         </div>
 
+        <!-- Git配置 Card -->
         <div class="card mt-3">
             <div class="card-body">
                 <h5 class="card-title">全局 Git 配置</h5>
@@ -40,6 +46,23 @@
             </div>
         </div>
 
+        <!-- 通知渠道配置 Card -->
+        <div class="card mt-3">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="card-title mb-0">通知渠道配置</h5>
+                    <button class="btn btn-primary btn-sm" onclick="openAddChannelModal()">
+                        <i class="bi bi-plus-lg"></i> 添加渠道
+                    </button>
+                </div>
+                <p class="text-muted small">配置同步任务的通知渠道，支持邮件、钉钉、企业微信和自定义Webhook。</p>
+                <div id="channelList">
+                    <div class="text-center text-muted py-3">加载中...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- API文档 Card -->
         <div class="card mt-3">
              <div class="card-body">
                 <h5 class="card-title">API 文档</h5>
@@ -48,15 +71,86 @@
         </div>
     </div>
 
+    <!-- 通知渠道 Modal -->
+    <div class="modal fade" id="channelModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="channelModalTitle">添加通知渠道</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="channelForm">
+                        <input type="hidden" name="id" id="channelId">
+                        
+                        <div class="mb-3">
+                            <label class="form-label">渠道名称 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="name" id="channelName" required placeholder="例如: 开发团队钉钉群">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">渠道类型 <span class="text-danger">*</span></label>
+                            <select class="form-select" name="type" id="channelType" onchange="updateConfigFields()" required>
+                                <option value="">请选择</option>
+                                <option value="email">邮件 (Email)</option>
+                                <option value="dingtalk">钉钉机器人 (DingTalk)</option>
+                                <option value="wechat">企业微信机器人 (WeChat)</option>
+                                <option value="webhook">自定义 Webhook</option>
+                            </select>
+                        </div>
+                        
+                        <!-- 动态配置字段 -->
+                        <div id="configFields"></div>
+                        
+                        <hr>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" name="enabled" id="channelEnabled" checked>
+                                    <label class="form-check-label" for="channelEnabled">启用渠道</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mt-2">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="notify_on_success" id="notifyOnSuccess">
+                                    <label class="form-check-label" for="notifyOnSuccess">成功时通知</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="notify_on_failure" id="notifyOnFailure" checked>
+                                    <label class="form-check-label" for="notifyOnFailure">失败时通知</label>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="saveChannel()">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="vendor/js/bootstrap.bundle.min.js"></script>
     <script src="js/request.js"></script>
     <script src="js/common.js"></script>
     <script src="js/navbar.js"></script>
     <script>
+        let channelModal;
+        let editingChannelId = null;
+
         document.addEventListener('DOMContentLoaded', () => {
+            channelModal = new bootstrap.Modal(document.getElementById('channelModal'));
             loadConfig();
+            loadChannels();
         });
 
+        // ========== 系统配置 ==========
         async function loadConfig() {
             try {
                 const data = await request('/system/config');
@@ -82,9 +176,282 @@
                         author_email: authorEmail
                     }
                 });
-                alert("配置保存成功");
+                showToast("配置保存成功", "success");
             } catch (e) {
-                alert("保存失败: " + e.message);
+                showToast("保存失败: " + e.message, "error");
+            }
+        }
+
+        // ========== 通知渠道 ==========
+        async function loadChannels() {
+            try {
+                const data = await request('/notification/channels');
+                renderChannelList(data.channels || []);
+            } catch (e) {
+                document.getElementById('channelList').innerHTML = 
+                    '<div class="alert alert-danger">加载失败: ' + e.message + '</div>';
+            }
+        }
+
+        function renderChannelList(channels) {
+            const container = document.getElementById('channelList');
+            if (!channels || channels.length === 0) {
+                container.innerHTML = '<div class="text-center text-muted py-3">暂无通知渠道，点击上方按钮添加</div>';
+                return;
+            }
+
+            const typeIcons = {
+                'email': 'bi-envelope',
+                'dingtalk': 'bi-chat-dots',
+                'wechat': 'bi-wechat',
+                'webhook': 'bi-link-45deg'
+            };
+            const typeLabels = {
+                'email': '邮件',
+                'dingtalk': '钉钉',
+                'wechat': '企业微信',
+                'webhook': 'Webhook'
+            };
+
+            container.innerHTML = channels.map(ch => `
+                <div class="card channel-card mb-2 ${ch.enabled ? 'enabled' : ''}">
+                    <div class="card-body py-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="bi ${typeIcons[ch.type] || 'bi-bell'}"></i>
+                                <strong class="ms-2">${escapeHtml(ch.name)}</strong>
+                                <span class="badge bg-secondary channel-type-badge ms-2">${typeLabels[ch.type] || ch.type}</span>
+                                ${ch.enabled ? '<span class="badge bg-success ms-1">启用</span>' : '<span class="badge bg-secondary ms-1">禁用</span>'}
+                                ${ch.notify_on_success ? '<span class="badge bg-info ms-1">成功通知</span>' : ''}
+                                ${ch.notify_on_failure ? '<span class="badge bg-warning ms-1">失败通知</span>' : ''}
+                            </div>
+                            <div>
+                                <button class="btn btn-sm btn-outline-primary me-1" onclick="testChannel(${ch.id})" title="测试">
+                                    <i class="bi bi-send"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary me-1" onclick="editChannel(${ch.id})" title="编辑">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteChannel(${ch.id})" title="删除">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openAddChannelModal() {
+            editingChannelId = null;
+            document.getElementById('channelModalTitle').textContent = '添加通知渠道';
+            document.getElementById('channelForm').reset();
+            document.getElementById('configFields').innerHTML = '';
+            channelModal.show();
+        }
+
+        async function editChannel(id) {
+            try {
+                const data = await request(`/notification/channel?id=${id}`);
+                const ch = data.channel;
+                editingChannelId = ch.id;
+                
+                document.getElementById('channelModalTitle').textContent = '编辑通知渠道';
+                document.getElementById('channelId').value = ch.id;
+                document.getElementById('channelName').value = ch.name;
+                document.getElementById('channelType').value = ch.type;
+                document.getElementById('channelEnabled').checked = ch.enabled;
+                document.getElementById('notifyOnSuccess').checked = ch.notify_on_success;
+                document.getElementById('notifyOnFailure').checked = ch.notify_on_failure;
+                
+                updateConfigFields();
+                
+                // 填充配置
+                if (ch.config) {
+                    const config = JSON.parse(ch.config);
+                    Object.keys(config).forEach(key => {
+                        const input = document.getElementById('config_' + key);
+                        if (input) input.value = config[key];
+                    });
+                }
+                
+                channelModal.show();
+            } catch (e) {
+                showToast('加载渠道信息失败: ' + e.message, 'error');
+            }
+        }
+
+        function updateConfigFields() {
+            const type = document.getElementById('channelType').value;
+            const container = document.getElementById('configFields');
+            
+            const configs = {
+                'email': `
+                    <div class="row">
+                        <div class="col-md-8 mb-3">
+                            <label class="form-label">SMTP服务器</label>
+                            <input type="text" class="form-control" id="config_smtp_host" placeholder="smtp.example.com">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">端口</label>
+                            <input type="number" class="form-control" id="config_smtp_port" placeholder="587">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">用户名</label>
+                            <input type="text" class="form-control" id="config_username" placeholder="user@example.com">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">密码</label>
+                            <input type="password" class="form-control" id="config_password">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">发件人</label>
+                        <input type="text" class="form-control" id="config_from" placeholder="Git管理服务 <noreply@example.com>">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">收件人 (多个用逗号分隔)</label>
+                        <input type="text" class="form-control" id="config_to" placeholder="admin@example.com, dev@example.com">
+                    </div>
+                `,
+                'dingtalk': `
+                    <div class="mb-3">
+                        <label class="form-label">Webhook URL <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="config_webhook_url" placeholder="https://oapi.dingtalk.com/robot/send?access_token=xxx">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">签名密钥 (可选)</label>
+                        <input type="text" class="form-control" id="config_secret" placeholder="SEC开头的密钥">
+                        <div class="form-text">如果开启了加签，请填写签名密钥</div>
+                    </div>
+                `,
+                'wechat': `
+                    <div class="mb-3">
+                        <label class="form-label">Webhook URL <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="config_webhook_url" placeholder="https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxx">
+                    </div>
+                `,
+                'webhook': `
+                    <div class="mb-3">
+                        <label class="form-label">Webhook URL <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="config_url" placeholder="https://your-server.com/webhook">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">请求方法</label>
+                        <select class="form-select" id="config_method">
+                            <option value="POST">POST</option>
+                            <option value="GET">GET</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Content-Type</label>
+                        <select class="form-select" id="config_content_type">
+                            <option value="application/json">application/json</option>
+                            <option value="application/x-www-form-urlencoded">application/x-www-form-urlencoded</option>
+                        </select>
+                    </div>
+                `
+            };
+            
+            container.innerHTML = configs[type] || '';
+        }
+
+        function getConfigJson() {
+            const type = document.getElementById('channelType').value;
+            const config = {};
+            
+            const configKeys = {
+                'email': ['smtp_host', 'smtp_port', 'username', 'password', 'from', 'to'],
+                'dingtalk': ['webhook_url', 'secret'],
+                'wechat': ['webhook_url'],
+                'webhook': ['url', 'method', 'content_type']
+            };
+            
+            (configKeys[type] || []).forEach(key => {
+                const input = document.getElementById('config_' + key);
+                if (input && input.value) {
+                    config[key] = input.value;
+                }
+            });
+            
+            return JSON.stringify(config);
+        }
+
+        async function saveChannel() {
+            const name = document.getElementById('channelName').value;
+            const type = document.getElementById('channelType').value;
+            
+            if (!name || !type) {
+                showToast('请填写必填字段', 'error');
+                return;
+            }
+            
+            const payload = {
+                name: name,
+                type: type,
+                config: getConfigJson(),
+                enabled: document.getElementById('channelEnabled').checked,
+                notify_on_success: document.getElementById('notifyOnSuccess').checked,
+                notify_on_failure: document.getElementById('notifyOnFailure').checked
+            };
+            
+            try {
+                if (editingChannelId) {
+                    payload.id = editingChannelId;
+                    await request('/notification/channel/update', { method: 'POST', body: payload });
+                    showToast('渠道更新成功', 'success');
+                } else {
+                    await request('/notification/channel/create', { method: 'POST', body: payload });
+                    showToast('渠道创建成功', 'success');
+                }
+                channelModal.hide();
+                loadChannels();
+            } catch (e) {
+                showToast('保存失败: ' + e.message, 'error');
+            }
+        }
+
+        async function deleteChannel(id) {
+            if (!confirm('确定要删除这个通知渠道吗？')) return;
+            
+            try {
+                await request('/notification/channel/delete', { method: 'POST', body: { id } });
+                showToast('渠道已删除', 'success');
+                loadChannels();
+            } catch (e) {
+                showToast('删除失败: ' + e.message, 'error');
+            }
+        }
+
+        async function testChannel(id) {
+            try {
+                const data = await request('/notification/channel/test', { 
+                    method: 'POST', 
+                    body: { id, message: '这是一条测试消息 - Git管理服务' } 
+                });
+                if (data.success) {
+                    showToast('测试消息发送成功！', 'success');
+                } else {
+                    showToast('测试失败: ' + (data.error || '未知错误'), 'error');
+                }
+            } catch (e) {
+                showToast('测试失败: ' + e.message, 'error');
+            }
+        }
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        function showToast(message, type) {
+            if (window.showToast) {
+                window.showToast(message, type);
+            } else {
+                alert(message);
             }
         }
     </script>

@@ -25,6 +25,7 @@ type GitRepoConfig struct {
 
 type BranchInfo struct {
 	Name        string    `json:"name"`
+	Type        string    `json:"type"` // "local" or "remote"
 	IsCurrent   bool      `json:"is_current"`
 	Hash        string    `json:"hash"`
 	Author      string    `json:"author"`

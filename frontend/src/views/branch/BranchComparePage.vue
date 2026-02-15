@@ -13,16 +13,21 @@
         <el-col :span="8">
           <div class="form-label">源分支 (Source/Feature)</div>
           <el-select v-model="sourceBranch" placeholder="选择源分支" filterable style="width: 100%">
-            <el-option v-for="b in branchList" :key="b" :label="b" :value="b" />
+            <el-option-group label="本地分支">
+              <el-option v-for="b in localBranches" :key="b" :label="b" :value="b" />
+            </el-option-group>
+            <el-option-group label="远程分支">
+              <el-option v-for="b in remoteBranches" :key="b" :label="b" :value="b" />
+            </el-option-group>
           </el-select>
         </el-col>
         <el-col :span="2" class="text-center">
           <el-icon :size="24" color="#909399"><Right /></el-icon>
         </el-col>
         <el-col :span="8">
-          <div class="form-label">目标分支 (Target/Base)</div>
+          <div class="form-label">目标分支 (Target/Base) <el-text type="info" size="small">仅本地分支</el-text></div>
           <el-select v-model="targetBranch" placeholder="选择目标分支" filterable style="width: 100%">
-            <el-option v-for="b in branchList" :key="b" :label="b" :value="b" />
+            <el-option v-for="b in localBranches" :key="b" :label="b" :value="b" />
           </el-select>
         </el-col>
         <el-col :span="6" class="text-right">
@@ -30,12 +35,22 @@
             <el-button type="primary" @click="handleCompare" :loading="comparing">
               <el-icon><Switch /></el-icon> 对比
             </el-button>
-            <el-button type="success" @click="openMergeDialog" :disabled="!compareResult">
+            <el-button type="success" @click="openMergeDialog" :disabled="!compareResult || !canMerge">
               <el-icon><Connection /></el-icon> 合并
             </el-button>
           </el-button-group>
         </el-col>
       </el-row>
+      <!-- 合并提示 -->
+      <el-alert
+        v-if="targetBranch && isRemoteBranch(targetBranch)"
+        title="目标分支不能是远程分支"
+        type="warning"
+        :closable="false"
+        show-icon
+        class="mt-3"
+        description="Git 合并只能在本地分支上执行，请选择本地分支作为目标分支。"
+      />
     </el-card>
 
     <!-- Summary Stats -->
@@ -153,19 +168,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { ArrowLeft, Right, Switch, Connection, Download, Loading } from '@element-plus/icons-vue'
 import { getBranchList, compareBranches, getBranchDiff, getBranchPatch, checkMerge, mergeBranch } from '@/api/modules/branch'
-import type { MergeCheckResult } from '@/types/branch'
+import type { MergeCheckResult, BranchInfo } from '@/types/branch'
 import * as Diff2Html from 'diff2html'
 import 'diff2html/bundles/css/diff2html.min.css'
 
 const route = useRoute()
 const repoKey = route.params.repoKey as string
 
-const branchList = ref<string[]>([])
+const allBranches = ref<BranchInfo[]>([])
 const sourceBranch = ref('')
 const targetBranch = ref('')
 const comparing = ref(false)
@@ -181,10 +196,28 @@ const mergeCheckResult = ref<MergeCheckResult | null>(null)
 const merging = ref(false)
 const mergeForm = ref({ message: '' })
 
+// 分离本地和远程分支
+const localBranches = computed(() => 
+  allBranches.value.filter(b => b.type === 'local').map(b => b.name)
+)
+const remoteBranches = computed(() => 
+  allBranches.value.filter(b => b.type === 'remote').map(b => b.name)
+)
+
+// 判断是否是远程分支
+function isRemoteBranch(name: string): boolean {
+  return remoteBranches.value.includes(name)
+}
+
+// 是否可以合并：目标分支必须是本地分支
+const canMerge = computed(() => {
+  return targetBranch.value && !isRemoteBranch(targetBranch.value)
+})
+
 onMounted(async () => {
   try {
     const res = await getBranchList(repoKey, { page_size: 1000 })
-    branchList.value = (res.list || []).map((b) => b.name)
+    allBranches.value = res.list || []
   } catch { /* ignore */ }
 })
 
@@ -232,14 +265,18 @@ async function selectFile(path: string) {
 
 async function handleDownloadPatch() {
   try {
-    const response = await getBranchPatch(repoKey, sourceBranch.value, targetBranch.value) as unknown as Blob
-    const url = window.URL.createObjectURL(response)
+    const response = await getBranchPatch(repoKey, sourceBranch.value, targetBranch.value)
+    const blob = response.data instanceof Blob ? response.data : new Blob([response.data], { type: 'application/octet-stream' })
+    const url = window.URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
     a.download = `${sourceBranch.value}-to-${targetBranch.value}.patch`
     a.click()
     window.URL.revokeObjectURL(url)
-  } catch { /* handled */ }
+  } catch (e: unknown) {
+    const err = e as { message?: string }
+    ElMessage.error('导出 Patch 失败: ' + (err.message || '未知错误'))
+  }
 }
 
 async function openMergeDialog() {
@@ -306,6 +343,9 @@ async function handleMerge() {
 }
 .mb-4 {
   margin-bottom: 16px;
+}
+.mt-3 {
+  margin-top: 12px;
 }
 .file-list {
   max-height: 600px;

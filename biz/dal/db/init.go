@@ -58,13 +58,15 @@ func Init() {
 		migrator.HasTable(&po.SyncRun{}) &&
 		migrator.HasTable(&po.AuditLog{}) &&
 		migrator.HasTable(&po.SystemConfig{}) &&
-		migrator.HasTable(&po.CommitStat{}) {
+		migrator.HasTable(&po.CommitStat{}) &&
+		migrator.HasTable(&po.NotificationChannel{}) &&
+		migrator.HasTable(&po.SSHKey{}) {
 		log.Println("Database tables exist, skipping schema migration.")
 		return
 	}
 
 	// Migrate the schema
-	err = DB.AutoMigrate(&po.Repo{}, &po.SyncTask{}, &po.SyncRun{}, &po.AuditLog{}, &po.SystemConfig{}, &po.CommitStat{})
+	err = DB.AutoMigrate(&po.Repo{}, &po.SyncTask{}, &po.SyncRun{}, &po.AuditLog{}, &po.SystemConfig{}, &po.CommitStat{}, &po.NotificationChannel{}, &po.SSHKey{})
 	if err != nil {
 		log.Fatal("failed to migrate database: ", err)
 	}

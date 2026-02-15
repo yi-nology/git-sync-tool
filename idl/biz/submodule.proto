@@ -1,0 +1,125 @@
+// idl/biz/submodule.proto - Submodule管理模块
+syntax = "proto3";
+
+package submodule;
+
+option go_package = "github.com/yi-nology/git-manage-service/biz/model/biz/submodule";
+
+import "api.proto";
+import "common.proto";
+
+// SubmoduleService Submodule服务
+service SubmoduleService {
+  // ListSubmodules 列出所有submodule
+  rpc ListSubmodules(ListSubmodulesRequest) returns (ListSubmodulesResponse) {
+    option (api.get) = "/api/v1/submodule/list";
+  }
+  
+  // GetStatus 获取submodule状态
+  rpc GetStatus(GetSubmoduleStatusRequest) returns (GetSubmoduleStatusResponse) {
+    option (api.get) = "/api/v1/submodule/status";
+  }
+  
+  // AddSubmodule 添加submodule
+  rpc AddSubmodule(AddSubmoduleRequest) returns (common.EmptyResponse) {
+    option (api.post) = "/api/v1/submodule/add";
+  }
+  
+  // InitSubmodule 初始化submodule
+  rpc InitSubmodule(InitSubmoduleRequest) returns (common.EmptyResponse) {
+    option (api.post) = "/api/v1/submodule/init";
+  }
+  
+  // UpdateSubmodule 更新submodule
+  rpc UpdateSubmodule(UpdateSubmoduleRequest) returns (common.EmptyResponse) {
+    option (api.post) = "/api/v1/submodule/update";
+  }
+  
+  // SyncSubmodule 同步submodule URL
+  rpc SyncSubmodule(SyncSubmoduleRequest) returns (common.EmptyResponse) {
+    option (api.post) = "/api/v1/submodule/sync";
+  }
+  
+  // RemoveSubmodule 移除submodule
+  rpc RemoveSubmodule(RemoveSubmoduleRequest) returns (common.EmptyResponse) {
+    option (api.post) = "/api/v1/submodule/remove";
+  }
+}
+
+// SubmoduleInfo Submodule信息
+message SubmoduleInfo {
+  string name = 1;       // submodule名称
+  string path = 2;       // 路径
+  string url = 3;        // 远程URL
+  string branch = 4;     // 跟踪分支
+  string commit = 5;     // 当前commit
+  string status = 6;     // 状态：initialized, uninitialized, modified
+}
+
+// SubmoduleStatusItem Submodule状态项
+message SubmoduleStatusItem {
+  string path = 1;       // 路径
+  string commit = 2;     // 当前commit
+  string status = 3;     // 状态标记：+表示有新提交，-表示未初始化，U表示有冲突
+  string description = 4; // 状态描述
+}
+
+// ListSubmodulesRequest 列出submodule请求
+message ListSubmodulesRequest {
+  string repo_key = 1 [(api.query) = "repo_key"];
+}
+
+// ListSubmodulesResponse 列出submodule响应
+message ListSubmodulesResponse {
+  common.BaseResponse base = 1;
+  repeated SubmoduleInfo submodules = 2;
+}
+
+// GetSubmoduleStatusRequest 获取状态请求
+message GetSubmoduleStatusRequest {
+  string repo_key = 1 [(api.query) = "repo_key"];
+  bool recursive = 2 [(api.query) = "recursive"];
+}
+
+// GetSubmoduleStatusResponse 获取状态响应
+message GetSubmoduleStatusResponse {
+  common.BaseResponse base = 1;
+  repeated SubmoduleStatusItem items = 2;
+}
+
+// AddSubmoduleRequest 添加submodule请求
+message AddSubmoduleRequest {
+  string repo_key = 1 [(api.body) = "repo_key"];
+  string url = 2 [(api.body) = "url"];
+  string path = 3 [(api.body) = "path"];
+  string branch = 4 [(api.body) = "branch"];
+}
+
+// InitSubmoduleRequest 初始化submodule请求
+message InitSubmoduleRequest {
+  string repo_key = 1 [(api.body) = "repo_key"];
+  string path = 2 [(api.body) = "path"];
+}
+
+// UpdateSubmoduleRequest 更新submodule请求
+message UpdateSubmoduleRequest {
+  string repo_key = 1 [(api.body) = "repo_key"];
+  string path = 2 [(api.body) = "path"];
+  bool init = 3 [(api.body) = "init"];
+  bool recursive = 4 [(api.body) = "recursive"];
+  bool remote = 5 [(api.body) = "remote"];
+}
+
+// SyncSubmoduleRequest 同步submodule URL请求
+message SyncSubmoduleRequest {
+  string repo_key = 1 [(api.body) = "repo_key"];
+  string path = 2 [(api.body) = "path"];
+  bool recursive = 3 [(api.body) = "recursive"];
+}
+
+// RemoveSubmoduleRequest 移除submodule请求
+message RemoveSubmoduleRequest {
+  string repo_key = 1 [(api.body) = "repo_key"];
+  string path = 2 [(api.body) = "path"];
+  bool force = 3 [(api.body) = "force"];
+}

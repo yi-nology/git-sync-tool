@@ -1,0 +1,92 @@
+// idl/biz/stash.proto - Stash管理模块
+syntax = "proto3";
+
+package stash;
+
+option go_package = "github.com/yi-nology/git-manage-service/biz/model/biz/stash";
+
+import "api.proto";
+import "common.proto";
+
+// StashService Stash服务
+service StashService {
+  // ListStash 列出stash
+  rpc ListStash(ListStashRequest) returns (ListStashResponse) {
+    option (api.get) = "/api/v1/stash/list";
+  }
+  
+  // SaveStash 保存stash
+  rpc SaveStash(SaveStashRequest) returns (common.EmptyResponse) {
+    option (api.post) = "/api/v1/stash/save";
+  }
+  
+  // ApplyStash 应用stash
+  rpc ApplyStash(ApplyStashRequest) returns (common.EmptyResponse) {
+    option (api.post) = "/api/v1/stash/apply";
+  }
+  
+  // PopStash 弹出stash（应用并删除）
+  rpc PopStash(PopStashRequest) returns (common.EmptyResponse) {
+    option (api.post) = "/api/v1/stash/pop";
+  }
+  
+  // DropStash 删除stash
+  rpc DropStash(DropStashRequest) returns (common.EmptyResponse) {
+    option (api.post) = "/api/v1/stash/drop";
+  }
+  
+  // ClearStash 清空所有stash
+  rpc ClearStash(ClearStashRequest) returns (common.EmptyResponse) {
+    option (api.post) = "/api/v1/stash/clear";
+  }
+}
+
+// StashEntry Stash条目
+message StashEntry {
+  int32 index = 1;        // stash索引
+  string ref = 2;         // stash引用 (stash@{0})
+  string message = 3;     // stash消息
+  string branch = 4;      // 创建stash时的分支
+  string date = 5;        // 创建时间
+}
+
+// ListStashRequest 列出stash请求
+message ListStashRequest {
+  string repo_key = 1 [(api.query) = "repo_key"];
+}
+
+// ListStashResponse 列出stash响应
+message ListStashResponse {
+  common.BaseResponse base = 1;
+  repeated StashEntry stashes = 2;
+}
+
+// SaveStashRequest 保存stash请求
+message SaveStashRequest {
+  string repo_key = 1 [(api.body) = "repo_key"];
+  string message = 2 [(api.body) = "message"];
+  bool include_untracked = 3 [(api.body) = "include_untracked"];
+}
+
+// ApplyStashRequest 应用stash请求
+message ApplyStashRequest {
+  string repo_key = 1 [(api.body) = "repo_key"];
+  int32 index = 2 [(api.body) = "index"];
+}
+
+// PopStashRequest 弹出stash请求
+message PopStashRequest {
+  string repo_key = 1 [(api.body) = "repo_key"];
+  int32 index = 2 [(api.body) = "index"];
+}
+
+// DropStashRequest 删除stash请求
+message DropStashRequest {
+  string repo_key = 1 [(api.body) = "repo_key"];
+  int32 index = 2 [(api.body) = "index"];
+}
+
+// ClearStashRequest 清空stash请求
+message ClearStashRequest {
+  string repo_key = 1 [(api.body) = "repo_key"];
+}
