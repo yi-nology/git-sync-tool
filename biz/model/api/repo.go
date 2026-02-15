@@ -30,6 +30,7 @@ type CloneRepoReq struct {
 	AuthKey      string `json:"auth_key"`
 	AuthSecret   string `json:"auth_secret"`
 	ConfigSource string `json:"config_source"`
+	SSHKeyID     uint   `json:"ssh_key_id"` // 数据库SSH密钥ID，优先于AuthKey
 }
 
 type TestConnectionReq struct {

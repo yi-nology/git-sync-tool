@@ -341,17 +341,35 @@
                     
                     <div id="remote-auth-ssh" class="d-none">
                         <div class="mb-3">
-                            <label class="form-label">SSH 密钥</label>
-                            <div class="input-group">
-                                <select class="form-select" id="remoteSshKeySelect" onchange="document.getElementById('remoteAuthKey').value=this.value">
-                                    <option value="">手动输入路径...</option>
-                                </select>
-                                <input type="text" class="form-control" id="remoteAuthKey" placeholder="~/.ssh/id_rsa">
+                            <label class="form-label">密钥来源</label>
+                            <select class="form-select" id="remoteSshSource" onchange="toggleSshSource()">
+                                <option value="local">本地文件</option>
+                                <option value="database">数据库密钥</option>
+                            </select>
+                        </div>
+                        <div id="ssh-source-local">
+                            <div class="mb-3">
+                                <label class="form-label">SSH 密钥路径</label>
+                                <div class="input-group">
+                                    <select class="form-select" id="remoteSshKeySelect" onchange="document.getElementById('remoteAuthKey').value=this.value">
+                                        <option value="">手动输入路径...</option>
+                                    </select>
+                                    <input type="text" class="form-control" id="remoteAuthKey" placeholder="~/.ssh/id_rsa">
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">密钥密码 (Passphrase)</label>
+                                <input type="password" class="form-control" id="remoteAuthSecretSsh">
                             </div>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">密钥密码 (Passphrase)</label>
-                            <input type="password" class="form-control" id="remoteAuthSecretSsh">
+                        <div id="ssh-source-database" class="d-none">
+                            <div class="mb-3">
+                                <label class="form-label">选择数据库密钥</label>
+                                <select class="form-select" id="remoteDbSshKeySelect">
+                                    <option value="">-- 请选择 --</option>
+                                </select>
+                                <div class="form-text text-muted" id="dbKeyInfo"></div>
+                            </div>
                         </div>
                     </div>
                     

@@ -5,13 +5,17 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-git/go-git/v5/plumbing/transport"
 	"github.com/yi-nology/git-manage-service/biz/dal/db"
+	"github.com/yi-nology/git-manage-service/biz/model/domain"
 	"github.com/yi-nology/git-manage-service/biz/model/po"
+	"github.com/yi-nology/git-manage-service/biz/service/auth"
 	"github.com/yi-nology/git-manage-service/biz/service/git"
 )
 
 type SyncService struct {
 	git         *git.GitService
+	authSvc     *auth.AuthService
 	syncTaskDAO *db.SyncTaskDAO
 	syncRunDAO  *db.SyncRunDAO
 }
@@ -19,6 +23,7 @@ type SyncService struct {
 func NewSyncService() *SyncService {
 	return &SyncService{
 		git:         git.NewGitService(),
+		authSvc:     auth.NewAuthService(),
 		syncTaskDAO: db.NewSyncTaskDAO(),
 		syncRunDAO:  db.NewSyncRunDAO(),
 	}
@@ -73,13 +78,25 @@ func (s *SyncService) ExecuteSync(task *po.SyncTask) error {
 	return err
 }
 
-func getAuthForRemote(repo po.Repo, remoteName string) (string, string, string) {
+// getAuthInfoForRemote 获取指定远程的认证信息
+func getAuthInfoForRemote(repo po.Repo, remoteName string) domain.AuthInfo {
 	if repo.RemoteAuths != nil {
-		if auth, ok := repo.RemoteAuths[remoteName]; ok {
-			return auth.Type, auth.Key, auth.Secret
+		if authInfo, ok := repo.RemoteAuths[remoteName]; ok {
+			return authInfo
 		}
 	}
-	return repo.AuthType, repo.AuthKey, repo.AuthSecret
+	return domain.AuthInfo{
+		Type:   repo.AuthType,
+		Key:    repo.AuthKey,
+		Secret: repo.AuthSecret,
+		Source: "local",
+	}
+}
+
+// resolveAuthForRemote 解析指定远程的认证方法
+func (s *SyncService) resolveAuthForRemote(repo po.Repo, remoteName string) (transport.AuthMethod, error) {
+	authInfo := getAuthInfoForRemote(repo, remoteName)
+	return s.authSvc.ResolveAuth(authInfo)
 }
 
 func (s *SyncService) doSync(path string, task *po.SyncTask, logf func(string, ...interface{})) (string, error) {
@@ -105,16 +122,30 @@ func (s *SyncService) doSync(path string, task *po.SyncTask, logf func(string, .
 			sourceURL = task.SourceRepo.RemoteURL
 		}
 
-		sType, sKey, sSecret := getAuthForRemote(task.SourceRepo, sourceRemote)
+		// 解析源仓库认证
+		sourceAuth, err := s.resolveAuthForRemote(task.SourceRepo, sourceRemote)
+		if err != nil {
+			logf("Warning: failed to resolve source auth: %v", err)
+		}
+		sourceAuthInfo := getAuthInfoForRemote(task.SourceRepo, sourceRemote)
 		sRefSpec := fmt.Sprintf("+refs/heads/%s:refs/remotes/%s/%s", task.SourceBranch, sourceRemote, task.SourceBranch)
 
 		// Log Fetch Command (Approximate)
 		fetchCmd := fmt.Sprintf("git fetch %s %s", sourceRemote, sRefSpec)
 		logf("Command: %s", fetchCmd)
 
-		if sourceURL != "" && sType != "" && sType != "none" {
-			logf("Fetching source %s (Auth: %s)...", sourceRemote, sType)
-			if err := s.git.FetchWithAuth(path, sourceURL, sType, sKey, sSecret, progressWriter, sRefSpec); err != nil {
+		if sourceURL != "" && sourceAuthInfo.Type != "" && sourceAuthInfo.Type != "none" {
+			logf("Fetching source %s (Auth: %s, Source: %s)...", sourceRemote, sourceAuthInfo.Type, sourceAuthInfo.Source)
+			// 如果使用数据库SSH密钥，使用原生git命令（更可靠）
+			if sourceAuthInfo.Source == "database" && sourceAuthInfo.SSHKeyID > 0 {
+				privateKey, passphrase, keyErr := s.authSvc.GetDBSSHKeyContent(sourceAuthInfo.SSHKeyID)
+				if keyErr != nil {
+					return "", fmt.Errorf("failed to load source SSH key: %v", keyErr)
+				}
+				if err := s.git.FetchWithDBKey(path, sourceURL, privateKey, passphrase, progressWriter, sRefSpec); err != nil {
+					return "", fmt.Errorf("fetch source failed: %v", err)
+				}
+			} else if err := s.git.FetchWithAuthMethod(path, sourceURL, sourceAuth, progressWriter, sRefSpec); err != nil {
 				return "", fmt.Errorf("fetch source failed: %v", err)
 			}
 		} else {
@@ -154,16 +185,30 @@ func (s *SyncService) doSync(path string, task *po.SyncTask, logf func(string, .
 		targetURL = task.TargetRepo.RemoteURL
 	}
 
-	tType, tKey, tSecret := getAuthForRemote(task.TargetRepo, targetRemote)
+	// 解析目标仓库认证
+	targetAuth, err := s.resolveAuthForRemote(task.TargetRepo, targetRemote)
+	if err != nil {
+		logf("Warning: failed to resolve target auth: %v", err)
+	}
+	targetAuthInfo := getAuthInfoForRemote(task.TargetRepo, targetRemote)
 	tRefSpec := fmt.Sprintf("+refs/heads/%s:refs/remotes/%s/%s", task.TargetBranch, targetRemote, task.TargetBranch)
 
 	// Log Fetch Target Command
 	fetchTgtCmd := fmt.Sprintf("git fetch %s %s", targetRemote, tRefSpec)
 	logf("Command: %s", fetchTgtCmd)
 
-	if targetURL != "" && tType != "" && tType != "none" {
-		logf("Fetching target %s (Auth: %s)...", targetRemote, tType)
-		if err := s.git.FetchWithAuth(path, targetURL, tType, tKey, tSecret, progressWriter, tRefSpec); err != nil {
+	if targetURL != "" && targetAuthInfo.Type != "" && targetAuthInfo.Type != "none" {
+		logf("Fetching target %s (Auth: %s, Source: %s)...", targetRemote, targetAuthInfo.Type, targetAuthInfo.Source)
+		// 如果使用数据库SSH密钥，使用原生git命令（更可靠）
+		if targetAuthInfo.Source == "database" && targetAuthInfo.SSHKeyID > 0 {
+			privateKey, passphrase, keyErr := s.authSvc.GetDBSSHKeyContent(targetAuthInfo.SSHKeyID)
+			if keyErr != nil {
+				return "", fmt.Errorf("failed to load target SSH key: %v", keyErr)
+			}
+			if err := s.git.FetchWithDBKey(path, targetURL, privateKey, passphrase, progressWriter, tRefSpec); err != nil {
+				return "", fmt.Errorf("fetch target failed: %v", err)
+			}
+		} else if err := s.git.FetchWithAuthMethod(path, targetURL, targetAuth, progressWriter, tRefSpec); err != nil {
 			return "", fmt.Errorf("fetch target failed: %v", err)
 		}
 	} else {
@@ -233,11 +278,22 @@ func (s *SyncService) doSync(path string, task *po.SyncTask, logf func(string, .
 	logf("Command: %s", cmdStr)
 	logf("Pushing to %s/%s with options: %v", task.TargetRemote, task.TargetBranch, pushOpts)
 
-	if targetURL != "" && tType != "" && tType != "none" {
-		logf("Pushing target (Auth: %s)...", tType)
-		err := s.git.PushWithAuth(path, targetURL, sourceHash, task.TargetBranch, tType, tKey, tSecret, pushOpts, progressWriter)
-		if err != nil {
-			return "", fmt.Errorf("push failed: %v", err)
+	if targetURL != "" && targetAuthInfo.Type != "" && targetAuthInfo.Type != "none" {
+		logf("Pushing target (Auth: %s, Source: %s)...", targetAuthInfo.Type, targetAuthInfo.Source)
+		// 如果使用数据库SSH密钥，使用原生git命令（更可靠）
+		if targetAuthInfo.Source == "database" && targetAuthInfo.SSHKeyID > 0 {
+			privateKey, passphrase, keyErr := s.authSvc.GetDBSSHKeyContent(targetAuthInfo.SSHKeyID)
+			if keyErr != nil {
+				return "", fmt.Errorf("failed to load target SSH key for push: %v", keyErr)
+			}
+			if err := s.git.PushWithDBKey(path, targetURL, sourceHash, task.TargetBranch, privateKey, passphrase, pushOpts, progressWriter); err != nil {
+				return "", fmt.Errorf("push failed: %v", err)
+			}
+		} else {
+			err := s.git.PushWithAuthMethod(path, targetURL, sourceHash, task.TargetBranch, targetAuth, pushOpts, progressWriter)
+			if err != nil {
+				return "", fmt.Errorf("push failed: %v", err)
+			}
 		}
 	} else {
 		if err := s.git.Push(path, task.TargetRemote, sourceHash, task.TargetBranch, pushOpts, progressWriter); err != nil {

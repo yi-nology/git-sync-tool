@@ -11,6 +11,7 @@ import (
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
 	"github.com/yi-nology/git-manage-service/biz/dal/db"
+	"github.com/yi-nology/git-manage-service/biz/handler/helper"
 	"github.com/yi-nology/git-manage-service/biz/model/api"
 	"github.com/yi-nology/git-manage-service/biz/service/git"
 	"github.com/yi-nology/git-manage-service/biz/service/stats"
@@ -20,15 +21,8 @@ import (
 // ListBranches .
 // @router /api/v1/stats/branches [GET]
 func ListBranches(ctx context.Context, c *app.RequestContext) {
-	repoKey := c.Query("repo_key")
-	if repoKey == "" {
-		response.BadRequest(c, "repo_key is required")
-		return
-	}
-
-	repo, err := db.NewRepoDAO().FindByKey(repoKey)
-	if err != nil {
-		response.NotFound(c, "repo not found")
+	repo, ok := helper.GetRepoFromQuery(c)
+	if !ok {
 		return
 	}
 
@@ -44,15 +38,8 @@ func ListBranches(ctx context.Context, c *app.RequestContext) {
 // ListAuthors .
 // @router /api/v1/stats/authors [GET]
 func ListAuthors(ctx context.Context, c *app.RequestContext) {
-	repoKey := c.Query("repo_key")
-	if repoKey == "" {
-		response.BadRequest(c, "repo_key is required")
-		return
-	}
-
-	repo, err := db.NewRepoDAO().FindByKey(repoKey)
-	if err != nil {
-		response.NotFound(c, "repo not found")
+	repo, ok := helper.GetRepoFromQuery(c)
+	if !ok {
 		return
 	}
 
@@ -68,21 +55,13 @@ func ListAuthors(ctx context.Context, c *app.RequestContext) {
 // ListCommits .
 // @router /api/v1/stats/commits [GET]
 func ListCommits(ctx context.Context, c *app.RequestContext) {
-	repoKey := c.Query("repo_key")
+	repo, ok := helper.GetRepoFromQuery(c)
+	if !ok {
+		return
+	}
 	branch := c.Query("branch")
 	since := c.Query("since")
 	until := c.Query("until")
-
-	if repoKey == "" {
-		response.BadRequest(c, "repo_key is required")
-		return
-	}
-
-	repo, err := db.NewRepoDAO().FindByKey(repoKey)
-	if err != nil {
-		response.NotFound(c, "repo not found")
-		return
-	}
 
 	raw, err := git.NewGitService().GetCommits(repo.Path, branch, since, until)
 	if err != nil {

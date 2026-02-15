@@ -13,6 +13,7 @@ import (
 	"github.com/yi-nology/git-manage-service/biz/model/api"
 	"github.com/yi-nology/git-manage-service/biz/model/po"
 	"github.com/yi-nology/git-manage-service/biz/service/audit"
+	"github.com/yi-nology/git-manage-service/biz/service/auth"
 	"github.com/yi-nology/git-manage-service/biz/service/git"
 	"github.com/yi-nology/git-manage-service/biz/service/stats"
 	"github.com/yi-nology/git-manage-service/pkg/response"
@@ -289,7 +290,27 @@ func Clone(ctx context.Context, c *app.RequestContext) {
 			}
 		}()
 
-		err := gitSvc.CloneWithProgress(req.RemoteURL, req.LocalPath, req.AuthType, req.AuthKey, req.AuthSecret, progressChan)
+		var err error
+		authSvc := auth.NewAuthService()
+
+		// 如果指定了数据库SSH密钥，使用原生git命令（更可靠）
+		if req.SSHKeyID > 0 {
+			privateKey, passphrase, keyErr := authSvc.GetDBSSHKeyContent(req.SSHKeyID)
+			if keyErr != nil {
+				git.GlobalTaskManager.UpdateStatus(taskID, "failed", "Failed to load SSH key: "+keyErr.Error())
+				close(progressChan)
+				return
+			}
+			git.GlobalTaskManager.AppendLog(taskID, "Using database SSH key for clone...")
+			err = gitSvc.CloneWithDBKey(req.RemoteURL, req.LocalPath, privateKey, passphrase, progressChan)
+		} else {
+			// 使用 go-git 方式
+			authMethod, authErr := authSvc.ResolveAuthFromParams(req.AuthType, req.AuthKey, req.AuthSecret, 0)
+			if authErr != nil {
+				git.GlobalTaskManager.AppendLog(taskID, "Warning: auth resolution failed: "+authErr.Error())
+			}
+			err = gitSvc.CloneWithAuthMethod(req.RemoteURL, req.LocalPath, authMethod, progressChan)
+		}
 		close(progressChan)
 
 		if err != nil {
