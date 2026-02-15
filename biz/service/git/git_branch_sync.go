@@ -2,6 +2,8 @@ package git
 
 import (
 	"fmt"
+	"os"
+	"os/exec"
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
@@ -213,5 +215,107 @@ func (s *GitService) FetchAll(path string) error {
 			// Log error but continue?
 		}
 	}
+	return nil
+}
+
+// PushBranchWithDBKey pushes local branch to remote using database SSH key
+func (s *GitService) PushBranchWithDBKey(path, remote, branch, privateKey, passphrase string) error {
+	// Create temp private key file
+	tmpFile, err := os.CreateTemp("", "git_ssh_key_*")
+	if err != nil {
+		return fmt.Errorf("failed to create temp key file: %v", err)
+	}
+	defer os.Remove(tmpFile.Name())
+
+	if _, err := tmpFile.WriteString(privateKey); err != nil {
+		tmpFile.Close()
+		return fmt.Errorf("failed to write key file: %v", err)
+	}
+	tmpFile.Close()
+
+	if err := os.Chmod(tmpFile.Name(), 0600); err != nil {
+		return fmt.Errorf("failed to set key file permissions: %v", err)
+	}
+
+	sshCmd := fmt.Sprintf("ssh -i %s -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null", tmpFile.Name())
+
+	// git push remote branch
+	cmd := exec.Command("git", "push", remote, branch)
+	cmd.Dir = path
+	cmd.Env = append(os.Environ(), "GIT_SSH_COMMAND="+sshCmd)
+
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("git push failed: %v, output: %s", err, string(output))
+	}
+
+	return nil
+}
+
+// PullBranchWithDBKey pulls changes from remote using database SSH key
+func (s *GitService) PullBranchWithDBKey(path, remote, branch, privateKey, passphrase string) error {
+	// Create temp private key file
+	tmpFile, err := os.CreateTemp("", "git_ssh_key_*")
+	if err != nil {
+		return fmt.Errorf("failed to create temp key file: %v", err)
+	}
+	defer os.Remove(tmpFile.Name())
+
+	if _, err := tmpFile.WriteString(privateKey); err != nil {
+		tmpFile.Close()
+		return fmt.Errorf("failed to write key file: %v", err)
+	}
+	tmpFile.Close()
+
+	if err := os.Chmod(tmpFile.Name(), 0600); err != nil {
+		return fmt.Errorf("failed to set key file permissions: %v", err)
+	}
+
+	sshCmd := fmt.Sprintf("ssh -i %s -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null", tmpFile.Name())
+
+	// git pull remote branch
+	cmd := exec.Command("git", "pull", remote, branch)
+	cmd.Dir = path
+	cmd.Env = append(os.Environ(), "GIT_SSH_COMMAND="+sshCmd)
+
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("git pull failed: %v, output: %s", err, string(output))
+	}
+
+	return nil
+}
+
+// FetchBranchWithDBKey fetches a specific branch from remote using database SSH key
+func (s *GitService) FetchBranchWithDBKey(path, remote, branch, privateKey, passphrase string) error {
+	// Create temp private key file
+	tmpFile, err := os.CreateTemp("", "git_ssh_key_*")
+	if err != nil {
+		return fmt.Errorf("failed to create temp key file: %v", err)
+	}
+	defer os.Remove(tmpFile.Name())
+
+	if _, err := tmpFile.WriteString(privateKey); err != nil {
+		tmpFile.Close()
+		return fmt.Errorf("failed to write key file: %v", err)
+	}
+	tmpFile.Close()
+
+	if err := os.Chmod(tmpFile.Name(), 0600); err != nil {
+		return fmt.Errorf("failed to set key file permissions: %v", err)
+	}
+
+	sshCmd := fmt.Sprintf("ssh -i %s -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null", tmpFile.Name())
+
+	// git fetch remote branch
+	cmd := exec.Command("git", "fetch", remote, branch)
+	cmd.Dir = path
+	cmd.Env = append(os.Environ(), "GIT_SSH_COMMAND="+sshCmd)
+
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("git fetch failed: %v, output: %s", err, string(output))
+	}
+
 	return nil
 }

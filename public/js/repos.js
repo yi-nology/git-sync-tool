@@ -249,32 +249,55 @@ function openRemoteAuthModal(rowId) {
     document.getElementById('remoteAuthType').value = auth.type || 'none';
     toggleRemoteAuthFields();
     
+    // Handle SSH source (local vs database)
+    const source = auth.source || 'local';
+    document.getElementById('remoteSshSource').value = source;
+    toggleSshSource();
+    
     if (auth.type === 'ssh') {
-        document.getElementById('remoteAuthKey').value = auth.key || '';
-        document.getElementById('remoteAuthSecretSsh').value = auth.secret || '';
+        if (source === 'database' && auth.ssh_key_id) {
+            document.getElementById('remoteDbSshKeySelect').value = auth.ssh_key_id;
+        } else {
+            document.getElementById('remoteAuthKey').value = auth.key || '';
+            document.getElementById('remoteAuthSecretSsh').value = auth.secret || '';
+        }
     } else if (auth.type === 'http') {
         document.getElementById('remoteAuthUser').value = auth.key || '';
         document.getElementById('remoteAuthSecretHttp').value = auth.secret || '';
     }
     
     loadSSHKeys('remoteSshKeySelect');
+    loadDbSSHKeys();
     new bootstrap.Modal(document.getElementById('remoteAuthModal')).show();
 }
 
 function saveRemoteAuth() {
     const rowId = document.getElementById('authRemoteRowId').value;
     const type = document.getElementById('remoteAuthType').value;
-    let key = '', secret = '';
+    let key = '', secret = '', source = 'local', ssh_key_id = 0;
     
     if (type === 'ssh') {
-        key = document.getElementById('remoteAuthKey').value;
-        secret = document.getElementById('remoteAuthSecretSsh').value;
+        source = document.getElementById('remoteSshSource').value;
+        if (source === 'database') {
+            const dbSelect = document.getElementById('remoteDbSshKeySelect');
+            ssh_key_id = parseInt(dbSelect.value) || 0;
+            if (!ssh_key_id) {
+                showToast('请选择数据库密钥', 'warning');
+                return;
+            }
+            // Store key name for display
+            const selectedOpt = dbSelect.options[dbSelect.selectedIndex];
+            key = selectedOpt.dataset.name || '';
+        } else {
+            key = document.getElementById('remoteAuthKey').value;
+            secret = document.getElementById('remoteAuthSecretSsh').value;
+        }
     } else if (type === 'http') {
         key = document.getElementById('remoteAuthUser').value;
         secret = document.getElementById('remoteAuthSecretHttp').value;
     }
     
-    const auth = {type, key, secret};
+    const auth = {type, key, secret, source, ssh_key_id};
     const tr = document.getElementById(rowId);
     tr.dataset.auth = JSON.stringify(auth);
     
@@ -282,9 +305,18 @@ function saveRemoteAuth() {
     if (type !== 'none') {
         btn.classList.remove('btn-outline-secondary');
         btn.classList.add('btn-success');
+        // Show key info on button
+        if (type === 'ssh' && source === 'database' && key) {
+            btn.title = `数据库密钥: ${key}`;
+        } else if (type === 'ssh' && key) {
+            btn.title = `本地密钥: ${key}`;
+        } else if (type === 'http' && key) {
+            btn.title = `HTTP: ${key}`;
+        }
     } else {
         btn.classList.remove('btn-success');
         btn.classList.add('btn-outline-secondary');
+        btn.title = '配置认证';
     }
     
     bootstrap.Modal.getInstance(document.getElementById('remoteAuthModal')).hide();
@@ -294,6 +326,32 @@ function toggleRemoteAuthFields() {
      const type = document.getElementById('remoteAuthType').value;
      document.getElementById('remote-auth-ssh').className = type === 'ssh' ? 'd-block' : 'd-none';
      document.getElementById('remote-auth-http').className = type === 'http' ? 'd-block' : 'd-none';
+}
+
+function toggleSshSource() {
+    const source = document.getElementById('remoteSshSource').value;
+    document.getElementById('ssh-source-local').className = source === 'local' ? 'd-block' : 'd-none';
+    document.getElementById('ssh-source-database').className = source === 'database' ? 'd-block' : 'd-none';
+}
+
+let dbSSHKeys = [];
+
+async function loadDbSSHKeys() {
+    try {
+        const data = await request('/system/ssh-keys');
+        dbSSHKeys = data || [];
+        const select = document.getElementById('remoteDbSshKeySelect');
+        select.innerHTML = '<option value="">-- 请选择 --</option>';
+        dbSSHKeys.forEach(key => {
+            const opt = document.createElement('option');
+            opt.value = key.ID;
+            opt.textContent = `${key.name} (${key.key_type || 'unknown'})`;
+            opt.dataset.name = key.name;
+            select.appendChild(opt);
+        });
+    } catch(e) {
+        console.error('加载数据库SSH密钥失败', e);
+    }
 }
 
 function openExecuteSyncModal(rowId) {

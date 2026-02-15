@@ -363,14 +363,32 @@
           </el-select>
         </el-form-item>
         <template v-if="remoteAuthForm.type === 'ssh'">
-          <el-form-item label="SSH 密钥">
-            <el-select v-model="remoteAuthForm.key" filterable allow-create placeholder="手动输入路径..." style="width: 100%">
-              <el-option v-for="k in sshKeyList" :key="k" :label="k" :value="k" />
-            </el-select>
+          <el-form-item label="密钥来源">
+            <el-radio-group v-model="remoteAuthForm.source">
+              <el-radio value="local">本地文件</el-radio>
+              <el-radio value="database">数据库密钥</el-radio>
+            </el-radio-group>
           </el-form-item>
-          <el-form-item label="密钥密码">
-            <el-input v-model="remoteAuthForm.secret" type="password" show-password placeholder="Passphrase (可选)" />
-          </el-form-item>
+          <template v-if="remoteAuthForm.source === 'local'">
+            <el-form-item label="SSH 密钥">
+              <el-select v-model="remoteAuthForm.key" filterable allow-create placeholder="手动输入路径..." style="width: 100%">
+                <el-option v-for="k in sshKeyList" :key="k" :label="k" :value="k" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="密钥密码">
+              <el-input v-model="remoteAuthForm.secret" type="password" show-password placeholder="Passphrase (可选)" />
+            </el-form-item>
+          </template>
+          <template v-if="remoteAuthForm.source === 'database'">
+            <el-form-item label="选择密钥">
+              <el-select v-model="remoteAuthForm.ssh_key_id" placeholder="请选择数据库密钥" style="width: 100%">
+                <el-option v-for="k in dbSSHKeyList" :key="k.id" :label="`${k.name} (${k.key_type})`" :value="k.id" />
+              </el-select>
+            </el-form-item>
+            <div v-if="selectedDbKeyInfo" style="padding: 0 110px; color: #909399; font-size: 12px;">
+              {{ selectedDbKeyInfo }}
+            </div>
+          </template>
         </template>
         <template v-if="remoteAuthForm.type === 'http'">
           <el-form-item label="用户名">
@@ -462,6 +480,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowLeft, Share, Switch, Refresh, Edit, Search, Download, Setting, Plus, Top, Delete, CopyDocument, Connection, Lock } from '@element-plus/icons-vue'
 import { getRepoDetail, scanRepo, updateRepo, fetchRepo } from '@/api/modules/repo'
 import { getSSHKeys, testConnection } from '@/api/modules/system'
+import { listDBSSHKeys, type DBSSHKey } from '@/api/modules/sshkey'
 import { getStatsAnalyze, getStatsAuthors, getStatsBranches, getStatsCommits, getLineStats, getLineStatsConfig, saveLineStatsConfig, exportStatsCsv } from '@/api/modules/stats'
 import { getVersionList, getCurrentVersion, getNextVersion } from '@/api/modules/version'
 import type { VersionTag, NextVersionInfo } from '@/api/modules/version'
@@ -541,8 +560,9 @@ const editTrackingBranches = ref<TrackingBranch[]>([])
 const showRemoteAuthDialog = ref(false)
 const remoteAuthName = ref('')
 const remoteAuthIndex = ref(-1)
-const remoteAuthForm = ref<AuthInfo>({ type: 'none', key: '', secret: '' })
+const remoteAuthForm = ref<AuthInfo>({ type: 'none', key: '', secret: '', source: 'local', ssh_key_id: 0 })
 const sshKeyList = ref<string[]>([])
+const dbSSHKeyList = ref<DBSSHKey[]>([])
 
 // Exclude config
 const showExcludeDialog = ref(false)
@@ -758,7 +778,7 @@ function openEditDialog() {
     scanRepo(repo.value.path).then(result => {
       editRemotes.value = (result.remotes || []).map(r => ({
         ...r,
-        _auth: storedAuths[r.name] || { type: 'none', key: '', secret: '' },
+        _auth: storedAuths[r.name] || { type: 'none', key: '', secret: '', source: 'local', ssh_key_id: 0 },
         _testing: false,
       }))
       editTrackingBranches.value = result.branches || []
@@ -789,7 +809,13 @@ async function handleSaveEdit() {
     const remoteAuths: Record<string, AuthInfo> = {}
     editRemotes.value.forEach(r => {
       if (r.name && r._auth && r._auth.type !== 'none') {
-        remoteAuths[r.name] = { type: r._auth.type, key: r._auth.key, secret: r._auth.secret }
+        remoteAuths[r.name] = { 
+          type: r._auth.type, 
+          key: r._auth.key, 
+          secret: r._auth.secret,
+          source: r._auth.source || 'local',
+          ssh_key_id: r._auth.ssh_key_id || 0
+        }
       }
     })
 
@@ -823,7 +849,7 @@ function addEditRemote() {
     fetch_url: '',
     push_url: '',
     is_mirror: false,
-    _auth: { type: 'none', key: '', secret: '' },
+    _auth: { type: 'none', key: '', secret: '', source: 'local', ssh_key_id: 0 },
     _testing: false,
   })
 }
@@ -854,15 +880,38 @@ function openEditRemoteAuth(index: number) {
   if (!row) return
   remoteAuthIndex.value = index
   remoteAuthName.value = row.name || 'New Remote'
-  remoteAuthForm.value = { ...(row._auth || { type: 'none', key: '', secret: '' }) }
+  remoteAuthForm.value = { 
+    type: row._auth?.type || 'none', 
+    key: row._auth?.key || '', 
+    secret: row._auth?.secret || '',
+    source: row._auth?.source || 'local',
+    ssh_key_id: row._auth?.ssh_key_id || 0
+  }
   showRemoteAuthDialog.value = true
-  // Load SSH keys
+  // Load local SSH keys
   getSSHKeys().then(keys => { sshKeyList.value = keys }).catch(() => {})
+  // Load database SSH keys
+  listDBSSHKeys().then(keys => { dbSSHKeyList.value = keys }).catch(() => {})
 }
+
+// Computed property for selected database key info
+const selectedDbKeyInfo = computed(() => {
+  if (remoteAuthForm.value.source !== 'database' || !remoteAuthForm.value.ssh_key_id) return ''
+  const key = dbSSHKeyList.value.find(k => k.id === remoteAuthForm.value.ssh_key_id)
+  if (!key) return ''
+  return key.description || `创建于 ${key.created_at}`
+})
 
 function saveEditRemoteAuth() {
   const row = editRemotes.value[remoteAuthIndex.value]
   if (row) {
+    // If using database key, store key name for display
+    if (remoteAuthForm.value.type === 'ssh' && remoteAuthForm.value.source === 'database') {
+      const dbKey = dbSSHKeyList.value.find(k => k.id === remoteAuthForm.value.ssh_key_id)
+      if (dbKey) {
+        remoteAuthForm.value.key = dbKey.name  // Store name for display
+      }
+    }
     row._auth = { ...remoteAuthForm.value }
   }
   showRemoteAuthDialog.value = false

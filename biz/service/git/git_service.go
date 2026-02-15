@@ -96,11 +96,24 @@ func (s *GitService) GetAuthFromDBKey(privateKey, passphrase string) (transport.
 		return nil, fmt.Errorf("failed to parse private key: %v", err)
 	}
 	publicKeys.HostKeyCallback = ssh2.InsecureIgnoreHostKey()
+
+	// 配置更广泛的 SSH 算法支持以提高兼容性
+	publicKeys.HostKeyCallbackHelper = ssh.HostKeyCallbackHelper{
+		HostKeyCallback: ssh2.InsecureIgnoreHostKey(),
+	}
+
 	return publicKeys, nil
 }
 
 // TestRemoteConnectionWithDBKey 使用数据库密钥测试远程连接
 func (s *GitService) TestRemoteConnectionWithDBKey(url, privateKey, passphrase string) error {
+	// 方案1: 先尝试使用原生 git 命令（更可靠）
+	err := s.testConnectionWithGitCommand(url, privateKey, passphrase)
+	if err == nil {
+		return nil
+	}
+
+	// 方案2: 回退到 go-git（作为备选）
 	auth, err := s.GetAuthFromDBKey(privateKey, passphrase)
 	if err != nil {
 		return err
@@ -111,8 +124,6 @@ func (s *GitService) TestRemoteConnectionWithDBKey(url, privateKey, passphrase s
 		return fmt.Errorf("invalid URL: %v", err)
 	}
 
-	// 使用 git ls-remote 命令测试连接
-	// go-git 的内部 transport client 不直接暴露，使用命令行方式更可靠
 	r, err := git.Init(nil, nil)
 	if err != nil {
 		return fmt.Errorf("failed to init memory repo: %v", err)
@@ -131,6 +142,42 @@ func (s *GitService) TestRemoteConnectionWithDBKey(url, privateKey, passphrase s
 	})
 	if err != nil {
 		return fmt.Errorf("connection failed: %v", err)
+	}
+
+	return nil
+}
+
+// testConnectionWithGitCommand 使用原生 git 命令测试连接（更可靠）
+func (s *GitService) testConnectionWithGitCommand(url, privateKey, passphrase string) error {
+	// 创建临时私钥文件
+	tmpFile, err := os.CreateTemp("", "git_ssh_key_*")
+	if err != nil {
+		return fmt.Errorf("failed to create temp key file: %v", err)
+	}
+	defer os.Remove(tmpFile.Name())
+
+	// 写入私钥内容
+	if _, err := tmpFile.WriteString(privateKey); err != nil {
+		tmpFile.Close()
+		return fmt.Errorf("failed to write key file: %v", err)
+	}
+	tmpFile.Close()
+
+	// 设置文件权限为 600
+	if err := os.Chmod(tmpFile.Name(), 0600); err != nil {
+		return fmt.Errorf("failed to set key file permissions: %v", err)
+	}
+
+	// 构建 GIT_SSH_COMMAND
+	sshCmd := fmt.Sprintf("ssh -i %s -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null", tmpFile.Name())
+
+	// 执行 git ls-remote
+	cmd := exec.Command("git", "ls-remote", "--heads", url)
+	cmd.Env = append(os.Environ(), "GIT_SSH_COMMAND="+sshCmd)
+
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("git ls-remote failed: %v, output: %s", err, string(output))
 	}
 
 	return nil
@@ -266,6 +313,71 @@ func (s *GitService) FetchWithAuth(path, remoteURL, authType, authKey, authSecre
 	return err
 }
 
+// FetchWithAuthMethod 使用已解析的认证方法进行 fetch
+func (s *GitService) FetchWithAuthMethod(path, remoteURL string, auth transport.AuthMethod, progress io.Writer, extraArgs ...string) error {
+	r, err := s.openRepo(path)
+	if err != nil {
+		return err
+	}
+
+	// Create a temporary remote to fetch from the URL
+	remote := git.NewRemote(r.Storer, &config.RemoteConfig{
+		Name: "origin",
+		URLs: []string{remoteURL},
+	})
+
+	err = remote.Fetch(&git.FetchOptions{
+		Auth:       auth,
+		RemoteName: "origin",
+		Progress:   progress,
+	})
+	if err == git.NoErrAlreadyUpToDate {
+		return nil
+	}
+	return err
+}
+
+// FetchWithDBKey 使用数据库SSH密钥进行fetch（使用原生git命令，更可靠）
+func (s *GitService) FetchWithDBKey(path, remoteURL, privateKey, passphrase string, progress io.Writer, refSpecs ...string) error {
+	// 创建临时私钥文件
+	tmpFile, err := os.CreateTemp("", "git_ssh_key_*")
+	if err != nil {
+		return fmt.Errorf("failed to create temp key file: %v", err)
+	}
+	defer os.Remove(tmpFile.Name())
+
+	if _, err := tmpFile.WriteString(privateKey); err != nil {
+		tmpFile.Close()
+		return fmt.Errorf("failed to write key file: %v", err)
+	}
+	tmpFile.Close()
+
+	if err := os.Chmod(tmpFile.Name(), 0600); err != nil {
+		return fmt.Errorf("failed to set key file permissions: %v", err)
+	}
+
+	sshCmd := fmt.Sprintf("ssh -i %s -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null", tmpFile.Name())
+
+	args := []string{"fetch", remoteURL}
+	args = append(args, refSpecs...)
+
+	cmd := exec.Command("git", args...)
+	cmd.Dir = path
+	cmd.Env = append(os.Environ(), "GIT_SSH_COMMAND="+sshCmd)
+
+	if progress != nil {
+		cmd.Stdout = progress
+		cmd.Stderr = progress
+	}
+
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("git fetch failed: %v, output: %s", err, string(output))
+	}
+
+	return nil
+}
+
 func (s *GitService) Clone(remoteURL, localPath, authType, authKey, authSecret string) error {
 	return s.CloneWithProgress(remoteURL, localPath, authType, authKey, authSecret, nil)
 }
@@ -291,6 +403,61 @@ func (s *GitService) CloneWithProgress(remoteURL, localPath, authType, authKey, 
 		Progress: progress,
 	})
 	return err
+}
+
+// CloneWithAuthMethod 使用已解析的认证方法进行克隆
+func (s *GitService) CloneWithAuthMethod(remoteURL, localPath string, auth transport.AuthMethod, progressChan chan string) error {
+	if auth == nil {
+		auth = s.detectSSHAuth(remoteURL)
+	}
+
+	var progress io.Writer
+	if progressChan != nil {
+		progress = &channelWriter{ch: progressChan}
+	}
+
+	_, err := git.PlainClone(localPath, false, &git.CloneOptions{
+		URL:      remoteURL,
+		Auth:     auth,
+		Progress: progress,
+	})
+	return err
+}
+
+// CloneWithDBKey 使用数据库SSH密钥进行克隆（使用原生git命令，更可靠）
+func (s *GitService) CloneWithDBKey(remoteURL, localPath, privateKey, passphrase string, progressChan chan string) error {
+	// 创建临时私钥文件
+	tmpFile, err := os.CreateTemp("", "git_ssh_key_*")
+	if err != nil {
+		return fmt.Errorf("failed to create temp key file: %v", err)
+	}
+	defer os.Remove(tmpFile.Name())
+
+	if _, err := tmpFile.WriteString(privateKey); err != nil {
+		tmpFile.Close()
+		return fmt.Errorf("failed to write key file: %v", err)
+	}
+	tmpFile.Close()
+
+	if err := os.Chmod(tmpFile.Name(), 0600); err != nil {
+		return fmt.Errorf("failed to set key file permissions: %v", err)
+	}
+
+	sshCmd := fmt.Sprintf("ssh -i %s -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null", tmpFile.Name())
+
+	cmd := exec.Command("git", "clone", remoteURL, localPath)
+	cmd.Env = append(os.Environ(), "GIT_SSH_COMMAND="+sshCmd)
+
+	if progressChan != nil {
+		cmd.Stdout = &channelWriter{ch: progressChan}
+		cmd.Stderr = &channelWriter{ch: progressChan}
+	}
+
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("git clone failed: %v", err)
+	}
+
+	return nil
 }
 
 type channelWriter struct {
@@ -398,134 +565,6 @@ func (s *GitService) Push(path, targetRemote, sourceHash, targetBranch string, o
 	return err
 }
 
-func (s *GitService) GetRemotes(path string) ([]string, error) {
-	r, err := s.openRepo(path)
-	if err != nil {
-		return nil, err
-	}
-	remotes, err := r.Remotes()
-	if err != nil {
-		return nil, err
-	}
-	var names []string
-	for _, remote := range remotes {
-		names = append(names, remote.Config().Name)
-	}
-	return names, nil
-}
-
-func (s *GitService) GetRemoteURL(path, remoteName string) (string, error) {
-	r, err := s.openRepo(path)
-	if err != nil {
-		return "", err
-	}
-	remote, err := r.Remote(remoteName)
-	if err != nil {
-		return "", err
-	}
-	urls := remote.Config().URLs
-	if len(urls) > 0 {
-		return urls[0], nil
-	}
-	return "", fmt.Errorf("no URL for remote %s", remoteName)
-}
-
-func (s *GitService) GetRepoConfig(path string) (*domain.GitRepoConfig, error) {
-	r, err := s.openRepo(path)
-	if err != nil {
-		return nil, err
-	}
-	cfg, err := r.Config()
-	if err != nil {
-		return nil, err
-	}
-
-	repoConfig := &domain.GitRepoConfig{
-		Remotes:  []domain.GitRemote{},
-		Branches: []domain.GitBranch{},
-	}
-
-	for _, remote := range cfg.Remotes {
-		r := &domain.GitRemote{
-			Name:       remote.Name,
-			FetchURL:   "",
-			PushURL:    "",
-			FetchSpecs: []string{},
-			PushSpecs:  []string{},
-			IsMirror:   remote.Mirror,
-		}
-		if len(remote.URLs) > 0 {
-			r.FetchURL = remote.URLs[0]
-			// Default PushURL
-			r.PushURL = remote.URLs[0]
-		}
-		for _, u := range remote.URLs {
-			r.FetchSpecs = append(r.FetchSpecs, u) // This is wrong, FetchSpecs are refspecs.
-		}
-		for _, spec := range remote.Fetch {
-			r.FetchSpecs = append(r.FetchSpecs, spec.String())
-		}
-		repoConfig.Remotes = append(repoConfig.Remotes, *r)
-	}
-
-	for _, branch := range cfg.Branches {
-		b := &domain.GitBranch{
-			Name:   branch.Name,
-			Remote: branch.Remote,
-			Merge:  branch.Merge.String(),
-		}
-		if branch.Remote != "" && branch.Merge != "" {
-			shortRef := branch.Merge.Short()
-			b.UpstreamRef = fmt.Sprintf("%s/%s", branch.Remote, shortRef)
-		}
-		repoConfig.Branches = append(repoConfig.Branches, *b)
-	}
-
-	return repoConfig, nil
-}
-
-func (s *GitService) AddRemote(path, name, url string, isMirror bool) error {
-	r, err := s.openRepo(path)
-	if err != nil {
-		return err
-	}
-	_, err = r.CreateRemote(&config.RemoteConfig{
-		Name:   name,
-		URLs:   []string{url},
-		Mirror: isMirror,
-	})
-	return err
-}
-
-func (s *GitService) RemoveRemote(path, name string) error {
-	r, err := s.openRepo(path)
-	if err != nil {
-		return err
-	}
-	return r.DeleteRemote(name)
-}
-
-func (s *GitService) SetRemotePushURL(path, name, url string) error {
-	// go-git doesn't have a direct SetURL method on Remote, need to edit Config.
-	r, err := s.openRepo(path)
-	if err != nil {
-		return err
-	}
-	cfg, err := r.Config()
-	if err != nil {
-		return err
-	}
-	if remote, ok := cfg.Remotes[name]; ok {
-		// remote.URLs is a slice.
-		remote.URLs = []string{url} // This sets fetch URL.
-		// If we want to set push URL, go-git Config struct doesn't expose it well in simple map?
-		// Actually cfg.Remotes is map[string]*RemoteConfig.
-		// RemoteConfig has URLs.
-		return r.Storer.SetConfig(cfg)
-	}
-	return fmt.Errorf("remote %s not found", name)
-}
-
 func (s *GitService) GetBranches(path string) ([]string, error) {
 	r, err := s.openRepo(path)
 	if err != nil {
@@ -613,6 +652,74 @@ func (s *GitService) PushWithAuth(path, targetRemoteURL, sourceHash, targetBranc
 	return err
 }
 
+// PushWithAuthMethod 使用已解析的认证方法进行 push
+func (s *GitService) PushWithAuthMethod(path, targetRemoteURL, sourceHash, targetBranch string, auth transport.AuthMethod, options []string, progress io.Writer) error {
+	r, err := s.openRepo(path)
+	if err != nil {
+		return err
+	}
+
+	remote := git.NewRemote(r.Storer, &config.RemoteConfig{
+		Name: "anonymous",
+		URLs: []string{targetRemoteURL},
+	})
+
+	refSpec := config.RefSpec(fmt.Sprintf("%s:refs/heads/%s", sourceHash, targetBranch))
+
+	pushOpts := parsePushOptions(options)
+	pushOpts.Auth = auth
+	pushOpts.RefSpecs = []config.RefSpec{refSpec}
+	pushOpts.Progress = progress
+
+	err = remote.Push(pushOpts)
+	if err == git.NoErrAlreadyUpToDate {
+		return nil
+	}
+	return err
+}
+
+// PushWithDBKey 使用数据库SSH密钥进行push（使用原生git命令，更可靠）
+func (s *GitService) PushWithDBKey(path, targetRemoteURL, sourceHash, targetBranch, privateKey, passphrase string, options []string, progress io.Writer) error {
+	// 创建临时私钥文件
+	tmpFile, err := os.CreateTemp("", "git_ssh_key_*")
+	if err != nil {
+		return fmt.Errorf("failed to create temp key file: %v", err)
+	}
+	defer os.Remove(tmpFile.Name())
+
+	if _, err := tmpFile.WriteString(privateKey); err != nil {
+		tmpFile.Close()
+		return fmt.Errorf("failed to write key file: %v", err)
+	}
+	tmpFile.Close()
+
+	if err := os.Chmod(tmpFile.Name(), 0600); err != nil {
+		return fmt.Errorf("failed to set key file permissions: %v", err)
+	}
+
+	sshCmd := fmt.Sprintf("ssh -i %s -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null", tmpFile.Name())
+
+	refSpec := fmt.Sprintf("%s:refs/heads/%s", sourceHash, targetBranch)
+	args := []string{"push", targetRemoteURL, refSpec}
+	args = append(args, options...)
+
+	cmd := exec.Command("git", args...)
+	cmd.Dir = path
+	cmd.Env = append(os.Environ(), "GIT_SSH_COMMAND="+sshCmd)
+
+	if progress != nil {
+		cmd.Stdout = progress
+		cmd.Stderr = progress
+	}
+
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("git push failed: %v, output: %s", err, string(output))
+	}
+
+	return nil
+}
+
 func (s *GitService) GetRepoFiles(path, branch string) ([]string, error) {
 	r, err := s.openRepo(path)
 	if err != nil {
@@ -649,22 +756,6 @@ func (s *GitService) BlameFile(path, branch, file string) (*git.BlameResult, err
 	}
 
 	return git.Blame(commit, file)
-}
-
-func (s *GitService) TestRemoteConnection(url string) error {
-	// Create a temporary remote
-	// memory.NewStorage() would be better but nil is accepted for non-persistent remote
-	remote := git.NewRemote(nil, &config.RemoteConfig{
-		Name: "anonymous",
-		URLs: []string{url},
-	})
-
-	auth := s.detectSSHAuth(url)
-
-	_, err := remote.List(&git.ListOptions{
-		Auth: auth,
-	})
-	return err
 }
 
 func (s *GitService) CheckoutBranch(path, branch string) error {
@@ -756,71 +847,6 @@ func (s *GitService) Commit(path, message, authorName, authorEmail string) error
 		},
 	})
 	return err
-}
-
-func (s *GitService) GetGitUser(path string) (string, string, error) {
-	// 1. Try Local Config
-	var name, email string
-	r, err := s.openRepo(path)
-	if err == nil {
-		if cfg, err := r.Config(); err == nil {
-			name = cfg.User.Name
-			email = cfg.User.Email
-		}
-	}
-
-	if name != "" && email != "" {
-		return name, email, nil
-	}
-
-	// 2. Try Global Config (~/.gitconfig)
-	home, err := os.UserHomeDir()
-	if err == nil {
-		globalConfigPath := filepath.Join(home, ".gitconfig")
-		content, err := os.ReadFile(globalConfigPath)
-		if err == nil {
-			cfg := config.NewConfig()
-			if err := cfg.Unmarshal(content); err == nil {
-				if name == "" {
-					name = cfg.User.Name
-				}
-				if email == "" {
-					email = cfg.User.Email
-				}
-			}
-		}
-	}
-
-	return name, email, nil
-}
-
-func (s *GitService) SetGlobalGitUser(name, email string) error {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return err
-	}
-	globalConfigPath := filepath.Join(home, ".gitconfig")
-
-	// Read existing
-	cfg := config.NewConfig()
-	content, err := os.ReadFile(globalConfigPath)
-	if err == nil {
-		if err := cfg.Unmarshal(content); err != nil {
-			return err
-		}
-	} else if !os.IsNotExist(err) {
-		return err
-	}
-
-	cfg.User.Name = name
-	cfg.User.Email = email
-
-	// Write back
-	data, err := cfg.Marshal()
-	if err != nil {
-		return err
-	}
-	return os.WriteFile(globalConfigPath, data, 0644)
 }
 
 func (s *GitService) PushCurrent(path string) error {
@@ -963,27 +989,6 @@ func (s *GitService) ResolveRevision(path, rev string) (string, error) {
 	return hash.String(), nil
 }
 
-func (s *GitService) GetGlobalGitUser() (string, string, error) {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return "", "", err
-	}
-	globalConfigPath := filepath.Join(home, ".gitconfig")
-	content, err := os.ReadFile(globalConfigPath)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return "", "", nil
-		}
-		return "", "", err
-	}
-
-	cfg := config.NewConfig()
-	if err := cfg.Unmarshal(content); err != nil {
-		return "", "", err
-	}
-	return cfg.User.Name, cfg.User.Email, nil
-}
-
 func (s *GitService) GetHeadBranch(path string) (string, error) {
 	r, err := s.openRepo(path)
 	if err != nil {
@@ -1042,253 +1047,6 @@ func (tm *TaskManager) UpdateStatus(id string, status string, errStr string) {
 		t.Status = status
 		t.Error = errStr
 	}
-}
-
-func (s *GitService) CreateTag(path, tagName, ref, message, authorName, authorEmail string) error {
-	r, err := s.openRepo(path)
-	if err != nil {
-		return err
-	}
-
-	hash, err := r.ResolveRevision(plumbing.Revision(ref))
-	if err != nil {
-		return fmt.Errorf("invalid reference '%s': %v", ref, err)
-	}
-
-	if authorName == "" {
-		authorName = "Git Manage Service"
-	}
-	if authorEmail == "" {
-		authorEmail = "git-manage@example.com"
-	}
-
-	_, err = r.CreateTag(tagName, *hash, &git.CreateTagOptions{
-		Tagger: &object.Signature{
-			Name:  authorName,
-			Email: authorEmail,
-			When:  time.Now(),
-		},
-		Message: message,
-	})
-	return err
-}
-
-func (s *GitService) PushTag(path, remoteName, tagName, authType, authKey, authSecret string) error {
-	r, err := s.openRepo(path)
-	if err != nil {
-		return err
-	}
-
-	// Detect Auth
-	auth, err := s.getAuth(authType, authKey, authSecret)
-	if err != nil {
-		return err
-	}
-
-	if auth == nil {
-		// Try to detect from remote URL
-		rem, err := r.Remote(remoteName)
-		if err == nil {
-			urls := rem.Config().URLs
-			if len(urls) > 0 {
-				auth = s.detectSSHAuth(urls[0])
-			}
-		}
-	}
-
-	refSpec := config.RefSpec(fmt.Sprintf("refs/tags/%s:refs/tags/%s", tagName, tagName))
-
-	err = r.Push(&git.PushOptions{
-		RemoteName: remoteName,
-		RefSpecs:   []config.RefSpec{refSpec},
-		Auth:       auth,
-	})
-	if err == git.NoErrAlreadyUpToDate {
-		return nil
-	}
-	return err
-}
-
-func (s *GitService) DeleteTag(path, tagName string) error {
-	r, err := s.openRepo(path)
-	if err != nil {
-		return err
-	}
-	return r.DeleteTag(tagName)
-}
-
-func (s *GitService) DeleteRemoteTag(path, remoteName, tagName, authType, authKey, authSecret string) error {
-	r, err := s.openRepo(path)
-	if err != nil {
-		return err
-	}
-
-	auth, _ := s.getAuth(authType, authKey, authSecret)
-	if auth == nil {
-		rem, err := r.Remote(remoteName)
-		if err == nil {
-			urls := rem.Config().URLs
-			if len(urls) > 0 {
-				auth = s.detectSSHAuth(urls[0])
-			}
-		}
-	}
-
-	refSpec := config.RefSpec(fmt.Sprintf(":refs/tags/%s", tagName))
-	err = r.Push(&git.PushOptions{
-		RemoteName: remoteName,
-		RefSpecs:   []config.RefSpec{refSpec},
-		Auth:       auth,
-	})
-	if err == git.NoErrAlreadyUpToDate {
-		return nil
-	}
-	return err
-}
-
-func (s *GitService) GetTags(path string) ([]string, error) {
-	r, err := s.openRepo(path)
-	if err != nil {
-		return nil, err
-	}
-	iter, err := r.Tags()
-	if err != nil {
-		return nil, err
-	}
-	var tags []string
-	iter.ForEach(func(ref *plumbing.Reference) error {
-		tags = append(tags, ref.Name().Short())
-		return nil
-	})
-	return tags, nil
-}
-
-type TagInfo struct {
-	Name    string    `json:"name"`
-	Hash    string    `json:"hash"`
-	Message string    `json:"message"`
-	Tagger  string    `json:"tagger"`
-	Date    time.Time `json:"date"`
-}
-
-func (s *GitService) GetTagList(path string) ([]TagInfo, error) {
-	r, err := s.openRepo(path)
-	if err != nil {
-		return nil, err
-	}
-	iter, err := r.Tags()
-	if err != nil {
-		return nil, err
-	}
-	var tags []TagInfo
-	iter.ForEach(func(ref *plumbing.Reference) error {
-		tagObj, err := r.TagObject(ref.Hash())
-		if err == nil {
-			// Annotated Tag
-			tags = append(tags, TagInfo{
-				Name:    ref.Name().Short(),
-				Hash:    ref.Hash().String(),
-				Message: tagObj.Message,
-				Tagger:  tagObj.Tagger.Name,
-				Date:    tagObj.Tagger.When,
-			})
-		} else {
-			// Lightweight Tag (commit)
-			commit, err := r.CommitObject(ref.Hash())
-			if err == nil {
-				tags = append(tags, TagInfo{
-					Name:    ref.Name().Short(),
-					Hash:    ref.Hash().String(),
-					Message: commit.Message,
-					Tagger:  commit.Author.Name,
-					Date:    commit.Author.When,
-				})
-			}
-		}
-		return nil
-	})
-	return tags, nil
-}
-
-func (s *GitService) GetDescribe(path string) (string, error) {
-	// git describe --tags --always --long
-	// Note: go-git does not implement describe yet.
-	// We use shell command for robustness and simplicity here.
-	return s.RunCommand(path, "describe", "--tags", "--always", "--long")
-}
-
-func (s *GitService) GetLatestVersion(path string) (string, error) {
-	// Simple strategy: use git describe --tags --abbrev=0 to get the latest tag reachable from HEAD
-	// This respects semver ordering if git is configured or tags are standard.
-	// However, git describe only sorts by topological reachability (most recent on branch).
-	// To get strictly highest semver, we need to list all tags and sort.
-	// For now, let's trust git describe --tags --abbrev=0 which is "latest tag on this branch".
-	out, err := s.RunCommand(path, "describe", "--tags", "--abbrev=0")
-	if err != nil {
-		// If no tags found, might fail. Return empty or error.
-		return "", err
-	}
-	return out, nil
-}
-
-type NextVersionInfo struct {
-	Current   string `json:"current"`
-	NextMajor string `json:"next_major"`
-	NextMinor string `json:"next_minor"`
-	NextPatch string `json:"next_patch"`
-}
-
-func (s *GitService) GetNextVersions(path string) (*NextVersionInfo, error) {
-	// 1. Get latest version
-	latest, err := s.GetLatestVersion(path)
-	// If error or empty, default to v0.0.0
-	if err != nil || latest == "" {
-		latest = "v0.0.0"
-	}
-
-	// 2. Parse SemVer
-	// Handle v prefix
-	version := latest
-	hasV := false
-	if strings.HasPrefix(version, "v") {
-		hasV = true
-		version = version[1:]
-	}
-
-	parts := strings.Split(version, ".")
-	major, minor, patch := 0, 0, 0
-
-	// Parse robustly
-	if len(parts) >= 1 {
-		fmt.Sscanf(parts[0], "%d", &major)
-	}
-	if len(parts) >= 2 {
-		fmt.Sscanf(parts[1], "%d", &minor)
-	}
-	if len(parts) >= 3 {
-		fmt.Sscanf(parts[2], "%d", &patch)
-	}
-
-	// 3. Calculate next versions
-	// Major: +1.0.0
-	nextMajor := fmt.Sprintf("%d.0.0", major+1)
-	// Minor: +0.1.0
-	nextMinor := fmt.Sprintf("%d.%d.0", major, minor+1)
-	// Patch: +0.0.1
-	nextPatch := fmt.Sprintf("%d.%d.%d", major, minor, patch+1)
-
-	if hasV {
-		nextMajor = "v" + nextMajor
-		nextMinor = "v" + nextMinor
-		nextPatch = "v" + nextPatch
-	}
-
-	return &NextVersionInfo{
-		Current:   latest,
-		NextMajor: nextMajor,
-		NextMinor: nextMinor,
-		NextPatch: nextPatch,
-	}, nil
 }
 
 // AuthorInfo 作者信息
@@ -1434,310 +1192,4 @@ func (s *GitService) getConflictFiles(path string) []string {
 		return nil
 	}
 	return strings.Split(strings.TrimSpace(output), "\n")
-}
-
-// StashEntry Stash条目
-type StashEntry struct {
-	Index   int    `json:"index"`
-	Ref     string `json:"ref"`
-	Message string `json:"message"`
-	Branch  string `json:"branch"`
-	Date    string `json:"date"`
-}
-
-// StashList 列出stash
-func (s *GitService) StashList(path string) ([]StashEntry, error) {
-	output, err := s.RunCommand(path, "stash", "list", "--format=%gd|%gs|%ci")
-	if err != nil {
-		return nil, err
-	}
-
-	if output == "" {
-		return []StashEntry{}, nil
-	}
-
-	var entries []StashEntry
-	lines := strings.Split(output, "\n")
-	for i, line := range lines {
-		if line == "" {
-			continue
-		}
-		parts := strings.SplitN(line, "|", 3)
-		entry := StashEntry{
-			Index: i,
-			Ref:   fmt.Sprintf("stash@{%d}", i),
-		}
-		if len(parts) >= 1 {
-			entry.Ref = parts[0]
-		}
-		if len(parts) >= 2 {
-			entry.Message = parts[1]
-		}
-		if len(parts) >= 3 {
-			entry.Date = parts[2]
-		}
-		entries = append(entries, entry)
-	}
-
-	return entries, nil
-}
-
-// StashSave 保存stash
-func (s *GitService) StashSave(path, message string, includeUntracked bool) error {
-	args := []string{"stash", "push"}
-	if message != "" {
-		args = append(args, "-m", message)
-	}
-	if includeUntracked {
-		args = append(args, "-u")
-	}
-	_, err := s.RunCommand(path, args...)
-	return err
-}
-
-// StashApply 应用stash
-func (s *GitService) StashApply(path string, index int) error {
-	ref := fmt.Sprintf("stash@{%d}", index)
-	_, err := s.RunCommand(path, "stash", "apply", ref)
-	return err
-}
-
-// StashPop 弹出stash（应用并删除）
-func (s *GitService) StashPop(path string, index int) error {
-	ref := fmt.Sprintf("stash@{%d}", index)
-	_, err := s.RunCommand(path, "stash", "pop", ref)
-	return err
-}
-
-// StashDrop 删除stash
-func (s *GitService) StashDrop(path string, index int) error {
-	ref := fmt.Sprintf("stash@{%d}", index)
-	_, err := s.RunCommand(path, "stash", "drop", ref)
-	return err
-}
-
-// StashClear 清空所有stash
-func (s *GitService) StashClear(path string) error {
-	_, err := s.RunCommand(path, "stash", "clear")
-	return err
-}
-
-// ===================== Submodule 管理 =====================
-
-// SubmoduleInfo Submodule信息
-type SubmoduleInfo struct {
-	Name   string `json:"name"`
-	Path   string `json:"path"`
-	URL    string `json:"url"`
-	Branch string `json:"branch"`
-	Commit string `json:"commit"`
-	Status string `json:"status"` // initialized, uninitialized, modified
-}
-
-// SubmoduleStatusItem Submodule状态项
-type SubmoduleStatusItem struct {
-	Path        string `json:"path"`
-	Commit      string `json:"commit"`
-	Status      string `json:"status"`      // +, -, U, 空
-	Description string `json:"description"` // 状态描述
-}
-
-// SubmoduleList 列出所有submodule
-func (s *GitService) SubmoduleList(path string) ([]SubmoduleInfo, error) {
-	r, err := s.openRepo(path)
-	if err != nil {
-		return nil, err
-	}
-
-	w, err := r.Worktree()
-	if err != nil {
-		return nil, err
-	}
-
-	submodules, err := w.Submodules()
-	if err != nil {
-		return nil, err
-	}
-
-	var result []SubmoduleInfo
-	for _, sm := range submodules {
-		cfg := sm.Config()
-		status, err := sm.Status()
-
-		info := SubmoduleInfo{
-			Name:   cfg.Name,
-			Path:   cfg.Path,
-			URL:    cfg.URL,
-			Branch: cfg.Branch,
-		}
-
-		if err == nil && status != nil {
-			info.Commit = status.Current.String()
-			if !status.IsClean() {
-				info.Status = "modified"
-			} else if status.Current.IsZero() {
-				info.Status = "uninitialized"
-			} else {
-				info.Status = "initialized"
-			}
-		} else {
-			info.Status = "unknown"
-		}
-
-		result = append(result, info)
-	}
-
-	return result, nil
-}
-
-// SubmoduleAdd 添加submodule
-func (s *GitService) SubmoduleAdd(path, url, subPath, branch string) error {
-	args := []string{"submodule", "add"}
-	if branch != "" {
-		args = append(args, "-b", branch)
-	}
-	args = append(args, url, subPath)
-
-	_, err := s.RunCommand(path, args...)
-	return err
-}
-
-// SubmoduleInit 初始化submodule
-func (s *GitService) SubmoduleInit(path, subPath string) error {
-	args := []string{"submodule", "init"}
-	if subPath != "" {
-		args = append(args, subPath)
-	}
-
-	_, err := s.RunCommand(path, args...)
-	return err
-}
-
-// SubmoduleUpdate 更新submodule
-func (s *GitService) SubmoduleUpdate(path, subPath string, init, recursive, remote bool) error {
-	args := []string{"submodule", "update"}
-	if init {
-		args = append(args, "--init")
-	}
-	if recursive {
-		args = append(args, "--recursive")
-	}
-	if remote {
-		args = append(args, "--remote")
-	}
-	if subPath != "" {
-		args = append(args, "--", subPath)
-	}
-
-	_, err := s.RunCommand(path, args...)
-	return err
-}
-
-// SubmoduleSync 同步submodule URL
-func (s *GitService) SubmoduleSync(path, subPath string, recursive bool) error {
-	args := []string{"submodule", "sync"}
-	if recursive {
-		args = append(args, "--recursive")
-	}
-	if subPath != "" {
-		args = append(args, "--", subPath)
-	}
-
-	_, err := s.RunCommand(path, args...)
-	return err
-}
-
-// SubmoduleRemove 移除submodule
-func (s *GitService) SubmoduleRemove(path, subPath string, force bool) error {
-	// git submodule deinit
-	args := []string{"submodule", "deinit"}
-	if force {
-		args = append(args, "-f")
-	}
-	args = append(args, subPath)
-
-	if _, err := s.RunCommand(path, args...); err != nil {
-		return fmt.Errorf("deinit failed: %w", err)
-	}
-
-	// git rm
-	rmArgs := []string{"rm"}
-	if force {
-		rmArgs = append(rmArgs, "-f")
-	}
-	rmArgs = append(rmArgs, subPath)
-
-	if _, err := s.RunCommand(path, rmArgs...); err != nil {
-		return fmt.Errorf("rm failed: %w", err)
-	}
-
-	// 删除 .git/modules 中的缓存目录
-	modulesDir := filepath.Join(path, ".git", "modules", subPath)
-	if _, err := os.Stat(modulesDir); err == nil {
-		if err := os.RemoveAll(modulesDir); err != nil {
-			return fmt.Errorf("remove modules cache failed: %w", err)
-		}
-	}
-
-	return nil
-}
-
-// SubmoduleStatus 获取submodule状态
-func (s *GitService) SubmoduleStatus(path string, recursive bool) ([]SubmoduleStatusItem, error) {
-	args := []string{"submodule", "status"}
-	if recursive {
-		args = append(args, "--recursive")
-	}
-
-	output, err := s.RunCommand(path, args...)
-	if err != nil {
-		return nil, err
-	}
-
-	if output == "" {
-		return []SubmoduleStatusItem{}, nil
-	}
-
-	var items []SubmoduleStatusItem
-	lines := strings.Split(output, "\n")
-	for _, line := range lines {
-		if line == "" {
-			continue
-		}
-
-		item := SubmoduleStatusItem{}
-
-		// 解析状态标记
-		if len(line) > 0 {
-			switch line[0] {
-			case '+':
-				item.Status = "+"
-				item.Description = "has new commits"
-				line = line[1:]
-			case '-':
-				item.Status = "-"
-				item.Description = "not initialized"
-				line = line[1:]
-			case 'U':
-				item.Status = "U"
-				item.Description = "has conflicts"
-				line = line[1:]
-			case ' ':
-				item.Status = ""
-				item.Description = "up to date"
-				line = line[1:]
-			}
-		}
-
-		// 解析commit和path
-		parts := strings.Fields(strings.TrimSpace(line))
-		if len(parts) >= 2 {
-			item.Commit = parts[0]
-			item.Path = parts[1]
-		}
-
-		items = append(items, item)
-	}
-
-	return items, nil
 }

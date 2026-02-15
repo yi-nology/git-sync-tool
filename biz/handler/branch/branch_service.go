@@ -15,6 +15,7 @@ import (
 	branch "github.com/yi-nology/git-manage-service/biz/model/biz/branch"
 	"github.com/yi-nology/git-manage-service/biz/model/domain"
 	"github.com/yi-nology/git-manage-service/biz/service/audit"
+	"github.com/yi-nology/git-manage-service/biz/service/auth"
 	"github.com/yi-nology/git-manage-service/biz/service/git"
 	"github.com/yi-nology/git-manage-service/pkg/response"
 )
@@ -248,11 +249,28 @@ func Push(ctx context.Context, c *app.RequestContext) {
 	}
 
 	gitSvc := git.NewGitService()
+	authSvc := auth.NewAuthService()
 
 	var errors []string
 	for _, remote := range req.Remotes {
-		if err := gitSvc.PushBranch(repo.Path, remote, req.Name); err != nil {
-			errors = append(errors, fmt.Sprintf("%s: %v", remote, err))
+		// 获取该 remote 的认证配置
+		authInfo := auth.GetAuthInfoForRemote(repo.RemoteAuths, remote, repo.AuthType, repo.AuthKey, repo.AuthSecret)
+
+		// 如果配置了数据库 SSH 密钥，使用原生 git 命令
+		if authInfo.Type == "ssh" && authInfo.Source == "database" && authInfo.SSHKeyID > 0 {
+			privateKey, passphrase, err := authSvc.GetDBSSHKeyContent(authInfo.SSHKeyID)
+			if err != nil {
+				errors = append(errors, fmt.Sprintf("%s: failed to load SSH key: %v", remote, err))
+				continue
+			}
+			if err := gitSvc.PushBranchWithDBKey(repo.Path, remote, req.Name, privateKey, passphrase); err != nil {
+				errors = append(errors, fmt.Sprintf("%s: %v", remote, err))
+			}
+		} else {
+			// 使用 go-git 默认方式
+			if err := gitSvc.PushBranch(repo.Path, remote, req.Name); err != nil {
+				errors = append(errors, fmt.Sprintf("%s: %v", remote, err))
+			}
 		}
 	}
 
@@ -284,6 +302,7 @@ func Pull(ctx context.Context, c *app.RequestContext) {
 	}
 
 	gitSvc := git.NewGitService()
+	authSvc := auth.NewAuthService()
 	branches, _ := gitSvc.ListBranchesWithInfo(repo.Path)
 
 	var isCurrent bool
@@ -315,9 +334,29 @@ func Pull(ctx context.Context, c *app.RequestContext) {
 		remoteBranch = req.Name
 	}
 
+	// 获取该 remote 的认证配置
+	authInfo := auth.GetAuthInfoForRemote(repo.RemoteAuths, upstreamRemote, repo.AuthType, repo.AuthKey, repo.AuthSecret)
+
+	// 检查是否使用数据库 SSH 密钥
+	useDBKey := authInfo.Type == "ssh" && authInfo.Source == "database" && authInfo.SSHKeyID > 0
+	var privateKey, passphrase string
+	if useDBKey {
+		privateKey, passphrase, err = authSvc.GetDBSSHKeyContent(authInfo.SSHKeyID)
+		if err != nil {
+			response.InternalServerError(c, fmt.Sprintf("failed to load SSH key: %v", err))
+			return
+		}
+	}
+
 	if !isCurrent {
-		if err := gitSvc.UpdateBranchFastForward(repo.Path, upstreamRemote, req.Name, remoteBranch); err != nil {
-			response.InternalServerError(c, fmt.Sprintf("Update failed (must be fast-forward): %v", err))
+		var updateErr error
+		if useDBKey {
+			updateErr = gitSvc.FetchBranchWithDBKey(repo.Path, upstreamRemote, remoteBranch, privateKey, passphrase)
+		} else {
+			updateErr = gitSvc.UpdateBranchFastForward(repo.Path, upstreamRemote, req.Name, remoteBranch)
+		}
+		if updateErr != nil {
+			response.InternalServerError(c, fmt.Sprintf("Update failed (must be fast-forward): %v", updateErr))
 			return
 		}
 
@@ -330,8 +369,14 @@ func Pull(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	if err := gitSvc.PullBranch(repo.Path, upstreamRemote, req.Name); err != nil {
-		response.InternalServerError(c, err.Error())
+	var pullErr error
+	if useDBKey {
+		pullErr = gitSvc.PullBranchWithDBKey(repo.Path, upstreamRemote, req.Name, privateKey, passphrase)
+	} else {
+		pullErr = gitSvc.PullBranch(repo.Path, upstreamRemote, req.Name)
+	}
+	if pullErr != nil {
+		response.InternalServerError(c, pullErr.Error())
 		return
 	}
 

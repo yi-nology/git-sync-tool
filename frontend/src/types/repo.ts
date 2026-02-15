@@ -9,6 +9,8 @@ export interface AuthInfo {
   type: string
   key: string
   secret: string
+  source?: string      // "local" or "database"
+  ssh_key_id?: number  // Database SSH Key ID (when source="database")
 }
 
 export interface RepoDTO {
