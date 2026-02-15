@@ -96,18 +96,14 @@ func Create(ctx context.Context, c *app.RequestContext) {
 	}
 
 	repo := po.Repo{
-		Key:          uuid.New().String(),
-		Name:         req.Name,
-		Path:         req.Path,
-		RemoteURL:    req.RemoteURL,
-		AuthType:     req.AuthType,
-		AuthKey:      req.AuthKey,
-		AuthSecret:   req.AuthSecret,
-		ConfigSource: req.ConfigSource,
-		RemoteAuths:  req.RemoteAuths,
-	}
-	if repo.ConfigSource == "" {
-		repo.ConfigSource = "local"
+		Key:         uuid.New().String(),
+		Name:        req.Name,
+		Path:        req.Path,
+		RemoteURL:   req.RemoteURL,
+		AuthType:    req.AuthType,
+		AuthKey:     req.AuthKey,
+		AuthSecret:  req.AuthSecret,
+		RemoteAuths: req.RemoteAuths,
 	}
 	if err := db.NewRepoDAO().Create(&repo); err != nil {
 		response.InternalServerError(c, err.Error())
@@ -190,11 +186,7 @@ func Update(ctx context.Context, c *app.RequestContext) {
 	repo.AuthType = req.AuthType
 	repo.AuthKey = req.AuthKey
 	repo.AuthSecret = req.AuthSecret
-	repo.ConfigSource = req.ConfigSource
 	repo.RemoteAuths = req.RemoteAuths
-	if repo.ConfigSource == "" {
-		repo.ConfigSource = "local"
-	}
 
 	if err := repoDAO.Save(repo); err != nil {
 		response.InternalServerError(c, err.Error())
@@ -322,17 +314,13 @@ func Clone(ctx context.Context, c *app.RequestContext) {
 
 		name := filepath.Base(req.LocalPath)
 		repo := po.Repo{
-			Key:          uuid.New().String(),
-			Name:         name,
-			Path:         req.LocalPath,
-			RemoteURL:    req.RemoteURL,
-			AuthType:     req.AuthType,
-			AuthKey:      req.AuthKey,
-			AuthSecret:   req.AuthSecret,
-			ConfigSource: req.ConfigSource,
-		}
-		if repo.ConfigSource == "" {
-			repo.ConfigSource = "local"
+			Key:        uuid.New().String(),
+			Name:       name,
+			Path:       req.LocalPath,
+			RemoteURL:  req.RemoteURL,
+			AuthType:   req.AuthType,
+			AuthKey:    req.AuthKey,
+			AuthSecret: req.AuthSecret,
 		}
 		db.NewRepoDAO().Create(&repo)
 
@@ -365,8 +353,35 @@ func Fetch(ctx context.Context, c *app.RequestContext) {
 	}
 
 	gitSvc := git.NewGitService()
-	if err := gitSvc.FetchAll(repo.Path); err != nil {
-		response.InternalServerError(c, err.Error())
+	authSvc := auth.NewAuthService()
+
+	// 检查是否有任何远程使用数据库SSH密钥
+	useDBKey := false
+	var dbPrivateKey, dbPassphrase string
+	if repo.RemoteAuths != nil {
+		for _, authInfo := range repo.RemoteAuths {
+			if authInfo.Type == "ssh" && authInfo.Source == "database" && authInfo.SSHKeyID > 0 {
+				pk, pp, err := authSvc.GetDBSSHKeyContent(authInfo.SSHKeyID)
+				if err != nil {
+					response.InternalServerError(c, "failed to resolve SSH key: "+err.Error())
+					return
+				}
+				dbPrivateKey = pk
+				dbPassphrase = pp
+				useDBKey = true
+				break
+			}
+		}
+	}
+
+	var fetchErr error
+	if useDBKey {
+		fetchErr = gitSvc.FetchAllWithDBKey(repo.Path, dbPrivateKey, dbPassphrase)
+	} else {
+		fetchErr = gitSvc.FetchAll(repo.Path)
+	}
+	if fetchErr != nil {
+		response.InternalServerError(c, fetchErr.Error())
 		return
 	}
 

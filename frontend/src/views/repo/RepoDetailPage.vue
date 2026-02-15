@@ -44,9 +44,6 @@
               <el-text class="mono-text">{{ repo.key }}</el-text>
               <el-button size="small" link @click="copyKey">复制</el-button>
             </el-descriptions-item>
-            <el-descriptions-item label="配置来源">
-              <el-tag size="small">{{ repo.config_source === 'database' ? '数据库' : '本地文件' }}</el-tag>
-            </el-descriptions-item>
             <el-descriptions-item label="远程 URL" :span="2">{{ repo.remote_url || '-' }}</el-descriptions-item>
             <el-descriptions-item label="创建时间">{{ formatDate(repo.created_at) }}</el-descriptions-item>
             <el-descriptions-item label="更新时间">{{ formatDate(repo.updated_at) }}</el-descriptions-item>
@@ -286,15 +283,6 @@
             </el-form-item>
             <el-form-item label="远程 URL">
               <el-input v-model="editForm.remote_url" placeholder="自动从 Remotes 填充" />
-            </el-form-item>
-            <el-form-item label="配置来源">
-              <el-select v-model="editForm.config_source" style="width: 100%">
-                <el-option label="本地配置文件 (.git/config)" value="local" />
-                <el-option label="数据库 (使用下方配置)" value="database" />
-              </el-select>
-              <div style="color: #909399; font-size: 12px; margin-top: 4px;">
-                决定同步任务使用本地 git 配置还是数据库中存储的远程地址与凭证。
-              </div>
             </el-form-item>
           </el-form>
         </el-tab-pane>
@@ -547,7 +535,7 @@ const pushTagLoading = ref(false)
 const showEditDialog = ref(false)
 const editSaving = ref(false)
 const editActiveTab = ref('basic')
-const editForm = ref({ name: '', path: '', config_source: 'local', remote_url: '' })
+const editForm = ref({ name: '', path: '', remote_url: '' })
 
 interface EditRemoteRow extends GitRemote {
   _auth?: AuthInfo
@@ -764,7 +752,6 @@ function openEditDialog() {
   editForm.value = {
     name: repo.value.name,
     path: repo.value.path,
-    config_source: repo.value.config_source || 'local',
     remote_url: repo.value.remote_url || '',
   }
   editActiveTab.value = 'basic'
@@ -824,7 +811,6 @@ async function handleSaveEdit() {
       name: editForm.value.name,
       path: editForm.value.path,
       remote_url: editForm.value.remote_url || undefined,
-      config_source: editForm.value.config_source,
       remotes,
       remote_auths: remoteAuths,
     })

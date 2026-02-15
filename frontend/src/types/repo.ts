@@ -22,7 +22,6 @@ export interface RepoDTO {
   auth_type: string
   auth_key: string
   auth_secret: string
-  config_source: string
   remote_auths: Record<string, AuthInfo>
   created_at: string
   updated_at: string
@@ -35,7 +34,6 @@ export interface RegisterRepoReq {
   auth_type?: string
   auth_key?: string
   auth_secret?: string
-  config_source?: string
   remotes?: GitRemote[]
   remote_auths?: Record<string, AuthInfo>
 }
@@ -47,7 +45,6 @@ export interface CloneRepoReq {
   auth_type?: string
   auth_key?: string
   auth_secret?: string
-  config_source?: string
 }
 
 export interface ScanRepoReq {

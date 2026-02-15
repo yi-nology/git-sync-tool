@@ -23,12 +23,6 @@ const (
 	InitialVersion    = "v0.1.0"
 )
 
-// 配置源常量
-const (
-	ConfigSourceLocal    = "local"
-	ConfigSourceDatabase = "database"
-)
-
 // 认证类型常量
 const (
 	AuthTypeSSH      = "ssh"
