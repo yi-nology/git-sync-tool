@@ -2,6 +2,7 @@ package configs
 
 import (
 	"log"
+	"strings"
 
 	"github.com/spf13/viper"
 )
@@ -39,6 +40,8 @@ func LoadConfig(configPaths []string, configName string, configType string) (Con
 	v.SetDefault("lock.redis_db", 0)
 
 	// Environment variables override
+	// 支持环境变量覆盖，如 STORAGE_TYPE, LOCK_REDIS_ADDR 等
+	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	v.AutomaticEnv()
 
 	if err := v.ReadInConfig(); err != nil {

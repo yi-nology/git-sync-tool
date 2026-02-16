@@ -2,7 +2,7 @@ services:
   app:
     container_name: git-manage-service-sqlite
     build: 
-      context: ../../
+      context: ../../..
       dockerfile: Dockerfile
     restart: unless-stopped
     ports:
@@ -13,12 +13,16 @@ services:
       - DB_TYPE=sqlite
       - DB_PATH=/app/data/git_sync.db
       - TZ=Asia/Shanghai
+      # 存储配置 (默认本地存储)
+      - STORAGE_TYPE=local
+      - STORAGE_LOCAL_PATH=/app/storage
+      # 锁配置 (SQLite 使用内存锁，适合单机部署)
+      - LOCK_TYPE=memory
     volumes:
-      # Config file (optional override)
-      # - ./config.yaml:/app/conf/config.yaml
       # Data persistence
       - ./data:/app/data
       - ./repos:/repos
+      - ./storage:/app/storage
       # SSH Keys
       - ~/.ssh:/root/.ssh:ro
     networks:
