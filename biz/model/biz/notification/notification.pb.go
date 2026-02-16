@@ -9,12 +9,13 @@
 package notification
 
 import (
+	reflect "reflect"
+	sync "sync"
+
 	_ "github.com/yi-nology/git-manage-service/biz/model/api"
 	common "github.com/yi-nology/git-manage-service/biz/model/common"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	reflect "reflect"
-	sync "sync"
 )
 
 const (
@@ -39,6 +40,9 @@ type NotificationChannel struct {
 	NotifyOnFailure bool   `protobuf:"varint,7,opt,name=notify_on_failure,json=notifyOnFailure,proto3" form:"notify_on_failure" json:"notify_on_failure,omitempty" query:"notify_on_failure"` // 失败时通知
 	CreatedAt       string `protobuf:"bytes,8,opt,name=created_at,json=createdAt,proto3" form:"created_at" json:"created_at,omitempty" query:"created_at"`
 	UpdatedAt       string `protobuf:"bytes,9,opt,name=updated_at,json=updatedAt,proto3" form:"updated_at" json:"updated_at,omitempty" query:"updated_at"`
+	TriggerEvents   string `protobuf:"bytes,10,opt,name=trigger_events,json=triggerEvents,proto3" form:"trigger_events" json:"trigger_events,omitempty" query:"trigger_events"`           // 触发事件列表（JSON数组）
+	TitleTemplate   string `protobuf:"bytes,11,opt,name=title_template,json=titleTemplate,proto3" form:"title_template" json:"title_template,omitempty" query:"title_template"`           // 自定义标题模板
+	ContentTemplate string `protobuf:"bytes,12,opt,name=content_template,json=contentTemplate,proto3" form:"content_template" json:"content_template,omitempty" query:"content_template"` // 自定义内容模板
 }
 
 func (x *NotificationChannel) Reset() {
@@ -132,6 +136,27 @@ func (x *NotificationChannel) GetCreatedAt() string {
 func (x *NotificationChannel) GetUpdatedAt() string {
 	if x != nil {
 		return x.UpdatedAt
+	}
+	return ""
+}
+
+func (x *NotificationChannel) GetTriggerEvents() string {
+	if x != nil {
+		return x.TriggerEvents
+	}
+	return ""
+}
+
+func (x *NotificationChannel) GetTitleTemplate() string {
+	if x != nil {
+		return x.TitleTemplate
+	}
+	return ""
+}
+
+func (x *NotificationChannel) GetContentTemplate() string {
+	if x != nil {
+		return x.ContentTemplate
 	}
 	return ""
 }
@@ -356,6 +381,9 @@ type CreateChannelRequest struct {
 	Enabled         bool   `protobuf:"varint,4,opt,name=enabled,proto3" form:"enabled" json:"enabled,omitempty"`
 	NotifyOnSuccess bool   `protobuf:"varint,5,opt,name=notify_on_success,json=notifyOnSuccess,proto3" form:"notify_on_success" json:"notify_on_success,omitempty"`
 	NotifyOnFailure bool   `protobuf:"varint,6,opt,name=notify_on_failure,json=notifyOnFailure,proto3" form:"notify_on_failure" json:"notify_on_failure,omitempty"`
+	TriggerEvents   string `protobuf:"bytes,7,opt,name=trigger_events,json=triggerEvents,proto3" form:"trigger_events" json:"trigger_events,omitempty"`
+	TitleTemplate   string `protobuf:"bytes,8,opt,name=title_template,json=titleTemplate,proto3" form:"title_template" json:"title_template,omitempty"`
+	ContentTemplate string `protobuf:"bytes,9,opt,name=content_template,json=contentTemplate,proto3" form:"content_template" json:"content_template,omitempty"`
 }
 
 func (x *CreateChannelRequest) Reset() {
@@ -432,6 +460,27 @@ func (x *CreateChannelRequest) GetNotifyOnFailure() bool {
 	return false
 }
 
+func (x *CreateChannelRequest) GetTriggerEvents() string {
+	if x != nil {
+		return x.TriggerEvents
+	}
+	return ""
+}
+
+func (x *CreateChannelRequest) GetTitleTemplate() string {
+	if x != nil {
+		return x.TitleTemplate
+	}
+	return ""
+}
+
+func (x *CreateChannelRequest) GetContentTemplate() string {
+	if x != nil {
+		return x.ContentTemplate
+	}
+	return ""
+}
+
 // UpdateChannelRequest 更新渠道请求
 type UpdateChannelRequest struct {
 	state         protoimpl.MessageState
@@ -444,6 +493,9 @@ type UpdateChannelRequest struct {
 	Enabled         bool   `protobuf:"varint,4,opt,name=enabled,proto3" form:"enabled" json:"enabled,omitempty"`
 	NotifyOnSuccess bool   `protobuf:"varint,5,opt,name=notify_on_success,json=notifyOnSuccess,proto3" form:"notify_on_success" json:"notify_on_success,omitempty"`
 	NotifyOnFailure bool   `protobuf:"varint,6,opt,name=notify_on_failure,json=notifyOnFailure,proto3" form:"notify_on_failure" json:"notify_on_failure,omitempty"`
+	TriggerEvents   string `protobuf:"bytes,7,opt,name=trigger_events,json=triggerEvents,proto3" form:"trigger_events" json:"trigger_events,omitempty"`
+	TitleTemplate   string `protobuf:"bytes,8,opt,name=title_template,json=titleTemplate,proto3" form:"title_template" json:"title_template,omitempty"`
+	ContentTemplate string `protobuf:"bytes,9,opt,name=content_template,json=contentTemplate,proto3" form:"content_template" json:"content_template,omitempty"`
 }
 
 func (x *UpdateChannelRequest) Reset() {
@@ -518,6 +570,27 @@ func (x *UpdateChannelRequest) GetNotifyOnFailure() bool {
 		return x.NotifyOnFailure
 	}
 	return false
+}
+
+func (x *UpdateChannelRequest) GetTriggerEvents() string {
+	if x != nil {
+		return x.TriggerEvents
+	}
+	return ""
+}
+
+func (x *UpdateChannelRequest) GetTitleTemplate() string {
+	if x != nil {
+		return x.TitleTemplate
+	}
+	return ""
+}
+
+func (x *UpdateChannelRequest) GetContentTemplate() string {
+	if x != nil {
+		return x.ContentTemplate
+	}
+	return ""
 }
 
 // DeleteChannelRequest 删除渠道请求

@@ -25,10 +25,17 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="通知条件" width="180">
+      <el-table-column label="触发时机" min-width="280">
         <template #default="{ row }">
-          <el-tag v-if="row.notify_on_success" type="success" size="small" class="mr-1">成功</el-tag>
-          <el-tag v-if="row.notify_on_failure" type="danger" size="small">失败</el-tag>
+          <template v-if="parseTriggerEvents(row.trigger_events).length > 0">
+            <el-tag v-for="event in parseTriggerEvents(row.trigger_events)" :key="event" :type="triggerEventTagType(event)" size="small" class="mr-1 mb-1">
+              {{ triggerEventLabels[event] || event }}
+            </el-tag>
+          </template>
+          <template v-else>
+            <el-tag v-if="row.notify_on_success" type="success" size="small" class="mr-1">成功</el-tag>
+            <el-tag v-if="row.notify_on_failure" type="danger" size="small">失败</el-tag>
+          </template>
         </template>
       </el-table-column>
       <el-table-column prop="updated_at" label="更新时间" width="160" />
@@ -192,9 +199,69 @@
         <el-form-item label="启用渠道">
           <el-switch v-model="form.enabled" />
         </el-form-item>
-        <el-form-item label="通知条件">
-          <el-checkbox v-model="form.notify_on_success">成功时通知</el-checkbox>
-          <el-checkbox v-model="form.notify_on_failure">失败时通知</el-checkbox>
+        <el-form-item label="触发时机">
+          <div class="trigger-events-grid">
+            <div class="trigger-group">
+              <div class="trigger-group-title">同步事件</div>
+              <el-checkbox v-model="triggerEventsMap.sync_success">同步成功</el-checkbox>
+              <el-checkbox v-model="triggerEventsMap.sync_failure">同步失败</el-checkbox>
+              <el-checkbox v-model="triggerEventsMap.sync_conflict">同步冲突</el-checkbox>
+            </div>
+            <div class="trigger-group">
+              <div class="trigger-group-title">Webhook 事件</div>
+              <el-checkbox v-model="triggerEventsMap.webhook_received">Webhook 接收</el-checkbox>
+              <el-checkbox v-model="triggerEventsMap.webhook_error">Webhook 处理错误</el-checkbox>
+            </div>
+            <div class="trigger-group">
+              <div class="trigger-group-title">定时任务</div>
+              <el-checkbox v-model="triggerEventsMap.cron_triggered">定时任务触发</el-checkbox>
+            </div>
+            <div class="trigger-group">
+              <div class="trigger-group-title">备份事件</div>
+              <el-checkbox v-model="triggerEventsMap.backup_success">备份成功</el-checkbox>
+              <el-checkbox v-model="triggerEventsMap.backup_failure">备份失败</el-checkbox>
+            </div>
+          </div>
+        </el-form-item>
+
+        <el-divider content-position="left">消息模板</el-divider>
+        <el-form-item label="标题模板">
+          <el-input
+            v-model="form.title_template"
+            placeholder="留空使用默认模板，例如：[{{.StatusText}}] 同步任务 {{.TaskKey}}"
+            clearable
+            style="font-family: monospace"
+          />
+        </el-form-item>
+        <el-form-item label="内容模板">
+          <el-input
+            v-model="form.content_template"
+            type="textarea"
+            :rows="5"
+            placeholder="留空使用默认模板，支持 {{.Var}} 语法"
+            clearable
+            style="font-family: monospace"
+          />
+        </el-form-item>
+        <el-form-item>
+          <el-collapse>
+            <el-collapse-item title="可用模板变量参考">
+              <div class="template-vars-table">
+                <table>
+                  <thead><tr><th>变量</th><th>说明</th><th>示例</th><th>适用事件</th></tr></thead>
+                  <tbody>
+                    <tr v-for="v in templateVariables" :key="v.name">
+                      <td class="var-name" @click="copyVar(v.name)"><code>{{`{{.${v.name}}}`}}</code></td>
+                      <td>{{ v.description }}</td>
+                      <td><code>{{ v.example }}</code></td>
+                      <td>{{ v.events }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+                <div class="vars-tip">点击变量名可复制</div>
+              </div>
+            </el-collapse-item>
+          </el-collapse>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -225,8 +292,119 @@ const form = reactive({
   type: '' as string,
   enabled: true,
   notify_on_success: false,
-  notify_on_failure: true
+  notify_on_failure: true,
+  title_template: '',
+  content_template: ''
 })
+
+const triggerEventsMap = reactive<Record<string, boolean>>({
+  sync_success: false,
+  sync_failure: true,
+  sync_conflict: true,
+  webhook_received: false,
+  webhook_error: true,
+  cron_triggered: false,
+  backup_success: false,
+  backup_failure: true
+})
+
+const allTriggerEventKeys = [
+  'sync_success', 'sync_failure', 'sync_conflict',
+  'webhook_received', 'webhook_error',
+  'cron_triggered',
+  'backup_success', 'backup_failure'
+]
+
+const triggerEventLabels: Record<string, string> = {
+  sync_success: '同步成功',
+  sync_failure: '同步失败',
+  sync_conflict: '同步冲突',
+  webhook_received: 'Webhook 接收',
+  webhook_error: 'Webhook 错误',
+  cron_triggered: '定时任务触发',
+  backup_success: '备份成功',
+  backup_failure: '备份失败'
+}
+
+function triggerEventTagType(event: string): string {
+  if (event.includes('success')) return 'success'
+  if (event.includes('failure') || event.includes('error') || event.includes('conflict')) return 'danger'
+  if (event.includes('received') || event.includes('triggered')) return 'warning'
+  return 'info'
+}
+
+function parseTriggerEvents(raw: string): string[] {
+  if (!raw) return []
+  try {
+    const arr = JSON.parse(raw)
+    return Array.isArray(arr) ? arr : []
+  } catch {
+    return []
+  }
+}
+
+function getTriggerEventsJson(): string {
+  const events = allTriggerEventKeys.filter(k => triggerEventsMap[k])
+  return JSON.stringify(events)
+}
+
+function resetTriggerEvents() {
+  allTriggerEventKeys.forEach(k => {
+    triggerEventsMap[k] = false
+  })
+  // 默认勾选失败类事件
+  triggerEventsMap.sync_failure = true
+  triggerEventsMap.sync_conflict = true
+  triggerEventsMap.webhook_error = true
+  triggerEventsMap.backup_failure = true
+}
+
+function loadTriggerEvents(raw: string) {
+  allTriggerEventKeys.forEach(k => {
+    triggerEventsMap[k] = false
+  })
+  const events = parseTriggerEvents(raw)
+  if (events.length > 0) {
+    events.forEach(e => {
+      if (e in triggerEventsMap) {
+        triggerEventsMap[e] = true
+      }
+    })
+  } else {
+    // 向后兼容：根据旧字段推断
+    triggerEventsMap.sync_failure = true
+    triggerEventsMap.backup_failure = true
+  }
+}
+
+const templateVariables = [
+  { name: 'TaskKey', description: '任务标识', example: 'my-sync-task', events: '全部' },
+  { name: 'Status', description: '状态码', example: 'success', events: '全部' },
+  { name: 'StatusText', description: '状态文字', example: '成功', events: '全部' },
+  { name: 'EventType', description: '事件类型', example: 'sync_success', events: '全部' },
+  { name: 'EventLabel', description: '事件名称', example: '同步成功', events: '全部' },
+  { name: 'Timestamp', description: '时间', example: '2026-02-16 10:30:00', events: '全部' },
+  { name: 'SourceRemote', description: '源远程仓库', example: 'origin', events: '同步事件' },
+  { name: 'SourceBranch', description: '源分支', example: 'main', events: '同步事件' },
+  { name: 'TargetRemote', description: '目标远程仓库', example: 'backup', events: '同步事件' },
+  { name: 'TargetBranch', description: '目标分支', example: 'main', events: '同步事件' },
+  { name: 'RepoKey', description: '仓库标识', example: 'my-repo', events: '全部' },
+  { name: 'ErrorMessage', description: '错误信息', example: 'push failed', events: '失败/错误/冲突' },
+  { name: 'CommitRange', description: '提交范围', example: 'abc..def', events: '同步成功' },
+  { name: 'Duration', description: '执行耗时', example: '3.2s', events: '同步/备份' },
+  { name: 'CronExpression', description: 'Cron表达式', example: '0 2 * * *', events: '定时任务' },
+  { name: 'WebhookSource', description: 'Webhook来源', example: 'github', events: 'Webhook事件' },
+  { name: 'BackupPath', description: '备份路径', example: '/backups/repo.tar.gz', events: '备份事件' },
+]
+
+function copyVar(name: string) {
+  const text = `{{.${name}}}`
+  navigator.clipboard.writeText(text).then(() => {
+    ElMessage.success(`已复制 ${text}`)
+  }).catch(() => {
+    ElMessage.info(`请手动复制: ${text}`)
+  })
+}
 
 const configForm = reactive({
   // Email
@@ -293,6 +471,9 @@ function openAddDialog() {
   form.enabled = true
   form.notify_on_success = false
   form.notify_on_failure = true
+  form.title_template = ''
+  form.content_template = ''
+  resetTriggerEvents()
   Object.keys(configForm).forEach(key => {
     (configForm as Record<string, string>)[key] = ''
   })
@@ -308,6 +489,9 @@ async function openEditDialog(channel: NotificationChannel) {
   form.enabled = channel.enabled
   form.notify_on_success = channel.notify_on_success
   form.notify_on_failure = channel.notify_on_failure
+  form.title_template = channel.title_template || ''
+  form.content_template = channel.content_template || ''
+  loadTriggerEvents(channel.trigger_events)
 
   // 解析配置
   try {
@@ -364,7 +548,10 @@ async function handleSave() {
       config: getConfigJson(),
       enabled: form.enabled,
       notify_on_success: form.notify_on_success,
-      notify_on_failure: form.notify_on_failure
+      notify_on_failure: form.notify_on_failure,
+      trigger_events: getTriggerEventsJson(),
+      title_template: form.title_template,
+      content_template: form.content_template
     }
     if (editingId.value) {
       await updateChannel({ ...params, id: editingId.value })
@@ -423,5 +610,61 @@ async function handleTest(id: number) {
 }
 .mr-1 {
   margin-right: 4px;
+}
+.mb-1 {
+  margin-bottom: 4px;
+}
+.trigger-events-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  width: 100%;
+}
+.trigger-group {
+  padding: 8px 12px;
+  background: var(--el-fill-color-lighter);
+  border-radius: 6px;
+}
+.trigger-group-title {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+.trigger-group .el-checkbox {
+  display: block;
+  margin-left: 0;
+  margin-bottom: 2px;
+}
+.template-vars-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.template-vars-table th,
+.template-vars-table td {
+  padding: 4px 8px;
+  border: 1px solid var(--el-border-color-lighter);
+  text-align: left;
+}
+.template-vars-table th {
+  background: var(--el-fill-color-lighter);
+  font-weight: 500;
+}
+.template-vars-table .var-name {
+  cursor: pointer;
+  color: var(--el-color-primary);
+}
+.template-vars-table .var-name:hover {
+  text-decoration: underline;
+}
+.template-vars-table code {
+  font-family: monospace;
+  font-size: 12px;
+}
+.vars-tip {
+  font-size: 11px;
+  color: var(--el-text-color-secondary);
+  margin-top: 4px;
 }
 </style>

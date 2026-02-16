@@ -12,6 +12,7 @@ import (
 	"github.com/yi-nology/git-manage-service/biz/model/po"
 	"github.com/yi-nology/git-manage-service/biz/service/auth"
 	"github.com/yi-nology/git-manage-service/biz/service/git"
+	notificationSvc "github.com/yi-nology/git-manage-service/biz/service/notification"
 	"github.com/yi-nology/git-manage-service/pkg/lock"
 )
 
@@ -94,6 +95,10 @@ func (s *SyncService) ExecuteSync(task *po.SyncTask) error {
 	// Save final details
 	run.Details = logs.String()
 	s.syncRunDAO.Save(&run)
+
+	// 发送通知
+	s.sendNotification(task, &run)
+
 	return err
 }
 
@@ -334,4 +339,61 @@ func (w *logWriter) Write(p []byte) (n int, err error) {
 		w.logf("[Git] %s", str)
 	}
 	return len(p), nil
+}
+
+// sendNotification 根据同步结果发送通知
+func (s *SyncService) sendNotification(task *po.SyncTask, run *po.SyncRun) {
+	var triggerEvent string
+	var status string
+
+	switch run.Status {
+	case "success":
+		triggerEvent = po.TriggerSyncSuccess
+		status = "success"
+	case "failed":
+		triggerEvent = po.TriggerSyncFailure
+		status = "failure"
+	case "conflict":
+		triggerEvent = po.TriggerSyncConflict
+		status = "failure"
+	default:
+		return
+	}
+
+	// 计算耗时
+	duration := ""
+	if !run.EndTime.IsZero() && !run.StartTime.IsZero() {
+		d := run.EndTime.Sub(run.StartTime)
+		duration = d.Round(time.Millisecond).String()
+	}
+
+	data := &notificationSvc.TemplateData{
+		TaskKey:      task.Key,
+		Status:       run.Status,
+		EventType:    triggerEvent,
+		SourceRemote: task.SourceRemote,
+		SourceBranch: task.SourceBranch,
+		TargetRemote: task.TargetRemote,
+		TargetBranch: task.TargetBranch,
+		RepoKey:      task.SourceRepoKey,
+		ErrorMessage: run.ErrorMessage,
+		CommitRange:  run.CommitRange,
+		Duration:     duration,
+	}
+	if task.Cron != "" {
+		data.CronExpression = task.Cron
+	}
+
+	// 使用模板渲染的默认标题和内容作为 fallback
+	title, content := notificationSvc.RenderTitleAndContent("", "", data)
+
+	notificationSvc.NotifySvc.Send(&notificationSvc.NotificationMessage{
+		Title:        title,
+		Content:      content,
+		Status:       status,
+		TriggerEvent: triggerEvent,
+		TaskKey:      task.Key,
+		RepoKey:      task.SourceRepoKey,
+		Data:         data,
+	})
 }

@@ -15,6 +15,24 @@ import (
 	"github.com/yi-nology/git-manage-service/pkg/response"
 )
 
+// channelToProto 将 PO 转换为 proto 格式
+func channelToProto(ch *po.NotificationChannel) *notification.NotificationChannel {
+	return &notification.NotificationChannel{
+		Id:              int64(ch.ID),
+		Name:            ch.Name,
+		Type:            ch.Type,
+		Config:          ch.Config,
+		Enabled:         ch.Enabled,
+		NotifyOnSuccess: ch.NotifyOnSuccess,
+		NotifyOnFailure: ch.NotifyOnFailure,
+		TriggerEvents:   ch.TriggerEvents,
+		TitleTemplate:   ch.TitleTemplate,
+		ContentTemplate: ch.ContentTemplate,
+		CreatedAt:       ch.CreatedAt.Format("2006-01-02 15:04:05"),
+		UpdatedAt:       ch.UpdatedAt.Format("2006-01-02 15:04:05"),
+	}
+}
+
 // ListChannels .
 // @router /api/v1/notification/channels [GET]
 func ListChannels(ctx context.Context, c *app.RequestContext) {
@@ -39,20 +57,9 @@ func ListChannels(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	// 转换为proto格式
 	var items []*notification.NotificationChannel
 	for _, ch := range channels {
-		items = append(items, &notification.NotificationChannel{
-			Id:              int64(ch.ID),
-			Name:            ch.Name,
-			Type:            ch.Type,
-			Config:          ch.Config,
-			Enabled:         ch.Enabled,
-			NotifyOnSuccess: ch.NotifyOnSuccess,
-			NotifyOnFailure: ch.NotifyOnFailure,
-			CreatedAt:       ch.CreatedAt.Format("2006-01-02 15:04:05"),
-			UpdatedAt:       ch.UpdatedAt.Format("2006-01-02 15:04:05"),
-		})
+		items = append(items, channelToProto(&ch))
 	}
 
 	response.Success(c, map[string]interface{}{
@@ -77,17 +84,7 @@ func GetChannel(ctx context.Context, c *app.RequestContext) {
 	}
 
 	response.Success(c, map[string]interface{}{
-		"channel": &notification.NotificationChannel{
-			Id:              int64(channel.ID),
-			Name:            channel.Name,
-			Type:            channel.Type,
-			Config:          channel.Config,
-			Enabled:         channel.Enabled,
-			NotifyOnSuccess: channel.NotifyOnSuccess,
-			NotifyOnFailure: channel.NotifyOnFailure,
-			CreatedAt:       channel.CreatedAt.Format("2006-01-02 15:04:05"),
-			UpdatedAt:       channel.UpdatedAt.Format("2006-01-02 15:04:05"),
-		},
+		"channel": channelToProto(channel),
 	})
 }
 
@@ -100,6 +97,16 @@ func CreateChannel(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
+	// 验证模板语法
+	if err := notificationSvc.ValidateTemplate(req.TitleTemplate); err != nil {
+		response.BadRequest(c, "标题模板语法错误: "+err.Error())
+		return
+	}
+	if err := notificationSvc.ValidateTemplate(req.ContentTemplate); err != nil {
+		response.BadRequest(c, "内容模板语法错误: "+err.Error())
+		return
+	}
+
 	channel := &po.NotificationChannel{
 		Name:            req.Name,
 		Type:            req.Type,
@@ -107,6 +114,9 @@ func CreateChannel(ctx context.Context, c *app.RequestContext) {
 		Enabled:         req.Enabled,
 		NotifyOnSuccess: req.NotifyOnSuccess,
 		NotifyOnFailure: req.NotifyOnFailure,
+		TriggerEvents:   req.TriggerEvents,
+		TitleTemplate:   req.TitleTemplate,
+		ContentTemplate: req.ContentTemplate,
 	}
 
 	dao := db.NewNotificationChannelDAO()
@@ -121,17 +131,7 @@ func CreateChannel(ctx context.Context, c *app.RequestContext) {
 	})
 
 	response.Success(c, map[string]interface{}{
-		"channel": &notification.NotificationChannel{
-			Id:              int64(channel.ID),
-			Name:            channel.Name,
-			Type:            channel.Type,
-			Config:          channel.Config,
-			Enabled:         channel.Enabled,
-			NotifyOnSuccess: channel.NotifyOnSuccess,
-			NotifyOnFailure: channel.NotifyOnFailure,
-			CreatedAt:       channel.CreatedAt.Format("2006-01-02 15:04:05"),
-			UpdatedAt:       channel.UpdatedAt.Format("2006-01-02 15:04:05"),
-		},
+		"channel": channelToProto(channel),
 	})
 }
 
@@ -141,6 +141,16 @@ func UpdateChannel(ctx context.Context, c *app.RequestContext) {
 	var req notification.UpdateChannelRequest
 	if err := c.BindAndValidate(&req); err != nil {
 		response.BadRequest(c, err.Error())
+		return
+	}
+
+	// 验证模板语法
+	if err := notificationSvc.ValidateTemplate(req.TitleTemplate); err != nil {
+		response.BadRequest(c, "标题模板语法错误: "+err.Error())
+		return
+	}
+	if err := notificationSvc.ValidateTemplate(req.ContentTemplate); err != nil {
+		response.BadRequest(c, "内容模板语法错误: "+err.Error())
 		return
 	}
 
@@ -156,6 +166,9 @@ func UpdateChannel(ctx context.Context, c *app.RequestContext) {
 	channel.Enabled = req.Enabled
 	channel.NotifyOnSuccess = req.NotifyOnSuccess
 	channel.NotifyOnFailure = req.NotifyOnFailure
+	channel.TriggerEvents = req.TriggerEvents
+	channel.TitleTemplate = req.TitleTemplate
+	channel.ContentTemplate = req.ContentTemplate
 
 	if err := dao.Save(channel); err != nil {
 		response.InternalServerError(c, err.Error())
@@ -167,17 +180,7 @@ func UpdateChannel(ctx context.Context, c *app.RequestContext) {
 	})
 
 	response.Success(c, map[string]interface{}{
-		"channel": &notification.NotificationChannel{
-			Id:              int64(channel.ID),
-			Name:            channel.Name,
-			Type:            channel.Type,
-			Config:          channel.Config,
-			Enabled:         channel.Enabled,
-			NotifyOnSuccess: channel.NotifyOnSuccess,
-			NotifyOnFailure: channel.NotifyOnFailure,
-			CreatedAt:       channel.CreatedAt.Format("2006-01-02 15:04:05"),
-			UpdatedAt:       channel.UpdatedAt.Format("2006-01-02 15:04:05"),
-		},
+		"channel": channelToProto(channel),
 	})
 }
 
