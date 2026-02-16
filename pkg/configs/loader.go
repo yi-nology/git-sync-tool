@@ -25,6 +25,19 @@ func LoadConfig(configPaths []string, configName string, configType string) (Con
 	v.SetDefault("webhook.rate_limit", 100)
 	v.SetDefault("webhook.ip_whitelist", []string{})
 
+	// Storage defaults (本地存储优先)
+	v.SetDefault("storage.type", "local")
+	v.SetDefault("storage.local_path", "./storage")
+	v.SetDefault("storage.repo_bucket", "repos")
+	v.SetDefault("storage.ssh_key_bucket", "ssh-keys")
+	v.SetDefault("storage.audit_log_bucket", "audit-logs")
+	v.SetDefault("storage.backup_bucket", "backups")
+	v.SetDefault("storage.use_ssl", false)
+
+	// Lock defaults (内存锁优先)
+	v.SetDefault("lock.type", "memory")
+	v.SetDefault("lock.redis_db", 0)
+
 	// Environment variables override
 	v.AutomaticEnv()
 

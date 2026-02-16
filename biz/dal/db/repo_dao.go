@@ -39,3 +39,10 @@ func (d *RepoDAO) Save(repo *po.Repo) error {
 func (d *RepoDAO) Delete(repo *po.Repo) error {
 	return DB.Delete(repo).Error
 }
+
+// FindByID 根据ID查询仓库
+func (d *RepoDAO) FindByID(id uint) (*po.Repo, error) {
+	var repo po.Repo
+	err := DB.First(&repo, id).Error
+	return &repo, err
+}
