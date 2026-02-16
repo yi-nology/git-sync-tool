@@ -1,12 +1,15 @@
 package sync
 
 import (
+	"context"
 	"fmt"
 	"log"
 	stdsync "sync"
+	"time"
 
 	"github.com/yi-nology/git-manage-service/biz/dal/db"
 	"github.com/yi-nology/git-manage-service/biz/model/po"
+	"github.com/yi-nology/git-manage-service/pkg/lock"
 
 	"github.com/robfig/cron/v3"
 )
@@ -17,6 +20,7 @@ type CronService struct {
 	mu      stdsync.Mutex
 	syncSvc *SyncService
 	taskDAO *db.SyncTaskDAO
+	lockSvc lock.DistLock
 }
 
 var CronSvc *CronService
@@ -30,6 +34,15 @@ func InitCronService() {
 	}
 	CronSvc.cron.Start()
 	CronSvc.Reload()
+}
+
+// SetLockService 设置锁服务（用于依赖注入）
+func (s *CronService) SetLockService(lockSvc lock.DistLock) {
+	s.lockSvc = lockSvc
+	// 同时设置给 syncSvc
+	if s.syncSvc != nil {
+		s.syncSvc.SetLockService(lockSvc)
+	}
 }
 
 func (s *CronService) Reload() {
@@ -85,6 +98,23 @@ func (s *CronService) addTask(task po.SyncTask) {
 	taskID := task.ID
 	taskKey := task.Key
 	entryID, err := s.cron.AddFunc(task.Cron, func() {
+		ctx := context.Background()
+
+		// 使用分布式锁防止多实例重复执行
+		if s.lockSvc != nil {
+			lockKey := fmt.Sprintf("cron:task:%s", taskKey)
+			success, lockErr := s.lockSvc.Up(ctx, lockKey, 10*time.Minute)
+			if lockErr != nil {
+				log.Printf("Cron Task %d lock error: %v", taskID, lockErr)
+				return
+			}
+			if !success {
+				log.Printf("Cron Task %d (Key: %s) skipped: another instance is running", taskID, taskKey)
+				return
+			}
+			defer s.lockSvc.Down(ctx, lockKey)
+		}
+
 		log.Printf("Executing Cron Task %d (Key: %s)", taskID, taskKey)
 		err := s.syncSvc.RunTask(taskKey)
 		if err != nil {

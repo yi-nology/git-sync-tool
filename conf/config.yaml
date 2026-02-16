@@ -22,3 +22,32 @@ webhook:
   secret: "my-secret-key"
   rate_limit: 100
   ip_whitelist: []
+
+# 对象存储配置 (可选，默认使用本地存储)
+storage:
+  # type: local 或 minio
+  type: local
+  # 本地存储路径
+  local_path: ./storage
+  
+  # MinIO 配置 (当 type: minio 时启用)
+  # endpoint: "localhost:9000"
+  # access_key: "minioadmin"
+  # secret_key: "minioadmin"
+  # use_ssl: false
+  
+  # 存储桶名称 (可选，使用默认值)
+  # repo_bucket: "repos"
+  # ssh_key_bucket: "ssh-keys"
+  # audit_log_bucket: "audit-logs"
+  # backup_bucket: "backups"
+
+# 分布式锁配置 (可选，默认使用内存锁)
+lock:
+  # type: memory 或 redis
+  type: memory
+  
+  # Redis 配置 (当 type: redis 时启用)
+  # redis_addr: "localhost:6379"
+  # redis_password: ""
+  # redis_db: 0

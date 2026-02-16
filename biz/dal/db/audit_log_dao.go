@@ -1,6 +1,8 @@
 package db
 
 import (
+	"time"
+
 	"github.com/yi-nology/git-manage-service/biz/model/po"
 	"gorm.io/gorm"
 )
@@ -71,4 +73,19 @@ func (d *AuditLogDAO) FindByID(id uint) (*po.AuditLog, error) {
 	var log po.AuditLog
 	err := DB.First(&log, id).Error
 	return &log, err
+}
+
+// FindByDateRange 查询指定日期范围内的审计日志
+func (d *AuditLogDAO) FindByDateRange(startDate, endDate time.Time) ([]po.AuditLog, error) {
+	var logs []po.AuditLog
+	err := DB.Where("created_at >= ? AND created_at <= ?", startDate, endDate).
+		Order("created_at asc").
+		Find(&logs).Error
+	return logs, err
+}
+
+// DeleteByDateRange 删除指定日期范围内的审计日志
+func (d *AuditLogDAO) DeleteByDateRange(startDate, endDate time.Time) error {
+	return DB.Where("created_at >= ? AND created_at <= ?", startDate, endDate).
+		Delete(&po.AuditLog{}).Error
 }

@@ -1,6 +1,7 @@
 package sync
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -11,6 +12,7 @@ import (
 	"github.com/yi-nology/git-manage-service/biz/model/po"
 	"github.com/yi-nology/git-manage-service/biz/service/auth"
 	"github.com/yi-nology/git-manage-service/biz/service/git"
+	"github.com/yi-nology/git-manage-service/pkg/lock"
 )
 
 type SyncService struct {
@@ -18,6 +20,7 @@ type SyncService struct {
 	authSvc     *auth.AuthService
 	syncTaskDAO *db.SyncTaskDAO
 	syncRunDAO  *db.SyncRunDAO
+	lockSvc     lock.DistLock
 }
 
 func NewSyncService() *SyncService {
@@ -29,6 +32,11 @@ func NewSyncService() *SyncService {
 	}
 }
 
+// SetLockService 设置锁服务（用于依赖注入）
+func (s *SyncService) SetLockService(lockSvc lock.DistLock) {
+	s.lockSvc = lockSvc
+}
+
 func (s *SyncService) RunTask(taskKey string) error {
 	task, err := s.syncTaskDAO.FindByKey(taskKey)
 	if err != nil {
@@ -38,6 +46,17 @@ func (s *SyncService) RunTask(taskKey string) error {
 }
 
 func (s *SyncService) ExecuteSync(task *po.SyncTask) error {
+	ctx := context.Background()
+
+	// 获取分布式锁保护同步任务
+	if s.lockSvc != nil {
+		lockKey := fmt.Sprintf("sync:task:%s", task.Key)
+		if err := s.lockSvc.UpWait(ctx, lockKey, 5*time.Minute, 30*time.Second); err != nil {
+			return fmt.Errorf("failed to acquire lock for task %s: %w", task.Key, err)
+		}
+		defer s.lockSvc.Down(ctx, lockKey)
+	}
+
 	run := po.SyncRun{
 		TaskKey:   task.Key,
 		StartTime: time.Now(),
