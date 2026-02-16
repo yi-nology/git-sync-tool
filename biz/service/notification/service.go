@@ -25,11 +25,13 @@ func NewNotificationService() *NotificationService {
 
 // NotificationMessage 通知消息
 type NotificationMessage struct {
-	Title   string `json:"title"`
-	Content string `json:"content"`
-	Status  string `json:"status"` // success, failure
-	TaskKey string `json:"task_key"`
-	RepoKey string `json:"repo_key"`
+	Title        string        `json:"title"`
+	Content      string        `json:"content"`
+	Status       string        `json:"status"`        // success, failure
+	TriggerEvent string        `json:"trigger_event"` // 触发事件类型
+	TaskKey      string        `json:"task_key"`
+	RepoKey      string        `json:"repo_key"`
+	Data         *TemplateData `json:"-"` // 模板渲染数据（可选）
 }
 
 // Sender 发送器接口
@@ -47,28 +49,85 @@ func (s *NotificationService) Send(msg *NotificationMessage) {
 
 	for _, channel := range channels {
 		// 检查是否需要通知
-		if msg.Status == "success" && !channel.NotifyOnSuccess {
-			continue
-		}
-		if msg.Status == "failure" && !channel.NotifyOnFailure {
+		if !s.shouldNotify(&channel, msg) {
 			continue
 		}
 
 		// 发送通知
 		go func(ch po.NotificationChannel) {
+			// 渲染模板：为每个渠道使用其自定义模板或默认模板
+			renderedMsg := s.renderMessage(&ch, msg)
+
 			sender, err := s.createSender(&ch)
 			if err != nil {
 				log.Printf("[Notification] Failed to create sender for channel %s: %v", ch.Name, err)
 				return
 			}
 
-			if err := sender.Send(msg); err != nil {
+			if err := sender.Send(renderedMsg); err != nil {
 				log.Printf("[Notification] Failed to send to channel %s: %v", ch.Name, err)
 			} else {
 				log.Printf("[Notification] Sent to channel %s successfully", ch.Name)
 			}
 		}(channel)
 	}
+}
+
+// renderMessage 为指定渠道渲染消息模板
+func (s *NotificationService) renderMessage(channel *po.NotificationChannel, msg *NotificationMessage) *NotificationMessage {
+	// 如果没有模板数据，直接返回原始消息
+	if msg.Data == nil {
+		return msg
+	}
+
+	title, content := RenderTitleAndContent(channel.TitleTemplate, channel.ContentTemplate, msg.Data)
+
+	return &NotificationMessage{
+		Title:        title,
+		Content:      content,
+		Status:       msg.Status,
+		TriggerEvent: msg.TriggerEvent,
+		TaskKey:      msg.TaskKey,
+		RepoKey:      msg.RepoKey,
+	}
+}
+
+// shouldNotify 检查是否应该发送通知
+func (s *NotificationService) shouldNotify(channel *po.NotificationChannel, msg *NotificationMessage) bool {
+	// 优先使用 TriggerEvents 配置
+	if channel.TriggerEvents != "" {
+		var events []string
+		if err := json.Unmarshal([]byte(channel.TriggerEvents), &events); err == nil && len(events) > 0 {
+			// 如果消息指定了触发事件类型，检查是否匹配
+			if msg.TriggerEvent != "" {
+				for _, event := range events {
+					if event == msg.TriggerEvent {
+						return true
+					}
+				}
+				return false
+			}
+			// 向后兼容：根据 status 推断触发事件
+			for _, event := range events {
+				if msg.Status == "success" && (event == po.TriggerSyncSuccess || event == po.TriggerBackupSuccess) {
+					return true
+				}
+				if msg.Status == "failure" && (event == po.TriggerSyncFailure || event == po.TriggerBackupFailure) {
+					return true
+				}
+			}
+			return false
+		}
+	}
+
+	// 向后兼容：使用旧的 NotifyOnSuccess/NotifyOnFailure 配置
+	if msg.Status == "success" && !channel.NotifyOnSuccess {
+		return false
+	}
+	if msg.Status == "failure" && !channel.NotifyOnFailure {
+		return false
+	}
+	return true
 }
 
 // Test 测试通知渠道

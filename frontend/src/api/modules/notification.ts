@@ -5,11 +5,14 @@ import request from '../request'
 export interface NotificationChannel {
   id: number
   name: string
-  type: 'email' | 'dingtalk' | 'wechat' | 'webhook'
+  type: 'email' | 'dingtalk' | 'wechat' | 'webhook' | 'lanxin' | 'feishu'
   config: string
   enabled: boolean
   notify_on_success: boolean
   notify_on_failure: boolean
+  trigger_events: string
+  title_template: string
+  content_template: string
   created_at: string
   updated_at: string
 }
@@ -21,6 +24,9 @@ export interface CreateChannelParams {
   enabled: boolean
   notify_on_success: boolean
   notify_on_failure: boolean
+  trigger_events: string
+  title_template: string
+  content_template: string
 }
 
 export interface UpdateChannelParams extends CreateChannelParams {

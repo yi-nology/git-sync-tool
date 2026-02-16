@@ -13,9 +13,24 @@ type NotificationChannel struct {
 	Type            string `gorm:"size:50;index" json:"type"` // email, dingtalk, wechat, webhook, lanxin, feishu
 	Config          string `gorm:"type:text" json:"config"`   // JSON配置
 	Enabled         bool   `json:"enabled"`
-	NotifyOnSuccess bool   `json:"notify_on_success"`
-	NotifyOnFailure bool   `json:"notify_on_failure"`
+	NotifyOnSuccess bool   `json:"notify_on_success"`                 // 向后兼容
+	NotifyOnFailure bool   `json:"notify_on_failure"`                 // 向后兼容
+	TriggerEvents   string `gorm:"type:text" json:"trigger_events"`   // JSON数组，触发事件列表
+	TitleTemplate   string `gorm:"type:text" json:"title_template"`   // 自定义标题模板
+	ContentTemplate string `gorm:"type:text" json:"content_template"` // 自定义内容模板
 }
+
+// TriggerEvent 触发事件类型
+const (
+	TriggerSyncSuccess     = "sync_success"     // 同步成功
+	TriggerSyncFailure     = "sync_failure"     // 同步失败
+	TriggerSyncConflict    = "sync_conflict"    // 同步冲突
+	TriggerWebhookReceived = "webhook_received" // Webhook 接收
+	TriggerWebhookError    = "webhook_error"    // Webhook 处理错误
+	TriggerCronTriggered   = "cron_triggered"   // 定时任务触发
+	TriggerBackupSuccess   = "backup_success"   // 备份成功
+	TriggerBackupFailure   = "backup_failure"   // 备份失败
+)
 
 func (NotificationChannel) TableName() string {
 	return "notification_channels"

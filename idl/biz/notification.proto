@@ -48,10 +48,13 @@ message NotificationChannel {
   string type = 3;              // 渠道类型: email, dingtalk, wechat, webhook
   string config = 4;            // JSON配置
   bool enabled = 5;             // 是否启用
-  bool notify_on_success = 6;   // 成功时通知
-  bool notify_on_failure = 7;   // 失败时通知
+  bool notify_on_success = 6;   // 成功时通知（向后兼容）
+  bool notify_on_failure = 7;   // 失败时通知（向后兼容）
   string created_at = 8;
   string updated_at = 9;
+  string trigger_events = 10;   // 触发事件列表（JSON数组）
+  string title_template = 11;   // 自定义标题模板
+  string content_template = 12; // 自定义内容模板
 }
 
 // ListChannelsRequest 列出通知渠道请求
@@ -84,6 +87,9 @@ message CreateChannelRequest {
   bool enabled = 4 [(api.body) = "enabled"];
   bool notify_on_success = 5 [(api.body) = "notify_on_success"];
   bool notify_on_failure = 6 [(api.body) = "notify_on_failure"];
+  string trigger_events = 7 [(api.body) = "trigger_events"];
+  string title_template = 8 [(api.body) = "title_template"];
+  string content_template = 9 [(api.body) = "content_template"];
 }
 
 // UpdateChannelRequest 更新渠道请求
@@ -94,6 +100,9 @@ message UpdateChannelRequest {
   bool enabled = 4 [(api.body) = "enabled"];
   bool notify_on_success = 5 [(api.body) = "notify_on_success"];
   bool notify_on_failure = 6 [(api.body) = "notify_on_failure"];
+  string trigger_events = 7 [(api.body) = "trigger_events"];
+  string title_template = 8 [(api.body) = "title_template"];
+  string content_template = 9 [(api.body) = "content_template"];
 }
 
 // DeleteChannelRequest 删除渠道请求
