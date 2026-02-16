@@ -251,7 +251,7 @@
                   <thead><tr><th>变量</th><th>说明</th><th>示例</th><th>适用事件</th></tr></thead>
                   <tbody>
                     <tr v-for="v in templateVariables" :key="v.name">
-                      <td class="var-name" @click="copyVar(v.name)"><code>{{`{{.${v.name}}}`}}</code></td>
+                      <td class="var-name" @click="copyVar(v.name)"><code v-text="formatVar(v.name)"></code></td>
                       <td>{{ v.description }}</td>
                       <td><code>{{ v.example }}</code></td>
                       <td>{{ v.events }}</td>
@@ -396,6 +396,10 @@ const templateVariables = [
   { name: 'WebhookSource', description: 'Webhook来源', example: 'github', events: 'Webhook事件' },
   { name: 'BackupPath', description: '备份路径', example: '/backups/repo.tar.gz', events: '备份事件' },
 ]
+
+function formatVar(name: string): string {
+  return '{{.' + name + '}}'
+}
 
 function copyVar(name: string) {
   const text = `{{.${name}}}`

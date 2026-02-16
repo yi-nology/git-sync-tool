@@ -2,6 +2,8 @@ package router
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/app/server"
@@ -46,8 +48,25 @@ func GeneratedRegister(h *server.Hertz) {
 	h.StaticFile("/docs/swagger.json", "./docs/swagger.json")
 	h.Static("/docs", "./docs")
 
-	// Static Files (Frontend)
-	h.Static("/", "./public")
+	// Static Files (Frontend) - SPA with fallback to index.html
+	h.GET("/*filepath", func(ctx context.Context, c *app.RequestContext) {
+		fp := c.Param("filepath")
+		fullPath := filepath.Join("./public", fp)
+		if info, err := os.Stat(fullPath); err == nil && !info.IsDir() {
+			c.File(fullPath)
+			return
+		}
+		c.File("./public/index.html")
+	})
+	h.HEAD("/*filepath", func(ctx context.Context, c *app.RequestContext) {
+		fp := c.Param("filepath")
+		fullPath := filepath.Join("./public", fp)
+		if info, err := os.Stat(fullPath); err == nil && !info.IsDir() {
+			c.File(fullPath)
+			return
+		}
+		c.File("./public/index.html")
+	})
 
 	// Redirect root to index.html
 	h.GET("/", func(ctx context.Context, c *app.RequestContext) {
