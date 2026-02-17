@@ -1,6 +1,17 @@
 import request from '../request'
 import type { SystemConfig, ListDirsResp } from '@/types/stats'
 
+export interface AppInfo {
+  app_name: string
+  version: string
+  build_time: string
+  git_commit: string
+}
+
+export function getAppInfo() {
+  return request.get<unknown, AppInfo>('/system/app-info')
+}
+
 export function getSystemConfig() {
   return request.get<unknown, SystemConfig>('/system/config')
 }
