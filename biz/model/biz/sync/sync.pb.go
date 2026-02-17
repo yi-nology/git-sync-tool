@@ -9,12 +9,13 @@
 package sync
 
 import (
+	reflect "reflect"
+	sync "sync"
+
 	_ "github.com/yi-nology/git-manage-service/biz/model/api"
 	common "github.com/yi-nology/git-manage-service/biz/model/common"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	reflect "reflect"
-	sync "sync"
 )
 
 const (
@@ -46,6 +47,7 @@ type SyncTask struct {
 	WebhookToken   string `protobuf:"bytes,14,opt,name=webhook_token,json=webhookToken,proto3" form:"webhook_token" json:"webhook_token,omitempty" query:"webhook_token"`
 	CreatedAt      string `protobuf:"bytes,15,opt,name=created_at,json=createdAt,proto3" form:"created_at" json:"created_at,omitempty" query:"created_at"`
 	UpdatedAt      string `protobuf:"bytes,16,opt,name=updated_at,json=updatedAt,proto3" form:"updated_at" json:"updated_at,omitempty" query:"updated_at"`
+	SyncMode       string `protobuf:"bytes,17,opt,name=sync_mode,json=syncMode,proto3" form:"sync_mode" json:"sync_mode,omitempty" query:"sync_mode"`
 }
 
 func (x *SyncTask) Reset() {
@@ -188,6 +190,13 @@ func (x *SyncTask) GetCreatedAt() string {
 func (x *SyncTask) GetUpdatedAt() string {
 	if x != nil {
 		return x.UpdatedAt
+	}
+	return ""
+}
+
+func (x *SyncTask) GetSyncMode() string {
+	if x != nil {
+		return x.SyncMode
 	}
 	return ""
 }
@@ -535,6 +544,7 @@ type CreateTaskRequest struct {
 	PushOptions   string `protobuf:"bytes,7,opt,name=push_options,json=pushOptions,proto3" form:"push_options" json:"push_options,omitempty"`
 	Cron          string `protobuf:"bytes,8,opt,name=cron,proto3" form:"cron" json:"cron,omitempty"`
 	Enabled       bool   `protobuf:"varint,9,opt,name=enabled,proto3" form:"enabled" json:"enabled,omitempty"`
+	SyncMode      string `protobuf:"bytes,10,opt,name=sync_mode,json=syncMode,proto3" form:"sync_mode" json:"sync_mode,omitempty"`
 }
 
 func (x *CreateTaskRequest) Reset() {
@@ -632,6 +642,13 @@ func (x *CreateTaskRequest) GetEnabled() bool {
 	return false
 }
 
+func (x *CreateTaskRequest) GetSyncMode() string {
+	if x != nil {
+		return x.SyncMode
+	}
+	return ""
+}
+
 // UpdateTaskRequest 更新任务请求
 type UpdateTaskRequest struct {
 	state         protoimpl.MessageState
@@ -648,6 +665,7 @@ type UpdateTaskRequest struct {
 	PushOptions   string `protobuf:"bytes,8,opt,name=push_options,json=pushOptions,proto3" form:"push_options" json:"push_options,omitempty"`
 	Cron          string `protobuf:"bytes,9,opt,name=cron,proto3" form:"cron" json:"cron,omitempty"`
 	Enabled       bool   `protobuf:"varint,10,opt,name=enabled,proto3" form:"enabled" json:"enabled,omitempty"`
+	SyncMode      string `protobuf:"bytes,11,opt,name=sync_mode,json=syncMode,proto3" form:"sync_mode" json:"sync_mode,omitempty"`
 }
 
 func (x *UpdateTaskRequest) Reset() {
@@ -750,6 +768,13 @@ func (x *UpdateTaskRequest) GetEnabled() bool {
 		return x.Enabled
 	}
 	return false
+}
+
+func (x *UpdateTaskRequest) GetSyncMode() string {
+	if x != nil {
+		return x.SyncMode
+	}
+	return ""
 }
 
 // DeleteTaskRequest 删除任务请求

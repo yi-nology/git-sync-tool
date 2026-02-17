@@ -83,7 +83,19 @@ func (s *SyncService) ExecuteSyncWithTrigger(task *po.SyncTask, triggerSource st
 		logs.WriteString(fmt.Sprintf("[%s] %s\n", time.Now().Format("15:04:05"), msg))
 	}
 
-	commitRange, err := s.doSync(repoPath, task, logf)
+	// 根据同步模式选择执行方法
+	syncMode := task.SyncMode
+	if syncMode == "" {
+		syncMode = "single"
+	}
+
+	var commitRange string
+	var err error
+	if syncMode == "all-branch" {
+		commitRange, err = s.doSyncAllBranches(repoPath, task, logf)
+	} else {
+		commitRange, err = s.doSyncSingleBranch(repoPath, task, logf)
+	}
 
 	run.CommitRange = commitRange
 	run.Details = logs.String()
@@ -132,7 +144,7 @@ func (s *SyncService) resolveAuthForRemote(repo po.Repo, remoteName string) (tra
 	return s.authSvc.ResolveAuth(authInfo)
 }
 
-func (s *SyncService) doSync(path string, task *po.SyncTask, logf func(string, ...interface{})) (string, error) {
+func (s *SyncService) doSyncSingleBranch(path string, task *po.SyncTask, logf func(string, ...interface{})) (string, error) {
 	logf("Starting sync for task %s (Repo: %s)", task.Key, path)
 
 	// 1. Fetch Source
@@ -337,6 +349,252 @@ func (s *SyncService) doSync(path string, task *po.SyncTask, logf func(string, .
 	return commitRange, nil
 }
 
+// doSyncAllBranches 全分支同步：自动检测源 remote 所有分支，逐一同步到目标 remote
+func (s *SyncService) doSyncAllBranches(path string, task *po.SyncTask, logf func(string, ...interface{})) (string, error) {
+	logf("Starting all-branch sync for task %s (Repo: %s)", task.Key, path)
+
+	sourceRemote := task.SourceRemote
+	if sourceRemote == "" {
+		sourceRemote = "origin"
+	}
+	targetRemote := task.TargetRemote
+	if targetRemote == "" {
+		targetRemote = "origin"
+	}
+
+	progressWriter := &logWriter{logf: logf}
+
+	// 1. Fetch all branches from source remote
+	isLocalSource := (sourceRemote == "local")
+	if !isLocalSource {
+		sourceURL, _ := s.git.GetRemoteURL(path, sourceRemote)
+		if sourceURL == "" && sourceRemote == "origin" {
+			sourceURL = task.SourceRepo.RemoteURL
+		}
+
+		sourceAuth, err := s.resolveAuthForRemote(task.SourceRepo, sourceRemote)
+		if err != nil {
+			logf("Warning: failed to resolve source auth: %v", err)
+		}
+		sourceAuthInfo := getAuthInfoForRemote(task.SourceRepo, sourceRemote)
+		allRefSpec := fmt.Sprintf("+refs/heads/*:refs/remotes/%s/*", sourceRemote)
+
+		logf("Command: git fetch %s %s", sourceRemote, allRefSpec)
+
+		if sourceURL != "" && sourceAuthInfo.Type != "" && sourceAuthInfo.Type != "none" {
+			logf("Fetching all branches from source %s (Auth: %s, Source: %s)...", sourceRemote, sourceAuthInfo.Type, sourceAuthInfo.Source)
+			if sourceAuthInfo.Source == "database" && sourceAuthInfo.SSHKeyID > 0 {
+				privateKey, passphrase, keyErr := s.authSvc.GetDBSSHKeyContent(sourceAuthInfo.SSHKeyID)
+				if keyErr != nil {
+					return "", fmt.Errorf("failed to load source SSH key: %v", keyErr)
+				}
+				if err := s.git.FetchWithDBKey(path, sourceURL, privateKey, passphrase, progressWriter, allRefSpec); err != nil {
+					return "", fmt.Errorf("fetch source (all branches) failed: %v", err)
+				}
+			} else if err := s.git.FetchWithAuthMethod(path, sourceURL, sourceAuth, progressWriter, allRefSpec); err != nil {
+				return "", fmt.Errorf("fetch source (all branches) failed: %v", err)
+			}
+		} else {
+			logf("Fetching all branches from source %s...", sourceRemote)
+			if err := s.git.Fetch(path, sourceRemote, progressWriter); err != nil {
+				return "", fmt.Errorf("fetch source (all branches) failed: %v", err)
+			}
+		}
+	}
+
+	// 2. List all branches from source remote
+	var branches []string
+	if isLocalSource {
+		// 本地分支：获取所有本地分支名
+		allBranches, err := s.git.GetBranches(path)
+		if err != nil {
+			return "", fmt.Errorf("list local branches failed: %v", err)
+		}
+		// GetBranches 返回本地和远程分支，只保留本地分支（不含 /）
+		for _, b := range allBranches {
+			if !strings.Contains(b, "/") {
+				branches = append(branches, b)
+			}
+		}
+	} else {
+		var err error
+		branches, err = s.git.ListRemoteBranches(path, sourceRemote)
+		if err != nil {
+			return "", fmt.Errorf("list remote branches failed: %v", err)
+		}
+	}
+
+	if len(branches) == 0 {
+		logf("No branches found on source remote %s", sourceRemote)
+		return "", nil
+	}
+	logf("Found %d branches on source: %v", len(branches), branches)
+
+	// 3. Fetch all branches from target remote
+	targetURL, _ := s.git.GetRemoteURL(path, targetRemote)
+	if targetURL == "" && targetRemote == "origin" {
+		targetURL = task.TargetRepo.RemoteURL
+	}
+	targetAuth, err := s.resolveAuthForRemote(task.TargetRepo, targetRemote)
+	if err != nil {
+		logf("Warning: failed to resolve target auth: %v", err)
+	}
+	targetAuthInfo := getAuthInfoForRemote(task.TargetRepo, targetRemote)
+
+	tAllRefSpec := fmt.Sprintf("+refs/heads/*:refs/remotes/%s/*", targetRemote)
+	logf("Command: git fetch %s %s", targetRemote, tAllRefSpec)
+
+	if targetURL != "" && targetAuthInfo.Type != "" && targetAuthInfo.Type != "none" {
+		logf("Fetching all branches from target %s (Auth: %s, Source: %s)...", targetRemote, targetAuthInfo.Type, targetAuthInfo.Source)
+		if targetAuthInfo.Source == "database" && targetAuthInfo.SSHKeyID > 0 {
+			privateKey, passphrase, keyErr := s.authSvc.GetDBSSHKeyContent(targetAuthInfo.SSHKeyID)
+			if keyErr != nil {
+				return "", fmt.Errorf("failed to load target SSH key: %v", keyErr)
+			}
+			if err := s.git.FetchWithDBKey(path, targetURL, privateKey, passphrase, progressWriter, tAllRefSpec); err != nil {
+				return "", fmt.Errorf("fetch target (all branches) failed: %v", err)
+			}
+		} else if err := s.git.FetchWithAuthMethod(path, targetURL, targetAuth, progressWriter, tAllRefSpec); err != nil {
+			return "", fmt.Errorf("fetch target (all branches) failed: %v", err)
+		}
+	} else {
+		logf("Fetching all branches from target %s...", targetRemote)
+		if err := s.git.Fetch(path, targetRemote, progressWriter); err != nil {
+			return "", fmt.Errorf("fetch target (all branches) failed: %v", err)
+		}
+	}
+
+	// 4. Sync each branch
+	var pushOpts []string
+	if task.PushOptions != "" {
+		pushOpts = strings.Fields(task.PushOptions)
+	}
+
+	successCount := 0
+	failedCount := 0
+	skippedCount := 0
+	var allCommitRanges []string
+	var lastErr error
+
+	for _, branch := range branches {
+		logf("--- Syncing branch: %s ---", branch)
+
+		// Get source hash
+		var sourceHash string
+		if isLocalSource {
+			h, err := s.git.ResolveRevision(path, branch)
+			if err != nil {
+				logf("  Skip branch %s: cannot resolve local ref: %v", branch, err)
+				failedCount++
+				lastErr = err
+				continue
+			}
+			sourceHash = h
+		} else {
+			h, err := s.git.GetCommitHash(path, sourceRemote, branch)
+			if err != nil {
+				logf("  Skip branch %s: cannot get source hash: %v", branch, err)
+				failedCount++
+				lastErr = err
+				continue
+			}
+			sourceHash = h
+		}
+		logf("  Source hash: %s", sourceHash)
+
+		// Get target hash
+		targetHash, err := s.git.GetCommitHash(path, targetRemote, branch)
+		targetExists := err == nil
+
+		if targetExists {
+			logf("  Target hash: %s", targetHash)
+			if sourceHash == targetHash {
+				logf("  Already in sync, skipping")
+				skippedCount++
+				continue
+			}
+
+			// Fast-forward check
+			isAncestor, err := s.git.IsAncestor(path, targetHash, sourceHash)
+			if err != nil {
+				logf("  Branch %s: ancestor check failed: %v", branch, err)
+				failedCount++
+				lastErr = err
+				continue
+			}
+			if !isAncestor {
+				isSourceBehind, _ := s.git.IsAncestor(path, sourceHash, targetHash)
+				if isSourceBehind {
+					logf("  Branch %s: source is behind target, skipping", branch)
+					failedCount++
+					lastErr = fmt.Errorf("branch %s: source is behind target", branch)
+					continue
+				}
+				logf("  Branch %s: conflict (not fast-forward)", branch)
+				failedCount++
+				lastErr = fmt.Errorf("branch %s: conflict", branch)
+				continue
+			}
+			logf("  Fast-forward check passed")
+			allCommitRanges = append(allCommitRanges, fmt.Sprintf("%s: %s..%s", branch, targetHash[:8], sourceHash[:8]))
+		} else {
+			logf("  Target branch does not exist yet (new branch)")
+			allCommitRanges = append(allCommitRanges, fmt.Sprintf("%s: (new) %s", branch, sourceHash[:8]))
+		}
+
+		// Push
+		logf("  Pushing %s to %s/%s...", sourceHash[:8], targetRemote, branch)
+		if targetURL != "" && targetAuthInfo.Type != "" && targetAuthInfo.Type != "none" {
+			if targetAuthInfo.Source == "database" && targetAuthInfo.SSHKeyID > 0 {
+				privateKey, passphrase, keyErr := s.authSvc.GetDBSSHKeyContent(targetAuthInfo.SSHKeyID)
+				if keyErr != nil {
+					logf("  Branch %s: failed to load SSH key: %v", branch, keyErr)
+					failedCount++
+					lastErr = keyErr
+					continue
+				}
+				if err := s.git.PushWithDBKey(path, targetURL, sourceHash, branch, privateKey, passphrase, pushOpts, progressWriter); err != nil {
+					logf("  Branch %s: push failed: %v", branch, err)
+					failedCount++
+					lastErr = err
+					continue
+				}
+			} else {
+				if err := s.git.PushWithAuthMethod(path, targetURL, sourceHash, branch, targetAuth, pushOpts, progressWriter); err != nil {
+					logf("  Branch %s: push failed: %v", branch, err)
+					failedCount++
+					lastErr = err
+					continue
+				}
+			}
+		} else {
+			if err := s.git.Push(path, targetRemote, sourceHash, branch, pushOpts, progressWriter); err != nil {
+				logf("  Branch %s: push failed: %v", branch, err)
+				failedCount++
+				lastErr = err
+				continue
+			}
+		}
+
+		logf("  Branch %s synced successfully", branch)
+		successCount++
+	}
+
+	// 5. Summary
+	logf("=== All-branch sync summary ===")
+	logf("Total: %d, Success: %d, Failed: %d, Skipped (up-to-date): %d", len(branches), successCount, failedCount, skippedCount)
+
+	commitRange := strings.Join(allCommitRanges, "; ")
+
+	if failedCount > 0 && successCount == 0 {
+		return commitRange, fmt.Errorf("all branches failed, last error: %v", lastErr)
+	}
+	if failedCount > 0 {
+		return commitRange, fmt.Errorf("%d/%d branches failed, last error: %v", failedCount, len(branches), lastErr)
+	}
+	return commitRange, nil
+}
+
 // LogWriter implements io.Writer
 type logWriter struct {
 	logf func(string, ...interface{})
@@ -388,6 +646,7 @@ func (s *SyncService) sendNotification(task *po.SyncTask, run *po.SyncRun) {
 		ErrorMessage: run.ErrorMessage,
 		CommitRange:  run.CommitRange,
 		Duration:     duration,
+		SyncMode:     task.SyncMode,
 	}
 	if task.Cron != "" {
 		data.CronExpression = task.Cron

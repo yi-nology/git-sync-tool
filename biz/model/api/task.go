@@ -18,6 +18,7 @@ type SyncTaskDTO struct {
 	PushOptions   string    `json:"push_options"`
 	Cron          string    `json:"cron"`
 	Enabled       bool      `json:"enabled"`
+	SyncMode      string    `json:"sync_mode"`
 	CreatedAt     time.Time `json:"created_at"`
 	UpdatedAt     time.Time `json:"updated_at"`
 
@@ -38,6 +39,7 @@ func NewSyncTaskDTO(t po.SyncTask) SyncTaskDTO {
 		PushOptions:   t.PushOptions,
 		Cron:          t.Cron,
 		Enabled:       t.Enabled,
+		SyncMode:      t.SyncMode,
 		CreatedAt:     t.CreatedAt,
 		UpdatedAt:     t.UpdatedAt,
 	}

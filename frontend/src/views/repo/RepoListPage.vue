@@ -65,6 +65,13 @@
                   <el-table-column prop="name" label="Name" width="100" />
                   <el-table-column prop="fetch_url" label="Fetch URL" />
                   <el-table-column prop="push_url" label="Push URL" />
+                  <el-table-column label="认证" width="80" align="center">
+                    <template #default="{ row, $index }">
+                      <el-button size="small" :icon="Lock" circle
+                        :type="remoteAuths[row.name]?.type && remoteAuths[row.name]?.type !== 'none' ? 'success' : 'default'"
+                        @click="openRemoteAuth($index, row.name)" title="配置认证" />
+                    </template>
+                  </el-table-column>
                 </el-table>
               </el-form-item>
               <el-form-item label="分支追踪">
@@ -116,14 +123,32 @@
               </el-select>
             </el-form-item>
             <template v-if="cloneForm.auth_type === 'ssh'">
-              <el-form-item label="私钥路径">
-                <el-select v-model="cloneForm.auth_key" filterable allow-create placeholder="~/.ssh/id_rsa">
-                  <el-option v-for="k in sshKeys" :key="k" :label="k" :value="k" />
-                </el-select>
+              <el-form-item label="密钥来源">
+                <el-radio-group v-model="cloneForm.ssh_source">
+                  <el-radio value="local">本地文件</el-radio>
+                  <el-radio value="database">数据库密钥</el-radio>
+                </el-radio-group>
               </el-form-item>
-              <el-form-item label="密码">
-                <el-input v-model="cloneForm.auth_secret" type="password" placeholder="Passphrase (可选)" show-password />
-              </el-form-item>
+              <template v-if="cloneForm.ssh_source === 'local'">
+                <el-form-item label="SSH 密钥">
+                  <el-select v-model="cloneForm.auth_key" filterable allow-create placeholder="~/.ssh/id_rsa" style="width: 100%">
+                    <el-option v-for="k in sshKeys" :key="k" :label="k" :value="k" />
+                  </el-select>
+                </el-form-item>
+                <el-form-item label="密钥密码">
+                  <el-input v-model="cloneForm.auth_secret" type="password" placeholder="Passphrase (可选)" show-password />
+                </el-form-item>
+              </template>
+              <template v-if="cloneForm.ssh_source === 'database'">
+                <el-form-item label="选择密钥">
+                  <el-select v-model="cloneForm.ssh_key_id" placeholder="请选择数据库密钥" style="width: 100%">
+                    <el-option v-for="k in dbSSHKeyList" :key="k.id" :label="`${k.name} (${k.key_type})`" :value="k.id" />
+                  </el-select>
+                </el-form-item>
+                <div v-if="cloneDbKeyInfo" style="padding: 0 100px; color: #909399; font-size: 12px; margin-bottom: 12px;">
+                  {{ cloneDbKeyInfo }}
+                </div>
+              </template>
             </template>
             <template v-if="cloneForm.auth_type === 'http'">
               <el-form-item label="用户名">
@@ -150,8 +175,62 @@
       </template>
     </el-dialog>
 
+    <!-- Remote Auth Dialog -->
+    <el-dialog v-model="showRemoteAuthDialog" :title="`配置认证: ${remoteAuthName}`" width="480px" destroy-on-close>
+      <el-form label-width="110px">
+        <el-form-item label="认证方式">
+          <el-select v-model="remoteAuthForm.type" style="width: 100%">
+            <el-option label="无 (None)" value="none" />
+            <el-option label="SSH 密钥" value="ssh" />
+            <el-option label="用户名/密码 (HTTP)" value="http" />
+          </el-select>
+        </el-form-item>
+        <template v-if="remoteAuthForm.type === 'ssh'">
+          <el-form-item label="密钥来源">
+            <el-radio-group v-model="remoteAuthForm.source">
+              <el-radio value="local">本地文件</el-radio>
+              <el-radio value="database">数据库密钥</el-radio>
+            </el-radio-group>
+          </el-form-item>
+          <template v-if="remoteAuthForm.source === 'local'">
+            <el-form-item label="SSH 密钥">
+              <el-select v-model="remoteAuthForm.key" filterable allow-create placeholder="手动输入路径..." style="width: 100%">
+                <el-option v-for="k in sshKeys" :key="k" :label="k" :value="k" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="密钥密码">
+              <el-input v-model="remoteAuthForm.secret" type="password" show-password placeholder="Passphrase (可选)" />
+            </el-form-item>
+          </template>
+          <template v-if="remoteAuthForm.source === 'database'">
+            <el-form-item label="选择密钥">
+              <el-select v-model="remoteAuthForm.ssh_key_id" placeholder="请选择数据库密钥" style="width: 100%">
+                <el-option v-for="k in dbSSHKeyList" :key="k.id" :label="`${k.name} (${k.key_type})`" :value="k.id" />
+              </el-select>
+            </el-form-item>
+            <div v-if="selectedDbKeyInfo" style="padding: 0 110px; color: #909399; font-size: 12px;">
+              {{ selectedDbKeyInfo }}
+            </div>
+          </template>
+        </template>
+        <template v-if="remoteAuthForm.type === 'http'">
+          <el-form-item label="用户名">
+            <el-input v-model="remoteAuthForm.key" placeholder="用户名" />
+          </el-form-item>
+          <el-form-item label="密码 / Token">
+            <el-input v-model="remoteAuthForm.secret" type="password" show-password placeholder="密码或 Token" />
+          </el-form-item>
+        </template>
+      </el-form>
+      <template #footer>
+        <el-button @click="showRemoteAuthDialog = false">取消</el-button>
+        <el-button type="primary" @click="saveRemoteAuth">确定</el-button>
+      </template>
+    </el-dialog>
+
     <!-- File Browser Dialog -->
     <el-dialog v-model="showFileBrowser" title="选择目录" width="600px" destroy-on-close>
+
       <div class="file-browser">
         <div class="browser-header">
           <el-button @click="loadDirs(dirState.parent)" :icon="Top">上一级</el-button>
@@ -179,15 +258,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessageBox, ElMessage } from 'element-plus'
-import { Plus, Delete, View, Share, Refresh, Top, Folder } from '@element-plus/icons-vue'
+import { Plus, Delete, View, Share, Refresh, Top, Folder, Lock } from '@element-plus/icons-vue'
 import { useRepoStore } from '@/stores/useRepoStore'
 import { createRepo, cloneRepo, deleteRepo, scanRepo, getCloneTask } from '@/api/modules/repo'
 import { listDirs, getSSHKeys, testConnection } from '@/api/modules/system'
+import { listDBSSHKeys } from '@/api/modules/sshkey'
 import type { ScanResult } from '@/types/repo'
+import type { AuthInfo } from '@/types/repo'
 import type { ListDirsResp } from '@/types/stats'
+import type { DBSSHKey } from '@/api/modules/sshkey'
 
 const router = useRouter()
 const repoStore = useRepoStore()
@@ -211,11 +293,21 @@ const cloneForm = ref({
   auth_type: 'none',
   auth_key: '',
   auth_secret: '',
+  ssh_source: 'local' as 'local' | 'database',
+  ssh_key_id: 0,
 })
 
 const scanResult = ref<ScanResult | null>(null)
 const testingConnection = ref(false)
 const connectionResult = ref<{ success: boolean; message: string } | null>(null)
+
+// Remote Auth state
+const showRemoteAuthDialog = ref(false)
+const remoteAuthName = ref('')
+const remoteAuthIndex = ref(-1)
+const remoteAuthForm = ref<AuthInfo>({ type: 'none', key: '', secret: '', source: 'local', ssh_key_id: 0 })
+const dbSSHKeyList = ref<DBSSHKey[]>([])
+const remoteAuths = ref<Record<string, AuthInfo>>({})
 
 const cloneProgress = ref<{ active: boolean; status: string; logs: string[] }>({
   active: false,
@@ -229,6 +321,11 @@ onMounted(async () => {
   await repoStore.fetchRepoList()
   try {
     sshKeys.value = await getSSHKeys()
+  } catch {
+    // ignore
+  }
+  try {
+    dbSSHKeyList.value = await listDBSSHKeys()
   } catch {
     // ignore
   }
@@ -312,7 +409,7 @@ async function handleSubmitRepo() {
         path: localForm.value.path,
         auth_type: 'none',
         remotes,
-        remote_auths: {},
+        remote_auths: remoteAuths.value,
       })
       ElMessage.success('仓库注册成功')
       showAddDialog.value = false
@@ -323,13 +420,15 @@ async function handleSubmitRepo() {
         ElMessage.warning('请填写完整克隆信息')
         return
       }
+      const isDbKey = cloneForm.value.auth_type === 'ssh' && cloneForm.value.ssh_source === 'database'
       const result = await cloneRepo({
         remote_url: cloneForm.value.remote_url,
         local_path: cloneForm.value.local_path,
         name: cloneForm.value.name,
         auth_type: cloneForm.value.auth_type === 'none' ? undefined : cloneForm.value.auth_type,
-        auth_key: cloneForm.value.auth_key || undefined,
-        auth_secret: cloneForm.value.auth_secret || undefined,
+        auth_key: isDbKey ? undefined : (cloneForm.value.auth_key || undefined),
+        auth_secret: isDbKey ? undefined : (cloneForm.value.auth_secret || undefined),
+        ssh_key_id: isDbKey ? cloneForm.value.ssh_key_id : undefined,
       })
       startClonePolling(result.task_id)
     }
@@ -364,10 +463,11 @@ function startClonePolling(taskId: string) {
 
 function resetForms() {
   localForm.value = { name: '', path: '' }
-  cloneForm.value = { remote_url: '', local_path: '', name: '', auth_type: 'none', auth_key: '', auth_secret: '' }
+  cloneForm.value = { remote_url: '', local_path: '', name: '', auth_type: 'none', auth_key: '', auth_secret: '', ssh_source: 'local', ssh_key_id: 0 }
   scanResult.value = null
   connectionResult.value = null
   cloneProgress.value = { active: false, status: '', logs: [] }
+  remoteAuths.value = {}
 }
 
 async function loadDirs(path?: string) {
@@ -391,6 +491,45 @@ function selectDir() {
   showFileBrowser.value = false
   if (addMode.value === 'local') handleScanRepo()
 }
+
+// Remote Auth functions
+function openRemoteAuth(index: number, remoteName: string) {
+  remoteAuthIndex.value = index
+  remoteAuthName.value = remoteName
+  const existing = remoteAuths.value[remoteName]
+  remoteAuthForm.value = existing
+    ? { ...existing }
+    : { type: 'none', key: '', secret: '', source: 'local', ssh_key_id: 0 }
+  showRemoteAuthDialog.value = true
+  getSSHKeys().then(keys => { sshKeys.value = keys }).catch(() => {})
+  listDBSSHKeys().then(keys => { dbSSHKeyList.value = keys }).catch(() => {})
+}
+
+function saveRemoteAuth() {
+  const name = remoteAuthName.value
+  if (remoteAuthForm.value.type === 'none') {
+    delete remoteAuths.value[name]
+  } else {
+    if (remoteAuthForm.value.type === 'ssh' && remoteAuthForm.value.source === 'database') {
+      const dbKey = dbSSHKeyList.value.find(k => k.id === remoteAuthForm.value.ssh_key_id)
+      if (dbKey) remoteAuthForm.value.key = dbKey.name
+    }
+    remoteAuths.value[name] = { ...remoteAuthForm.value }
+  }
+  showRemoteAuthDialog.value = false
+}
+
+const selectedDbKeyInfo = computed(() => {
+  if (remoteAuthForm.value.source !== 'database' || !remoteAuthForm.value.ssh_key_id) return ''
+  const key = dbSSHKeyList.value.find(k => k.id === remoteAuthForm.value.ssh_key_id)
+  return key ? (key.description || `创建于 ${key.created_at}`) : ''
+})
+
+const cloneDbKeyInfo = computed(() => {
+  if (!cloneForm.value.ssh_key_id) return ''
+  const key = dbSSHKeyList.value.find(k => k.id === cloneForm.value.ssh_key_id)
+  return key ? (key.description || `创建于 ${key.created_at}`) : ''
+})
 </script>
 
 <style scoped>

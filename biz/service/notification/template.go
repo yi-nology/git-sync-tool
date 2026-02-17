@@ -31,6 +31,10 @@ type TemplateData struct {
 	BackupPath     string // 备份路径
 	Timestamp      string // 格式化时间
 	Duration       string // 执行耗时
+	SyncMode       string // 同步模式: single/all-branch
+	BranchCount    int    // 全分支同步: 总分支数
+	SuccessCount   int    // 全分支同步: 成功数
+	FailedCount    int    // 全分支同步: 失败数
 }
 
 // VariableInfo 模板变量说明
@@ -178,9 +182,11 @@ var defaultTitleTemplates = map[string]string{
 var defaultContentTemplates = map[string]string{
 	po.TriggerSyncSuccess: strings.TrimSpace(`
 任务: {{.TaskKey}}
-状态: {{.StatusText}}
+状态: {{.StatusText}}{{if eq .SyncMode "all-branch"}}
+模式: 全分支同步 ({{.SourceRemote}} → {{.TargetRemote}})
+分支统计: 总计 {{.BranchCount}}, 成功 {{.SuccessCount}}, 失败 {{.FailedCount}}{{else}}
 源: {{.SourceRemote}}/{{.SourceBranch}}
-目标: {{.TargetRemote}}/{{.TargetBranch}}{{if .CommitRange}}
+目标: {{.TargetRemote}}/{{.TargetBranch}}{{end}}{{if .CommitRange}}
 提交范围: {{.CommitRange}}{{end}}{{if .Duration}}
 耗时: {{.Duration}}{{end}}
 时间: {{.Timestamp}}
@@ -188,9 +194,11 @@ var defaultContentTemplates = map[string]string{
 
 	po.TriggerSyncFailure: strings.TrimSpace(`
 任务: {{.TaskKey}}
-状态: {{.StatusText}}
+状态: {{.StatusText}}{{if eq .SyncMode "all-branch"}}
+模式: 全分支同步 ({{.SourceRemote}} → {{.TargetRemote}})
+分支统计: 总计 {{.BranchCount}}, 成功 {{.SuccessCount}}, 失败 {{.FailedCount}}{{else}}
 源: {{.SourceRemote}}/{{.SourceBranch}}
-目标: {{.TargetRemote}}/{{.TargetBranch}}{{if .ErrorMessage}}
+目标: {{.TargetRemote}}/{{.TargetBranch}}{{end}}{{if .ErrorMessage}}
 错误: {{.ErrorMessage}}{{end}}{{if .Duration}}
 耗时: {{.Duration}}{{end}}
 时间: {{.Timestamp}}
@@ -281,5 +289,9 @@ func GetAvailableVariables() []VariableInfo {
 		{Name: "CronExpression", Description: "Cron表达式", Example: "0 2 * * *", Events: "cron_triggered"},
 		{Name: "WebhookSource", Description: "Webhook来源", Example: "github", Events: "webhook_*"},
 		{Name: "BackupPath", Description: "备份路径", Example: "/backups/repo.tar.gz", Events: "backup_*"},
+		{Name: "SyncMode", Description: "同步模式", Example: "all-branch", Events: "sync_*"},
+		{Name: "BranchCount", Description: "全分支同步-总分支数", Example: "10", Events: "sync_*"},
+		{Name: "SuccessCount", Description: "全分支同步-成功数", Example: "8", Events: "sync_*"},
+		{Name: "FailedCount", Description: "全分支同步-失败数", Example: "2", Events: "sync_*"},
 	}
 }

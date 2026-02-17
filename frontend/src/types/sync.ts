@@ -12,6 +12,7 @@ export interface SyncTaskDTO {
   push_options: string
   cron: string
   enabled: boolean
+  sync_mode: string
   created_at: string
   updated_at: string
   source_repo?: RepoDTO
@@ -28,6 +29,7 @@ export interface CreateSyncTaskReq {
   push_options?: string
   cron?: string
   enabled?: boolean
+  sync_mode?: string
 }
 
 export interface UpdateSyncTaskReq extends CreateSyncTaskReq {
