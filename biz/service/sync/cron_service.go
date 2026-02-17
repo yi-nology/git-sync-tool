@@ -116,7 +116,7 @@ func (s *CronService) addTask(task po.SyncTask) {
 		}
 
 		log.Printf("Executing Cron Task %d (Key: %s)", taskID, taskKey)
-		err := s.syncSvc.RunTask(taskKey)
+		err := s.syncSvc.RunTaskWithTrigger(taskKey, po.TriggerSourceCron)
 		if err != nil {
 			log.Printf("Cron Task %d failed: %v", taskID, err)
 		}

@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/yi-nology/git-manage-service/biz/dal/db"
 	webhook "github.com/yi-nology/git-manage-service/biz/model/biz/webhook"
+	"github.com/yi-nology/git-manage-service/biz/model/po"
 	"github.com/yi-nology/git-manage-service/biz/service/audit"
 	"github.com/yi-nology/git-manage-service/biz/service/sync"
 	"github.com/yi-nology/git-manage-service/pkg/response"
@@ -47,7 +48,7 @@ func TriggerSync(ctx context.Context, c *app.RequestContext) {
 	// 异步执行同步任务
 	go func() {
 		syncSvc := sync.NewSyncService()
-		syncSvc.ExecuteSync(task)
+		syncSvc.ExecuteSyncWithTrigger(task, po.TriggerSourceWebhook)
 	}()
 
 	audit.AuditSvc.Log(c, "WEBHOOK_TRIGGER", "task:"+task.Key, map[string]string{
@@ -94,7 +95,7 @@ func TriggerSyncByToken(ctx context.Context, c *app.RequestContext) {
 	// 异步执行同步任务
 	go func() {
 		syncSvc := sync.NewSyncService()
-		syncSvc.ExecuteSync(task)
+		syncSvc.ExecuteSyncWithTrigger(task, po.TriggerSourceWebhook)
 	}()
 
 	audit.AuditSvc.Log(c, "WEBHOOK_TRIGGER_BY_TOKEN", "task:"+task.Key, map[string]string{

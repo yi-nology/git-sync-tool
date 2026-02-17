@@ -46,6 +46,7 @@ export interface ExecuteSyncReq {
 export interface SyncRunDTO {
   id: number
   task_key: string
+  trigger_source: string
   status: string
   commit_range: string
   error_message: string
