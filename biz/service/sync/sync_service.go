@@ -39,14 +39,22 @@ func (s *SyncService) SetLockService(lockSvc lock.DistLock) {
 }
 
 func (s *SyncService) RunTask(taskKey string) error {
+	return s.RunTaskWithTrigger(taskKey, po.TriggerSourceManual)
+}
+
+func (s *SyncService) RunTaskWithTrigger(taskKey string, triggerSource string) error {
 	task, err := s.syncTaskDAO.FindByKey(taskKey)
 	if err != nil {
 		return err
 	}
-	return s.ExecuteSync(task)
+	return s.ExecuteSyncWithTrigger(task, triggerSource)
 }
 
 func (s *SyncService) ExecuteSync(task *po.SyncTask) error {
+	return s.ExecuteSyncWithTrigger(task, po.TriggerSourceManual)
+}
+
+func (s *SyncService) ExecuteSyncWithTrigger(task *po.SyncTask, triggerSource string) error {
 	ctx := context.Background()
 
 	// 获取分布式锁保护同步任务
@@ -59,9 +67,10 @@ func (s *SyncService) ExecuteSync(task *po.SyncTask) error {
 	}
 
 	run := po.SyncRun{
-		TaskKey:   task.Key,
-		StartTime: time.Now(),
-		Status:    "running",
+		TaskKey:       task.Key,
+		TriggerSource: triggerSource,
+		StartTime:     time.Now(),
+		Status:        "running",
 	}
 	s.syncRunDAO.Create(&run)
 

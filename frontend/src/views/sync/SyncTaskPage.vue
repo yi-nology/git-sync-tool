@@ -95,10 +95,15 @@
     </el-dialog>
 
     <!-- History Dialog -->
-    <el-dialog v-model="showHistoryDialog" title="同步历史" width="700px">
+    <el-dialog v-model="showHistoryDialog" title="同步历史" width="800px">
       <el-table :data="historyList" size="small" border>
-        <el-table-column prop="start_time" label="时间" width="180">
+        <el-table-column prop="start_time" label="时间" width="160">
           <template #default="{ row }">{{ formatDate(row.start_time) }}</template>
+        </el-table-column>
+        <el-table-column prop="trigger_source" label="触发来源" width="100">
+          <template #default="{ row }">
+            <el-tag :type="getTriggerTagType(row.trigger_source)" size="small">{{ getTriggerLabel(row.trigger_source) }}</el-tag>
+          </template>
         </el-table-column>
         <el-table-column prop="status" label="状态" width="100">
           <template #default="{ row }">
@@ -113,6 +118,7 @@
         <el-table-column label="详情">
           <template #default="{ row }">
             <el-button size="small" link @click="showLog(row.details)">日志</el-button>
+            <span v-if="row.error_message" class="error-msg">{{ row.error_message }}</span>
           </template>
         </el-table-column>
       </el-table>
@@ -164,6 +170,24 @@ function getSyncTagType(task: SyncTaskDTO) {
   if (task.source_remote === 'local') return 'success'
   if (task.target_remote === 'local') return 'warning'
   return 'primary'
+}
+
+function getTriggerTagType(source: string) {
+  switch (source) {
+    case 'cron': return 'warning'
+    case 'webhook': return 'success'
+    case 'manual': return 'primary'
+    default: return 'info'
+  }
+}
+
+function getTriggerLabel(source: string) {
+  switch (source) {
+    case 'cron': return '定时'
+    case 'webhook': return 'Webhook'
+    case 'manual': return '手动'
+    default: return source || '手动'
+  }
 }
 
 onMounted(async () => {
@@ -339,5 +363,10 @@ function showLog(details: string) {
   white-space: pre-wrap;
   font-size: 13px;
   font-family: monospace;
+}
+.error-msg {
+  color: #f56c6c;
+  font-size: 12px;
+  margin-left: 8px;
 }
 </style>
