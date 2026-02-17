@@ -16,6 +16,7 @@ import (
 	systemModel "github.com/yi-nology/git-manage-service/biz/model/biz/system"
 	"github.com/yi-nology/git-manage-service/biz/service/audit"
 	"github.com/yi-nology/git-manage-service/biz/service/git"
+	"github.com/yi-nology/git-manage-service/pkg/appinfo"
 	"github.com/yi-nology/git-manage-service/pkg/configs"
 	"github.com/yi-nology/git-manage-service/pkg/response"
 )
@@ -269,4 +270,15 @@ func SubmitChanges(ctx context.Context, c *app.RequestContext) {
 	})
 
 	response.Success(c, map[string]string{"message": msg})
+}
+
+// GetAppInfo 获取应用版本信息
+// @router /api/v1/system/app-info [GET]
+func GetAppInfo(ctx context.Context, c *app.RequestContext) {
+	response.Success(c, map[string]string{
+		"app_name":   appinfo.AppName,
+		"version":    appinfo.Version,
+		"build_time": appinfo.BuildTime,
+		"git_commit": appinfo.GitCommit,
+	})
 }

@@ -33,6 +33,7 @@ func GeneratedRegister(h *server.Hertz) {
 	tag.Register(h)
 	version.Register(h)
 	system.Register(h)
+	system.RegisterCustomRoutes(h) // 注册自定义系统路由（app-info等）
 	sync.Register(h)
 	stats.Register(h)
 	audit.Register(h)

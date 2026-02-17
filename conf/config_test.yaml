@@ -1,0 +1,34 @@
+server:
+  port: 38080
+
+rpc:
+  port: 38888
+
+database:
+  type: sqlite
+  path: git_sync_test.db
+
+webhook:
+  secret: "my-secret-key"
+  rate_limit: 100
+  ip_whitelist: []
+
+# 启用 MinIO 对象存储
+storage:
+  type: minio
+  local_path: ./storage
+  endpoint: "localhost:9000"
+  access_key: "minioadmin"
+  secret_key: "minioadmin"
+  use_ssl: false
+  repo_bucket: "repos"
+  ssh_key_bucket: "ssh-keys"
+  audit_log_bucket: "audit-logs"
+  backup_bucket: "backups"
+
+# 启用 Redis 分布式锁
+lock:
+  type: redis
+  redis_addr: "localhost:6379"
+  redis_password: ""
+  redis_db: 0

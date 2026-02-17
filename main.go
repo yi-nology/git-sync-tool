@@ -21,6 +21,7 @@ import (
 	"github.com/yi-nology/git-manage-service/biz/service/stats"
 	"github.com/yi-nology/git-manage-service/biz/service/sync"
 	"github.com/yi-nology/git-manage-service/biz/utils"
+	"github.com/yi-nology/git-manage-service/pkg/appinfo"
 	"github.com/yi-nology/git-manage-service/pkg/configs"
 
 	_ "github.com/yi-nology/git-manage-service/docs"
@@ -66,6 +67,9 @@ func main() {
 	}
 
 	log.Printf("[%s] Starting in '%s' mode...\n", AppName, *mode)
+
+	// 设置应用信息（供 API 使用）
+	appinfo.Set(Version, BuildTime, GitCommit)
 
 	// 初始化共享资源
 	initResources()
