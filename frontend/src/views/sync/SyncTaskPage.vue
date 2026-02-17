@@ -18,10 +18,18 @@
       <el-card v-for="task in tasks" :key="task.key" class="task-card" :class="{ disabled: !task.enabled }">
         <div class="task-header">
           <div class="task-title">
-            <el-tag size="small" :type="getSyncTagType(task)">{{ getSyncTypeLabel(task.source_remote, task.target_remote) }}</el-tag>
-            <strong>{{ task.source_remote }}/{{ task.source_branch }}</strong>
-            <el-icon><Right /></el-icon>
-            <strong>{{ task.target_remote }}/{{ task.target_branch }}</strong>
+            <el-tag size="small" :type="getSyncTagType(task)">{{ task.sync_mode === 'all-branch' ? '全分支' : getSyncTypeLabel(task.source_remote, task.target_remote) }}</el-tag>
+            <template v-if="task.sync_mode === 'all-branch'">
+              <strong>{{ task.source_remote }}</strong>
+              <el-icon><Right /></el-icon>
+              <strong>{{ task.target_remote }}</strong>
+              <span style="color: #909399; font-size: 13px;">(全分支同步)</span>
+            </template>
+            <template v-else>
+              <strong>{{ task.source_remote }}/{{ task.source_branch }}</strong>
+              <el-icon><Right /></el-icon>
+              <strong>{{ task.target_remote }}/{{ task.target_branch }}</strong>
+            </template>
           </div>
           <div class="task-actions">
             <el-button size="small" type="success" @click="handleRun(task.key)" :icon="CaretRight" circle title="立即执行" />
@@ -44,6 +52,13 @@
     <!-- Task Dialog -->
     <el-dialog v-model="showTaskDialog" :title="editingTask ? '编辑同步规则' : '新建同步规则'" width="650px" destroy-on-close>
       <el-form :model="taskForm" label-width="100px">
+        <el-form-item label="同步模式">
+          <el-radio-group v-model="taskForm.sync_mode">
+            <el-radio value="single">单分支同步</el-radio>
+            <el-radio value="all-branch">全分支同步</el-radio>
+          </el-radio-group>
+        </el-form-item>
+
         <el-row :gutter="16">
           <el-col :span="12">
             <el-form-item label="源 (Source)">
@@ -52,7 +67,7 @@
                 <el-option v-for="r in remoteNames" :key="r" :label="r" :value="r" />
               </el-select>
             </el-form-item>
-            <el-form-item label="源分支">
+            <el-form-item v-if="taskForm.sync_mode !== 'all-branch'" label="源分支">
               <el-input v-model="taskForm.source_branch" placeholder="main" />
             </el-form-item>
           </el-col>
@@ -63,11 +78,13 @@
                 <el-option v-for="r in remoteNames" :key="r" :label="r" :value="r" />
               </el-select>
             </el-form-item>
-            <el-form-item label="目标分支">
+            <el-form-item v-if="taskForm.sync_mode !== 'all-branch'" label="目标分支">
               <el-input v-model="taskForm.target_branch" placeholder="main" />
             </el-form-item>
           </el-col>
         </el-row>
+
+        <el-alert v-if="taskForm.sync_mode === 'all-branch'" title="全分支模式将自动同步源端所有分支到目标端对应分支" type="info" :closable="false" show-icon class="mb-3" />
 
         <el-alert v-if="taskForm.source_remote === taskForm.target_remote" title="源和目标不能相同" type="warning" :closable="false" show-icon class="mb-3" />
 
@@ -159,6 +176,7 @@ const taskForm = ref({
   push_options: '',
   cron: '',
   enabled: true,
+  sync_mode: 'single',
 })
 
 const showHistoryDialog = ref(false)
@@ -220,6 +238,7 @@ function openAddTask() {
     push_options: '',
     cron: '',
     enabled: true,
+    sync_mode: 'single',
   }
   showTaskDialog.value = true
 }
@@ -234,6 +253,7 @@ function openEditTask(task: SyncTaskDTO) {
     push_options: task.push_options,
     cron: task.cron,
     enabled: task.enabled,
+    sync_mode: task.sync_mode || 'single',
   }
   showTaskDialog.value = true
 }

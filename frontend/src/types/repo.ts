@@ -45,6 +45,7 @@ export interface CloneRepoReq {
   auth_type?: string
   auth_key?: string
   auth_secret?: string
+  ssh_key_id?: number
 }
 
 export interface ScanRepoReq {

@@ -74,6 +74,7 @@ message SyncTask {
   string webhook_token = 14;
   string created_at = 15;
   string updated_at = 16;
+  string sync_mode = 17;
 }
 
 // SyncRun 同步运行记录
@@ -123,6 +124,7 @@ message CreateTaskRequest {
   string push_options = 7 [(api.body) = "push_options"];
   string cron = 8 [(api.body) = "cron"];
   bool enabled = 9 [(api.body) = "enabled"];
+  string sync_mode = 10 [(api.body) = "sync_mode"];
 }
 
 // UpdateTaskRequest 更新任务请求
@@ -137,6 +139,7 @@ message UpdateTaskRequest {
   string push_options = 8 [(api.body) = "push_options"];
   string cron = 9 [(api.body) = "cron"];
   bool enabled = 10 [(api.body) = "enabled"];
+  string sync_mode = 11 [(api.body) = "sync_mode"];
 }
 
 // DeleteTaskRequest 删除任务请求

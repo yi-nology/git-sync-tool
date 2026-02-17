@@ -17,7 +17,8 @@ type SyncTask struct {
 	PushOptions   string `json:"push_options"` // e.g. "--force --no-verify"
 	Cron          string `json:"cron"`         // e.g. "0 2 * * *"
 	Enabled       bool   `json:"enabled"`
-	WebhookToken  string `gorm:"index" json:"webhook_token"` // 用于Webhook触发的Token
+	WebhookToken  string `gorm:"index" json:"webhook_token"`      // 用于Webhook触发的Token
+	SyncMode      string `gorm:"default:single" json:"sync_mode"` // single: 单分支同步, all-branch: 全分支同步
 
 	// Associations
 	SourceRepo Repo `gorm:"foreignKey:SourceRepoKey;references:Key" json:"source_repo"`

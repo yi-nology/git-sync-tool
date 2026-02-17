@@ -90,6 +90,7 @@ func CreateTask(ctx context.Context, c *app.RequestContext) {
 		PushOptions:   req.PushOptions,
 		Cron:          req.Cron,
 		Enabled:       req.Enabled,
+		SyncMode:      normalizeSyncMode(req.SyncMode),
 	}
 
 	if err := db.NewSyncTaskDAO().Create(&task); err != nil {
@@ -127,6 +128,7 @@ func UpdateTask(ctx context.Context, c *app.RequestContext) {
 	task.PushOptions = req.PushOptions
 	task.Cron = req.Cron
 	task.Enabled = req.Enabled
+	task.SyncMode = normalizeSyncMode(req.SyncMode)
 
 	if err := taskDAO.Save(task); err != nil {
 		response.InternalServerError(c, err.Error())
@@ -282,4 +284,14 @@ func DeleteHistory(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 	response.Success(c, map[string]string{"message": "deleted"})
+}
+
+// normalizeSyncMode 校验并规范化 sync_mode 值
+func normalizeSyncMode(mode string) string {
+	switch mode {
+	case "all-branch":
+		return "all-branch"
+	default:
+		return "single"
+	}
 }

@@ -2,9 +2,11 @@ package git
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
+	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/sirupsen/logrus"
 	"github.com/yi-nology/git-manage-service/biz/model/domain"
 	"github.com/yi-nology/git-manage-service/pkg/logger"
@@ -182,6 +184,35 @@ func (s *GitService) GetRepoConfig(path string) (*domain.GitRepoConfig, error) {
 		"branches": len(repoConfig.Branches),
 	})
 	return repoConfig, nil
+}
+
+// ListRemoteBranches 获取指定远程的所有分支名（基于本地 remote-tracking refs）
+func (s *GitService) ListRemoteBranches(path, remoteName string) ([]string, error) {
+	r, err := s.openRepo(path)
+	if err != nil {
+		return nil, err
+	}
+
+	prefix := "refs/remotes/" + remoteName + "/"
+	iter, err := r.References()
+	if err != nil {
+		return nil, err
+	}
+
+	var branches []string
+	iter.ForEach(func(ref *plumbing.Reference) error {
+		name := ref.Name().String()
+		if strings.HasPrefix(name, prefix) {
+			branch := strings.TrimPrefix(name, prefix)
+			if branch != "HEAD" {
+				branches = append(branches, branch)
+			}
+		}
+		return nil
+	})
+
+	logger.Debug("Remote branches listed", logrus.Fields{"path": path, "remote": remoteName, "count": len(branches)})
+	return branches, nil
 }
 
 // TestRemoteConnection 测试远程连接
