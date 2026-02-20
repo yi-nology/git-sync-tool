@@ -217,7 +217,32 @@ docker-compose down -v
 
 适用于生产环境的高可用部署。详细说明请查看 [k8s/README.md](k8s/README.md)。
 
-### 快速开始
+### 🚀 一键部署（推荐）
+
+使用自动化脚本快速部署：
+
+```bash
+cd deploy/k8s
+
+# 1. 构建前端资源
+cd ../../
+make build-frontend-integrate
+cd deploy/k8s
+
+# 2. 一键部署
+./deploy.sh deploy
+
+# 3. 查看状态
+./deploy.sh status
+```
+
+**脚本功能**：
+- ✅ 自动检查前置条件
+- ✅ 自动上传前端资源到 PVC
+- ✅ 自动部署所有组件
+- ✅ 支持重启、卸载、查看日志等操作
+
+### 📋 手动部署步骤
 
 **架构**：
 - Nginx Pod（2 副本）：提供前端静态资源
