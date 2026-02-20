@@ -636,6 +636,7 @@ func (s *SyncService) sendNotification(task *po.SyncTask, run *po.SyncRun) {
 
 	data := &notificationSvc.TemplateData{
 		TaskKey:      task.Key,
+		TaskName:     task.Key,
 		Status:       run.Status,
 		EventType:    triggerEvent,
 		SourceRemote: task.SourceRemote,
@@ -643,6 +644,7 @@ func (s *SyncService) sendNotification(task *po.SyncTask, run *po.SyncRun) {
 		TargetRemote: task.TargetRemote,
 		TargetBranch: task.TargetBranch,
 		RepoKey:      task.SourceRepoKey,
+		RepoName:     task.SourceRepo.Name,
 		ErrorMessage: run.ErrorMessage,
 		CommitRange:  run.CommitRange,
 		Duration:     duration,
