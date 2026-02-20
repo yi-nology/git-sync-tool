@@ -55,6 +55,7 @@ message NotificationChannel {
   string trigger_events = 10;   // 触发事件列表（JSON数组）
   string title_template = 11;   // 自定义标题模板
   string content_template = 12; // 自定义内容模板
+  string event_templates_json = 13; // 事件级模板列表（JSON字符串）
 }
 
 // ListChannelsRequest 列出通知渠道请求
@@ -90,6 +91,7 @@ message CreateChannelRequest {
   string trigger_events = 7 [(api.body) = "trigger_events"];
   string title_template = 8 [(api.body) = "title_template"];
   string content_template = 9 [(api.body) = "content_template"];
+  string event_templates_json = 10 [(api.body) = "event_templates_json"];
 }
 
 // UpdateChannelRequest 更新渠道请求
@@ -103,6 +105,7 @@ message UpdateChannelRequest {
   string trigger_events = 7 [(api.body) = "trigger_events"];
   string title_template = 8 [(api.body) = "title_template"];
   string content_template = 9 [(api.body) = "content_template"];
+  string event_templates_json = 10 [(api.body) = "event_templates_json"];
 }
 
 // DeleteChannelRequest 删除渠道请求

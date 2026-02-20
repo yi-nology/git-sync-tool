@@ -84,3 +84,16 @@ type FeishuConfig struct {
 	Secret       string `json:"secret"`        // 签名密钥（sign模式）
 	Keywords     string `json:"keywords"`      // 关键字（keyword模式）
 }
+
+// NotificationEventTemplate 事件级消息模板
+type NotificationEventTemplate struct {
+	gorm.Model
+	ChannelID       uint   `gorm:"not null;uniqueIndex:idx_channel_event" json:"channel_id"`
+	EventType       string `gorm:"size:50;not null;uniqueIndex:idx_channel_event" json:"event_type"`
+	TitleTemplate   string `gorm:"type:text" json:"title_template"`
+	ContentTemplate string `gorm:"type:text" json:"content_template"`
+}
+
+func (NotificationEventTemplate) TableName() string {
+	return "notification_event_templates"
+}
