@@ -1,0 +1,53 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: git-manage-ingress
+  namespace: default
+  labels:
+    app: git-manage
+  annotations:
+    # 根据你的 Ingress Controller 类型选择合适的注解
+    # Nginx Ingress Controller
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    # 上传文件大小限制
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+    # 超时配置
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+spec:
+  ingressClassName: nginx  # 根据你的 Ingress Controller 设置
+  rules:
+    - host: git-manage.example.com  # 修改为你的域名
+      http:
+        paths:
+          # API 请求路由到后端
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: git-manage-backend
+                port:
+                  number: 8080
+          # Swagger 文档路由到后端
+          - path: /swagger
+            pathType: Prefix
+            backend:
+              service:
+                name: git-manage-backend
+                port:
+                  number: 8080
+          # 其他所有请求路由到 Nginx（前端）
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: git-manage-nginx
+                port:
+                  number: 80
+  # 可选：配置 TLS
+  # tls:
+  #   - hosts:
+  #       - git-manage.example.com
+  #     secretName: git-manage-tls-secret

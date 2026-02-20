@@ -1,0 +1,91 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: git-manage-nginx
+  namespace: default
+  labels:
+    app: git-manage
+    component: nginx
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: git-manage
+      component: nginx
+  template:
+    metadata:
+      labels:
+        app: git-manage
+        component: nginx
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:alpine
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+              name: http
+          volumeMounts:
+            - name: nginx-config
+              mountPath: /etc/nginx/conf.d/default.conf
+              subPath: default.conf
+            - name: frontend-assets
+              mountPath: /usr/share/nginx/html
+              readOnly: true
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+      volumes:
+        - name: nginx-config
+          configMap:
+            name: nginx-config
+        - name: frontend-assets
+          persistentVolumeClaim:
+            claimName: git-manage-frontend-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: git-manage-nginx
+  namespace: default
+  labels:
+    app: git-manage
+    component: nginx
+spec:
+  type: LoadBalancer
+  selector:
+    app: git-manage
+    component: nginx
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+      name: http
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: git-manage-frontend-pvc
+  namespace: default
+spec:
+  accessModes:
+    - ReadWriteMany  # 多个 Nginx Pod 共享前端资源
+  resources:
+    requests:
+      storage: 1Gi

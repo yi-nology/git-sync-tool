@@ -215,42 +215,93 @@ docker-compose down -v
 
 ## 2. Kubernetes 集群部署
 
-适用于生产环境的高可用部署。
+适用于生产环境的高可用部署。详细说明请查看 [k8s/README.md](k8s/README.md)。
 
-### 步骤
+### 快速开始
 
-1. **创建 ConfigMap 和 Secret**
-   ```bash
-   kubectl apply -f deploy/k8s/configmap.yaml
-   kubectl apply -f deploy/k8s/secret.yaml
-   ```
-   *注意：生产环境中，建议使用 SealedSecrets 或其他密钥管理工具管理 Secret。*
+**架构**：
+- Nginx Pod（2 副本）：提供前端静态资源
+- Backend Pod（2 副本）：Go API 服务
+- MySQL/PostgreSQL：数据库
+- Ingress：统一入口（可选）
 
-2. **部署数据库 (可选)**
-   如果使用集群外部的数据库，请跳过此步并修改 ConfigMap 中的数据库地址。
-   ```bash
-   kubectl apply -f deploy/k8s/mysql.yaml
-   ```
+**前置条件**：
+```bash
+# 1. 构建前端资源
+make build-frontend-integrate
 
-3. **部署应用**
-   ```bash
-   kubectl apply -f deploy/k8s/deployment.yaml
-   kubectl apply -f deploy/k8s/service.yaml
-   ```
+# 2. 准备 Docker 镜像
+docker build -t git-manage-service:latest .
+# 推送到你的 Registry
+docker tag git-manage-service:latest your-registry/git-manage-service:latest
+docker push your-registry/git-manage-service:latest
+```
 
-### 常见问题排查
+**部署步骤**：
+```bash
+cd deploy/k8s
 
-**Q1: Pod 启动失败，状态为 CrashLoopBackOff**
-- 查看日志：`kubectl logs -f <pod-name>`
-- 检查数据库连接配置是否正确（Host, Port, User, Password）。
-- 确认数据库服务是否已就绪。
+# 1. 创建 Secret 和 ConfigMap
+kubectl apply -f secret.yaml
+kubectl apply -f configmap.yaml
+kubectl apply -f nginx-configmap.yaml
 
-**Q2: 无法挂载 SSH 密钥**
-- `deployment.yaml` 中使用了 `hostPath` 挂载 `/root/.ssh`。这依赖于节点上存在该路径。
-- **解决方案**：建议将 SSH 私钥创建为 Kubernetes Secret，并挂载到 Pod 中，而不是依赖宿主机文件。
+# 2. 部署数据库（可选）
+kubectl apply -f mysql.yaml
 
-**Q3: 配置文件未生效**
-- 确认 ConfigMap 已更新，并且 Pod 已重启（ConfigMap 挂载通常需要重启 Pod 才能加载最新更改，或等待 kubelet 同步）。
+# 3. 上传前端资源到 PVC
+# 创建临时 Pod
+kubectl create -f - <<EOF
+apiVersion: v1
+kind: Pod
+metadata:
+  name: frontend-uploader
+spec:
+  containers:
+  - name: uploader
+    image: busybox
+    command: ['sh', '-c', 'sleep 3600']
+    volumeMounts:
+    - name: frontend
+      mountPath: /data
+  volumes:
+  - name: frontend
+    persistentVolumeClaim:
+      claimName: git-manage-frontend-pvc
+EOF
+
+# 等待就绪并复制前端资源
+kubectl wait --for=condition=Ready pod/frontend-uploader
+kubectl cp ../../public/. frontend-uploader:/data/
+kubectl delete pod frontend-uploader
+
+# 4. 部署应用
+kubectl apply -f deployment.yaml
+kubectl apply -f service.yaml
+kubectl apply -f nginx-deployment.yaml
+
+# 5. 部署 Ingress（可选）
+kubectl apply -f ingress.yaml
+
+# 6. 查看状态
+kubectl get all -l app=git-manage
+```
+
+**访问方式**：
+```bash
+# 方式一：通过 LoadBalancer
+kubectl get svc git-manage-nginx
+# 访问：http://<EXTERNAL-IP>
+
+# 方式二：通过端口转发（测试）
+kubectl port-forward svc/git-manage-nginx 8080:80
+# 访问：http://localhost:8080
+
+# 方式三：通过 Ingress
+# 访问：http://git-manage.example.com
+```
+
+详细的部署说明、故障排查和生产环境配置，请参考 [k8s/README.md](k8s/README.md)。
 
 ---
 
