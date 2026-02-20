@@ -479,16 +479,11 @@ func (s *GitService) GetCommitHash(path, remote, branch string) (string, error) 
 	if err != nil {
 		return "", err
 	}
-	// Try to resolve as remote reference
+	// Only resolve as remote reference (do NOT fallback to local branch)
 	refName := plumbing.ReferenceName(fmt.Sprintf("refs/remotes/%s/%s", remote, branch))
 	ref, err := r.Reference(refName, true)
 	if err != nil {
-		// Try local branch
-		refName = plumbing.ReferenceName(fmt.Sprintf("refs/heads/%s", branch))
-		ref, err = r.Reference(refName, true)
-		if err != nil {
-			return "", err
-		}
+		return "", fmt.Errorf("remote branch %s/%s not found: %v", remote, branch, err)
 	}
 	return ref.Hash().String(), nil
 }
