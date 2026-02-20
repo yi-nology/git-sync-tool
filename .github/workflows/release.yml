@@ -45,6 +45,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
@@ -54,14 +61,28 @@ jobs:
       - name: Get dependencies
         run: go mod download
 
+      - name: Build frontend
+        run: |
+          echo "Building frontend..."
+          cd frontend && npm ci
+          npm run build
+          cd ..
+          echo "Integrating frontend to backend..."
+          rm -rf public
+          cp -r frontend/dist public
+          echo "Frontend build complete"
+
       - name: Build binary
         env:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
           CGO_ENABLED: 0
+          VERSION: ${{ github.ref_name }}
+          BUILD_TIME: ${{ github.event.head_commit.timestamp }}
+          GIT_COMMIT: ${{ github.sha }}
         run: |
           mkdir -p dist
-          go build -ldflags="-s -w -X main.Version=${{ github.ref_name }} -X main.BuildTime=$(date -u '+%Y-%m-%d_%H:%M:%S')" \
+          go build -ldflags="-s -w -X 'main.Version=${VERSION}' -X 'main.BuildTime=${BUILD_TIME}' -X 'main.GitCommit=${GIT_COMMIT}'" \
             -o dist/${{ matrix.output }} \
             main.go
 
@@ -111,6 +132,13 @@ jobs:
           body: |
             ## 🚀 Release ${{ github.ref_name }}
             
+            ### ✨ 特性说明
+            
+            - ✅ **前后端一体化**: 包含完整的 Web UI 界面
+            - ✅ **多平台支持**: Linux、macOS、Windows (AMD64/ARM64)
+            - ✅ **开箱即用**: 单一二进制文件，无需额外依赖
+            - ✅ **版本信息**: 自动注入版本号、构建时间、Git 提交
+            
             ### 📦 下载说明
             
             根据你的操作系统选择对应的文件：
@@ -122,29 +150,44 @@ jobs:
             - **Windows (AMD64)**: `git-manage-service-windows-amd64.exe.zip`
             - **Windows (ARM64)**: `git-manage-service-windows-arm64.exe.zip`
             
-            ### 📝 安装方式
+            ### 📝 快速开始
             
             #### Linux / macOS
             ```bash
-            # 解压
+            # 1. 解压
             tar -xzf git-manage-service-*.tar.gz
             
-            # 添加执行权限
+            # 2. 添加执行权限
             chmod +x git-manage-service-*
             
-            # 运行
-            ./git-manage-service-*
+            # 3. 运行
+            ./git-manage-service-* --mode=all
+            
+            # 4. 访问 Web UI
+            # 打开浏览器访问: http://localhost:8080
             ```
             
             #### Windows
             ```powershell
-            # 解压 zip 文件
-            # 双击运行或在命令行中执行
-            .\git-manage-service-windows-amd64.exe
+            # 1. 解压 zip 文件
+            
+            # 2. 运行（命令行）
+            .\git-manage-service-windows-amd64.exe --mode=all
+            
+            # 3. 访问 Web UI
+            # 打开浏览器访问: http://localhost:8080
             ```
             
             ### 🔧 配置
             
-            首次运行前，请参考 [配置文档](https://github.com/${{ github.repository }}/blob/main/deploy/CONFIG_GUIDE.md) 进行配置。
+            首次运行前，请参考以下文档进行配置：
+            
+            - 📖 [配置指南](https://github.com/${{ github.repository }}/blob/main/deploy/CONFIG_GUIDE.md)
+            - 📖 [部署文档](https://github.com/${{ github.repository }}/blob/main/DEPLOY.md)
+            - 📖 [产品手册](https://github.com/${{ github.repository }}/blob/main/docs/product_manual.md)
+            
+            ### 🐛 问题反馈
+            
+            如遇到问题，请在 [Issues](https://github.com/${{ github.repository }}/issues) 中反馈。
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
