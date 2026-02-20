@@ -41,7 +41,7 @@ func ListTasks(ctx context.Context, c *app.RequestContext) {
 		response.InternalServerError(c, err.Error())
 		return
 	}
-	var dtos []api.SyncTaskDTO
+	dtos := make([]api.SyncTaskDTO, 0, len(tasks))
 	for _, t := range tasks {
 		dtos = append(dtos, api.NewSyncTaskDTO(t))
 	}

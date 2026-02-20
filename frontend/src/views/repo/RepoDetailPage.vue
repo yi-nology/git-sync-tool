@@ -611,10 +611,38 @@ async function loadStats() {
 
 async function loadLineStats() {
   try {
-    lineStatsData.value = await getLineStats(repoKey, {
+    lineStatsData.value = null
+    const result = await getLineStats(repoKey, {
       branch: lineStatsFilter.value.branch || undefined,
+      author: lineStatsFilter.value.author || undefined,
+      since: lineStatsFilter.value.since || undefined,
+      until: lineStatsFilter.value.until || undefined,
     })
+    lineStatsData.value = result
+    // 如果后端异步计算中，自动轮询
+    if (result && result.status === 'processing') {
+      pollLineStats()
+    }
   } catch { /* ignore */ }
+}
+
+function pollLineStats() {
+  const timer = setTimeout(async () => {
+    try {
+      const result = await getLineStats(repoKey, {
+        branch: lineStatsFilter.value.branch || undefined,
+        author: lineStatsFilter.value.author || undefined,
+        since: lineStatsFilter.value.since || undefined,
+        until: lineStatsFilter.value.until || undefined,
+      })
+      lineStatsData.value = result
+      if (result && result.status === 'processing') {
+        pollLineStats()
+      }
+    } catch { /* ignore */ }
+  }, 2000)
+  // 切换 tab 时不需要清理，因为 setTimeout 会自然结束
+  void timer
 }
 
 async function loadVersions() {

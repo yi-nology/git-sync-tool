@@ -222,7 +222,7 @@ onMounted(async () => {
 async function loadTasks() {
   loading.value = true
   try {
-    tasks.value = await getSyncTasks(repoKey)
+    tasks.value = (await getSyncTasks(repoKey)) || []
   } finally {
     loading.value = false
   }
