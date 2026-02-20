@@ -368,11 +368,14 @@ func (s *GitService) FetchWithDBKey(path, remoteURL, privateKey, passphrase stri
 	if progress != nil {
 		cmd.Stdout = progress
 		cmd.Stderr = progress
-	}
-
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("git fetch failed: %v, output: %s", err, string(output))
+		if err := cmd.Run(); err != nil {
+			return fmt.Errorf("git fetch failed: %v", err)
+		}
+	} else {
+		output, err := cmd.CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("git fetch failed: %v, output: %s", err, string(output))
+		}
 	}
 
 	return nil
@@ -710,11 +713,14 @@ func (s *GitService) PushWithDBKey(path, targetRemoteURL, sourceHash, targetBran
 	if progress != nil {
 		cmd.Stdout = progress
 		cmd.Stderr = progress
-	}
-
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("git push failed: %v, output: %s", err, string(output))
+		if err := cmd.Run(); err != nil {
+			return fmt.Errorf("git push failed: %v", err)
+		}
+	} else {
+		output, err := cmd.CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("git push failed: %v, output: %s", err, string(output))
+		}
 	}
 
 	return nil

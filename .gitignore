@@ -40,3 +40,5 @@ git-manage-service
 .qoder/
 .hz
 public/
+.vite/
+frontend/.vite/
