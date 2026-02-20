@@ -1,38 +1,59 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: git-manage-app
+  name: git-manage-backend
   namespace: default
   labels:
     app: git-manage
+    component: backend
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: git-manage
+      component: backend
   template:
     metadata:
       labels:
         app: git-manage
+        component: backend
     spec:
       containers:
         - name: app
-          image: git-manage-service:latest # Ensure image is available in your registry
+          image: git-manage-service:latest # 确保镜像在你的 Registry 中可用
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
+              name: http
             - containerPort: 8888
+              name: debug
           env:
+            # 版本信息（可选，如果构建时已注入）
+            - name: VERSION
+              value: "v1.0.0"
+            # 数据库密码
             - name: CONFIG_DATABASE_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: git-manage-secret
                   key: DB_PASSWORD
+            # Webhook 密钥
             - name: WEBHOOK_SECRET
               valueFrom:
                 secretKeyRef:
                   name: git-manage-secret
                   key: WEBHOOK_SECRET
+            # 数据库配置（从 ConfigMap 或直接设置）
+            - name: DB_TYPE
+              value: "mysql"
+            - name: DB_HOST
+              value: "git-manage-mysql"
+            - name: DB_PORT
+              value: "3306"
+            - name: DB_USER
+              value: "gituser"
+            - name: DB_NAME
+              value: "git_manage"
           volumeMounts:
             - name: config-volume
               mountPath: /app/conf/config.yaml
@@ -44,6 +65,27 @@ spec:
             - name: ssh-volume
               mountPath: /root/.ssh
               readOnly: true
+          livenessProbe:
+            httpGet:
+              path: /api/v1/ping
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /api/v1/ping
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+          resources:
+            requests:
+              cpu: 500m
+              memory: 512Mi
+            limits:
+              cpu: 2000m
+              memory: 2Gi
       volumes:
         - name: config-volume
           configMap:

@@ -1,13 +1,22 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: git-manage-service
+  name: git-manage-backend
   namespace: default
+  labels:
+    app: git-manage
+    component: backend
 spec:
   selector:
     app: git-manage
+    component: backend
   ports:
     - protocol: TCP
-      port: 80
+      port: 8080
       targetPort: 8080
+      name: http
+    - protocol: TCP
+      port: 8888
+      targetPort: 8888
+      name: debug
   type: ClusterIP
