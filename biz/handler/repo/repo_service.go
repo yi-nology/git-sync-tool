@@ -6,6 +6,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/google/uuid"
@@ -263,6 +264,13 @@ func Clone(ctx context.Context, c *app.RequestContext) {
 	}
 
 	gitSvc := git.NewGitService()
+	// 如果 LocalPath 是已存在的目录，自动从 URL 提取仓库名拼接子目录
+	if info, err := os.Stat(req.LocalPath); err == nil && info.IsDir() {
+		repoName := repoNameFromURL(req.RemoteURL)
+		if repoName != "" {
+			req.LocalPath = filepath.Join(req.LocalPath, repoName)
+		}
+	}
 	if _, err := os.Stat(req.LocalPath); err == nil {
 		if gitSvc.IsGitRepo(req.LocalPath) {
 			response.BadRequest(c, "directory already contains a git repository")
@@ -403,4 +411,20 @@ func GetCloneTask(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 	response.Success(c, task)
+}
+
+// repoNameFromURL 从 git 远程 URL 中提取仓库名称
+// 支持格式: https://github.com/user/repo.git, git@github.com:user/repo.git
+func repoNameFromURL(remoteURL string) string {
+	// 取最后一个 / 或 : 之后的部分
+	name := remoteURL
+	if idx := strings.LastIndex(name, "/"); idx >= 0 {
+		name = name[idx+1:]
+	} else if idx := strings.LastIndex(name, ":"); idx >= 0 {
+		name = name[idx+1:]
+	}
+	// 去掉 .git 后缀
+	name = strings.TrimSuffix(name, ".git")
+	name = strings.TrimSpace(name)
+	return name
 }

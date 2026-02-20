@@ -19,7 +19,7 @@ export function getStatsCommits(repoKey: string, params?: { branch?: string; aut
   return request.get('/stats/commits', { params: { repo_key: repoKey, ...params } })
 }
 
-export function getLineStats(repoKey: string, params?: { branch?: string }) {
+export function getLineStats(repoKey: string, params?: { branch?: string; author?: string; since?: string; until?: string }) {
   return request.get<unknown, LineStatsResponse>('/stats/lines', {
     params: { repo_key: repoKey, ...params },
   })
