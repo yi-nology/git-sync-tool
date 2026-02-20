@@ -1,13 +1,32 @@
 services:
+  nginx:
+    image: nginx:alpine
+    container_name: git-manage-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ../nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ../../../public:/usr/share/nginx/html:ro
+    networks:
+      - git-sync-net
+    depends_on:
+      - app
+
   app:
     container_name: git-manage-service-mysql
     build: 
       context: ../../..
       dockerfile: Dockerfile
+      args:
+        VERSION: ${VERSION:-dev}
+        BUILD_TIME: ${BUILD_TIME:-unknown}
+        GIT_COMMIT: ${GIT_COMMIT:-unknown}
     restart: unless-stopped
-    ports:
-      - "8080:8080"
-      - "8888:8888"
+    # 只暴露内部端口，外部通过 nginx 访问
+    expose:
+      - "8080"
+      - "8888"
     environment:
       - WEBHOOK_SECRET=${WEBHOOK_SECRET:-my-secret-key}
       - DB_TYPE=mysql

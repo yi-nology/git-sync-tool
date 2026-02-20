@@ -1,5 +1,37 @@
-# Build Stage
-FROM golang:1.24-alpine AS builder
+# ============================================
+# Multi-Stage Dockerfile for Git Manage Service
+# ============================================
+# Stage 1: Frontend Builder (Node.js)
+# Stage 2: Backend Builder (Go)
+# Stage 3: Runtime (Alpine)
+#
+# Build with version info:
+# docker build \
+#   --build-arg VERSION=$(git describe --tags --always) \
+#   --build-arg BUILD_TIME=$(date -u '+%Y-%m-%d %H:%M:%S') \
+#   --build-arg GIT_COMMIT=$(git rev-parse --short HEAD) \
+#   -t git-manage-service:latest .
+# ============================================
+
+# Frontend Build Stage
+FROM node:20-alpine AS frontend-builder
+
+WORKDIR /app/frontend
+
+# Copy frontend package files
+COPY frontend/package*.json ./
+
+# Install dependencies
+RUN npm install
+
+# Copy frontend source code
+COPY frontend/ ./
+
+# Build frontend (output: dist/)
+RUN npm run build
+
+# Backend Build Stage
+FROM golang:1.24-alpine AS backend-builder
 
 # Set environment variables with China Proxy
 ENV GO111MODULE=on \
@@ -25,8 +57,17 @@ RUN go mod download
 # Copy source code
 COPY . .
 
-# Build the application
-RUN go build -o git-manage-service cmd/api/main.go
+# Copy frontend build output to public directory
+COPY --from=frontend-builder /app/frontend/dist ./public
+
+# Build arguments for version injection
+ARG VERSION=dev
+ARG BUILD_TIME=unknown
+ARG GIT_COMMIT=unknown
+
+# Build the application with version info
+RUN go build -ldflags "-X 'main.Version=${VERSION}' -X 'main.BuildTime=${BUILD_TIME}' -X 'main.GitCommit=${GIT_COMMIT}'" \
+    -o git-manage-service main.go
 
 # Runtime Stage
 FROM alpine:latest
@@ -49,16 +90,16 @@ RUN apk add --no-cache \
 WORKDIR /app
 
 # Copy binary from builder
-COPY --from=builder /app/git-manage-service .
+COPY --from=backend-builder /app/git-manage-service .
 
-# Copy frontend assets
-COPY --from=builder /app/public ./public
+# Copy frontend assets (already integrated in backend builder)
+COPY --from=backend-builder /app/public ./public
 
 # Copy swagger docs
-COPY --from=builder /app/docs ./docs
+COPY --from=backend-builder /app/docs ./docs
 
 # Copy default config
-COPY --from=builder /app/conf/config.yaml ./conf/config.yaml
+COPY --from=backend-builder /app/conf/config.yaml ./conf/config.yaml
 
 # Set environment variables
 ENV GIN_MODE=release \
