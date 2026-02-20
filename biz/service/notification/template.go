@@ -14,7 +14,8 @@ import (
 
 // TemplateData 模板变量数据
 type TemplateData struct {
-	TaskKey        string // 任务标识
+	TaskKey        string // 任务标识（Key）
+	TaskName       string // 任务名称（可读，优先展示）
 	Status         string // success/failure/conflict
 	StatusText     string // 成功/失败/冲突
 	EventType      string // sync_success, sync_failure, etc.
@@ -23,7 +24,8 @@ type TemplateData struct {
 	SourceBranch   string // 源分支名
 	TargetRemote   string // 目标远程仓库名
 	TargetBranch   string // 目标分支名
-	RepoKey        string // 仓库标识
+	RepoKey        string // 仓库标识（Key）
+	RepoName       string // 仓库名称（可读，优先展示）
 	ErrorMessage   string // 错误信息
 	CommitRange    string // 提交范围
 	CronExpression string // Cron表达式
@@ -109,7 +111,7 @@ func RenderTitleAndContent(titleTmpl, contentTmpl string, data *TemplateData) (t
 	title, err = RenderTemplate(titleTmpl, data)
 	if err != nil {
 		// fallback
-		title = fmt.Sprintf("[%s] %s", data.EventLabel, data.TaskKey)
+		title = fmt.Sprintf("[%s] %s", data.EventLabel, data.TaskName)
 	}
 
 	// 渲染内容
@@ -119,7 +121,7 @@ func RenderTitleAndContent(titleTmpl, contentTmpl string, data *TemplateData) (t
 	content, err = RenderTemplate(contentTmpl, data)
 	if err != nil {
 		// fallback
-		content = fmt.Sprintf("任务: %s\n状态: %s\n时间: %s", data.TaskKey, data.StatusText, data.Timestamp)
+		content = fmt.Sprintf("任务: %s\n状态: %s\n时间: %s", data.TaskName, data.StatusText, data.Timestamp)
 	}
 
 	return title, content
@@ -150,6 +152,14 @@ func fillDefaults(data *TemplateData) {
 			data.EventLabel = data.EventType
 		}
 	}
+
+	// TaskName/RepoName 未设置时回退到 Key
+	if data.TaskName == "" {
+		data.TaskName = data.TaskKey
+	}
+	if data.RepoName == "" {
+		data.RepoName = data.RepoKey
+	}
 }
 
 // 事件类型 -> 中文标签
@@ -168,20 +178,21 @@ var eventLabels = map[string]string{
 
 // 默认标题模板
 var defaultTitleTemplates = map[string]string{
-	po.TriggerSyncSuccess:     `[成功] 同步任务 {{.TaskKey}}`,
-	po.TriggerSyncFailure:     `[失败] 同步任务 {{.TaskKey}}`,
-	po.TriggerSyncConflict:    `[冲突] 同步任务 {{.TaskKey}}`,
-	po.TriggerWebhookReceived: `[Webhook] 收到请求: {{.TaskKey}}`,
-	po.TriggerWebhookError:    `[Webhook错误] {{.TaskKey}}`,
-	po.TriggerCronTriggered:   `[定时] 任务触发: {{.TaskKey}}`,
-	po.TriggerBackupSuccess:   `[备份成功] {{.RepoKey}}`,
-	po.TriggerBackupFailure:   `[备份失败] {{.RepoKey}}`,
+	po.TriggerSyncSuccess:     `[成功] 同步任务 {{.TaskName}}`,
+	po.TriggerSyncFailure:     `[失败] 同步任务 {{.TaskName}}`,
+	po.TriggerSyncConflict:    `[冲突] 同步任务 {{.TaskName}}`,
+	po.TriggerWebhookReceived: `[Webhook] 收到请求: {{.TaskName}}`,
+	po.TriggerWebhookError:    `[Webhook错误] {{.TaskName}}`,
+	po.TriggerCronTriggered:   `[定时] 任务触发: {{.TaskName}}`,
+	po.TriggerBackupSuccess:   `[备份成功] {{.RepoName}}`,
+	po.TriggerBackupFailure:   `[备份失败] {{.RepoName}}`,
 }
 
 // 默认内容模板
 var defaultContentTemplates = map[string]string{
 	po.TriggerSyncSuccess: strings.TrimSpace(`
-任务: {{.TaskKey}}
+任务: {{.TaskName}}
+仓库: {{.RepoName}}
 状态: {{.StatusText}}{{if eq .SyncMode "all-branch"}}
 模式: 全分支同步 ({{.SourceRemote}} → {{.TargetRemote}})
 分支统计: 总计 {{.BranchCount}}, 成功 {{.SuccessCount}}, 失败 {{.FailedCount}}{{else}}
@@ -193,7 +204,8 @@ var defaultContentTemplates = map[string]string{
 `),
 
 	po.TriggerSyncFailure: strings.TrimSpace(`
-任务: {{.TaskKey}}
+任务: {{.TaskName}}
+仓库: {{.RepoName}}
 状态: {{.StatusText}}{{if eq .SyncMode "all-branch"}}
 模式: 全分支同步 ({{.SourceRemote}} → {{.TargetRemote}})
 分支统计: 总计 {{.BranchCount}}, 成功 {{.SuccessCount}}, 失败 {{.FailedCount}}{{else}}
@@ -205,7 +217,8 @@ var defaultContentTemplates = map[string]string{
 `),
 
 	po.TriggerSyncConflict: strings.TrimSpace(`
-任务: {{.TaskKey}}
+任务: {{.TaskName}}
+仓库: {{.RepoName}}
 状态: 同步冲突
 源: {{.SourceRemote}}/{{.SourceBranch}}
 目标: {{.TargetRemote}}/{{.TargetBranch}}
@@ -215,14 +228,16 @@ var defaultContentTemplates = map[string]string{
 `),
 
 	po.TriggerWebhookReceived: strings.TrimSpace(`
-任务: {{.TaskKey}}
+任务: {{.TaskName}}
+仓库: {{.RepoName}}
 状态: Webhook 请求已接收{{if .WebhookSource}}
 来源: {{.WebhookSource}}{{end}}
 时间: {{.Timestamp}}
 `),
 
 	po.TriggerWebhookError: strings.TrimSpace(`
-任务: {{.TaskKey}}
+任务: {{.TaskName}}
+仓库: {{.RepoName}}
 状态: Webhook 处理失败{{if .WebhookSource}}
 来源: {{.WebhookSource}}{{end}}{{if .ErrorMessage}}
 错误: {{.ErrorMessage}}{{end}}
@@ -230,14 +245,15 @@ var defaultContentTemplates = map[string]string{
 `),
 
 	po.TriggerCronTriggered: strings.TrimSpace(`
-任务: {{.TaskKey}}
+任务: {{.TaskName}}
+仓库: {{.RepoName}}
 状态: 定时任务已触发{{if .CronExpression}}
 Cron表达式: {{.CronExpression}}{{end}}
 时间: {{.Timestamp}}
 `),
 
 	po.TriggerBackupSuccess: strings.TrimSpace(`
-仓库: {{.RepoKey}}
+仓库: {{.RepoName}}
 状态: 备份成功{{if .BackupPath}}
 备份路径: {{.BackupPath}}{{end}}{{if .Duration}}
 耗时: {{.Duration}}{{end}}
@@ -245,7 +261,7 @@ Cron表达式: {{.CronExpression}}{{end}}
 `),
 
 	po.TriggerBackupFailure: strings.TrimSpace(`
-仓库: {{.RepoKey}}
+仓库: {{.RepoName}}
 状态: 备份失败{{if .ErrorMessage}}
 错误: {{.ErrorMessage}}{{end}}{{if .BackupPath}}
 备份路径: {{.BackupPath}}{{end}}
@@ -258,7 +274,7 @@ func GetDefaultTitleTemplate(eventType string) string {
 	if t, ok := defaultTitleTemplates[eventType]; ok {
 		return t
 	}
-	return `[通知] {{.TaskKey}}`
+	return `[通知] {{.TaskName}}`
 }
 
 // GetDefaultContentTemplate 获取事件类型的默认内容模板
@@ -266,13 +282,14 @@ func GetDefaultContentTemplate(eventType string) string {
 	if t, ok := defaultContentTemplates[eventType]; ok {
 		return t
 	}
-	return `任务: {{.TaskKey}}\n状态: {{.StatusText}}\n时间: {{.Timestamp}}`
+	return `任务: {{.TaskName}}\n状态: {{.StatusText}}\n时间: {{.Timestamp}}`
 }
 
 // GetAvailableVariables 获取所有可用模板变量列表（供前端展示）
 func GetAvailableVariables() []VariableInfo {
 	return []VariableInfo{
-		{Name: "TaskKey", Description: "任务标识", Example: "my-sync-task", Events: "all"},
+		{Name: "TaskKey", Description: "任务标识（Key）", Example: "task-abc123", Events: "all"},
+		{Name: "TaskName", Description: "任务名称（可读）", Example: "我的同步任务", Events: "all"},
 		{Name: "Status", Description: "状态码", Example: "success", Events: "all"},
 		{Name: "StatusText", Description: "状态文字", Example: "成功", Events: "all"},
 		{Name: "EventType", Description: "事件类型", Example: "sync_success", Events: "all"},
@@ -282,7 +299,8 @@ func GetAvailableVariables() []VariableInfo {
 		{Name: "SourceBranch", Description: "源分支", Example: "main", Events: "sync_*"},
 		{Name: "TargetRemote", Description: "目标远程仓库", Example: "backup", Events: "sync_*"},
 		{Name: "TargetBranch", Description: "目标分支", Example: "main", Events: "sync_*"},
-		{Name: "RepoKey", Description: "仓库标识", Example: "my-repo", Events: "all"},
+		{Name: "RepoKey", Description: "仓库标识（Key）", Example: "repo-abc123", Events: "all"},
+		{Name: "RepoName", Description: "仓库名称（可读）", Example: "前端项目仓库", Events: "all"},
 		{Name: "ErrorMessage", Description: "错误信息", Example: "push failed: ...", Events: "*_failure,*_error,sync_conflict"},
 		{Name: "CommitRange", Description: "提交范围", Example: "abc123..def456", Events: "sync_success"},
 		{Name: "Duration", Description: "执行耗时", Example: "3.2s", Events: "sync_*,backup_*"},
