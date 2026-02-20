@@ -1,20 +1,120 @@
-.PHONY: build build-http build-rpc run run-http run-rpc clean gen kitex-gen hz-gen test lint fmt help
+.PHONY: build build-http build-rpc build-all build-full build-frontend build-frontend-integrate run run-http run-rpc run-frontend preview-frontend clean clean-frontend gen kitex-gen hz-gen test lint fmt help
+
+# 版本信息
+VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
+BUILD_TIME := $(shell date -u '+%Y-%m-%d %H:%M:%S')
+GIT_COMMIT := $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+
+# 编译参数
+LDFLAGS := -X 'main.Version=$(VERSION)' \
+           -X 'main.BuildTime=$(BUILD_TIME)' \
+           -X 'main.GitCommit=$(GIT_COMMIT)'
 
 # 默认目标
-all: build
+all: build-full
 
-# 构建目标
+# 一键构建完整服务（前端+后端）
+build-full:
+	@echo "========================================"
+	@echo "Building Full-Stack Service..."
+	@echo "========================================"
+	@echo "Version: $(VERSION)"
+	@echo "Build Time: $(BUILD_TIME)"
+	@echo "Git Commit: $(GIT_COMMIT)"
+	@echo ""
+	@echo "[1/2] Building Frontend..."
+	@if [ ! -d "frontend/node_modules" ]; then \
+		echo "Installing frontend dependencies..."; \
+		cd frontend && npm install; \
+	fi
+	@cd frontend && npm run build
+	@echo "Copying frontend assets to public directory..."
+	@rm -rf public
+	@cp -r frontend/dist public
+	@echo "✓ Frontend build complete"
+	@echo ""
+	@echo "[2/2] Building Backend..."
+	@mkdir -p output
+	@go build -ldflags "$(LDFLAGS)" -o output/git-manage-service main.go
+	@echo "✓ Backend build complete"
+	@echo ""
+	@echo "========================================"
+	@echo "✓ Full-Stack Build Complete!"
+	@echo "========================================"
+	@echo ""
+	@echo "Run the service:"
+	@echo "  ./output/git-manage-service --mode=all"
+	@echo ""
+	@echo "Or use:"
+	@echo "  make run"
+	@echo ""
+
+# 构建目标（注入版本信息）
 build:
 	@echo "Building git-manage-service..."
-	go build -o output/git-manage-service main.go
+	@echo "Version: $(VERSION)"
+	@echo "Build Time: $(BUILD_TIME)"
+	@echo "Git Commit: $(GIT_COMMIT)"
+	@mkdir -p output
+	go build -ldflags "$(LDFLAGS)" -o output/git-manage-service main.go
 
 build-http:
 	@echo "Building HTTP-only service..."
-	go build -o output/git-manage-service-http main.go
+	@mkdir -p output
+	go build -ldflags "$(LDFLAGS)" -o output/git-manage-service-http main.go
 
 build-rpc:
 	@echo "Building RPC-only service..."
-	go build -o output/git-manage-service-rpc main.go
+	@mkdir -p output
+	go build -ldflags "$(LDFLAGS)" -o output/git-manage-service-rpc main.go
+
+# 多平台构建
+build-all:
+	@echo "Building for multiple platforms..."
+	@mkdir -p output
+	@for OS in linux darwin windows; do \
+		for ARCH in amd64 arm64; do \
+			EXT=""; \
+			if [ "$$OS" = "windows" ]; then EXT=".exe"; fi; \
+			echo "Building $$OS/$$ARCH..."; \
+			GOOS=$$OS GOARCH=$$ARCH go build -ldflags "$(LDFLAGS)" \
+				-o output/git-manage-service-$$OS-$$ARCH$$EXT main.go; \
+		done; \
+	done
+	@echo "Build complete. Binaries in output/"
+
+# 前端构建
+build-frontend:
+	@echo "Building frontend..."
+	@if [ ! -d "frontend/node_modules" ]; then \
+		echo "Installing frontend dependencies..."; \
+		cd frontend && npm install; \
+	fi
+	@cd frontend && npm run build
+	@echo "Frontend build complete. Output in frontend/dist/"
+
+# 前端构建并集成到后端
+build-frontend-integrate:
+	@echo "Building and integrating frontend..."
+	@if [ ! -d "frontend/node_modules" ]; then \
+		echo "Installing frontend dependencies..."; \
+		cd frontend && npm install; \
+	fi
+	@cd frontend && npm run build
+	@echo "Copying frontend assets to public directory..."
+	@rm -rf public
+	@cp -r frontend/dist public
+	@echo "Frontend integrated successfully. Backend can now serve frontend from ./public/"
+
+# 前端开发服务器
+run-frontend:
+	@echo "Starting frontend dev server..."
+	@cd frontend && npm run dev
+
+# 前端预览
+preview-frontend:
+	@echo "Starting frontend preview server..."
+	@cd frontend && npm run preview
 
 # 运行目标
 run:
@@ -66,20 +166,56 @@ fmt:
 clean:
 	rm -rf output
 
+clean-frontend:
+	@echo "Cleaning frontend build artifacts..."
+	rm -rf frontend/dist
+	rm -rf frontend/node_modules
+	rm -rf public
+
 # 帮助
 help:
 	@echo "Git Manage Service Makefile"
 	@echo ""
-	@echo "Usage:"
-	@echo "  make build        - Build the service"
+	@echo "Quick Start:"
+	@echo "  make build-full   - 🚀 Build complete service (frontend + backend) - RECOMMENDED"
+	@echo "  make              - Same as 'make build-full'"
+	@echo "  make run          - Run the built service"
+	@echo ""
+	@echo "Backend Build:"
+	@echo "  make build        - Build the service (with version info)"
+	@echo "  make build-all    - Build for multiple platforms (linux/darwin/windows, amd64/arm64)"
+	@echo "  make build-http   - Build HTTP-only service"
+	@echo "  make build-rpc    - Build RPC-only service"
+	@echo ""
+	@echo "Frontend Build:"
+	@echo "  make build-frontend   - Build frontend (production)"
+	@echo "  make build-frontend-integrate - Build frontend and copy to public/ for backend"
+	@echo "  make run-frontend     - Start frontend dev server"
+	@echo "  make preview-frontend - Preview frontend build"
+	@echo ""
+	@echo "Run Services:"
 	@echo "  make run          - Run in 'all' mode (HTTP + RPC)"
 	@echo "  make run-http     - Run HTTP server only"
 	@echo "  make run-rpc      - Run RPC server only"
+	@echo ""
+	@echo "Code Generation:"
 	@echo "  make gen          - Generate all code (Kitex + Hz)"
 	@echo "  make kitex-gen    - Generate Kitex RPC code"
 	@echo "  make hz-gen       - Generate Hz HTTP code"
+	@echo ""
+	@echo "Testing & Quality:"
 	@echo "  make test         - Run tests"
 	@echo "  make lint         - Run linter"
 	@echo "  make fmt          - Format code"
-	@echo "  make clean        - Clean build artifacts"
+	@echo ""
+	@echo "Cleanup:"
+	@echo "  make clean        - Clean backend build artifacts"
+	@echo "  make clean-frontend - Clean frontend build artifacts"
+	@echo ""
+	@echo "Other:"
 	@echo "  make help         - Show this help"
+	@echo ""
+	@echo "Version Info:"
+	@echo "  VERSION=$(VERSION)"
+	@echo "  BUILD_TIME=$(BUILD_TIME)"
+	@echo "  GIT_COMMIT=$(GIT_COMMIT)"

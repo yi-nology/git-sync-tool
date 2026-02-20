@@ -39,3 +39,4 @@ git-manage-service
 *.db
 .qoder/
 .hz
+public/
