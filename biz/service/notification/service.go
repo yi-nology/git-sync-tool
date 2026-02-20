@@ -80,7 +80,24 @@ func (s *NotificationService) renderMessage(channel *po.NotificationChannel, msg
 		return msg
 	}
 
-	title, content := RenderTitleAndContent(channel.TitleTemplate, channel.ContentTemplate, msg.Data)
+	titleTmpl := channel.TitleTemplate
+	contentTmpl := channel.ContentTemplate
+
+	// 优先使用事件级模板（留空则回退到渠道级模板）
+	if msg.TriggerEvent != "" {
+		etDAO := db.NewNotificationEventTemplateDAO()
+		et, err := etDAO.FindByChannelAndEvent(channel.ID, msg.TriggerEvent)
+		if err == nil && et != nil {
+			if et.TitleTemplate != "" {
+				titleTmpl = et.TitleTemplate
+			}
+			if et.ContentTemplate != "" {
+				contentTmpl = et.ContentTemplate
+			}
+		}
+	}
+
+	title, content := RenderTitleAndContent(titleTmpl, contentTmpl, msg.Data)
 
 	return &NotificationMessage{
 		Title:        title,

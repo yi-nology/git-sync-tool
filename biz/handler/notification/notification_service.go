@@ -4,6 +4,7 @@ package notification
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/cloudwego/hertz/pkg/app"
@@ -13,11 +14,19 @@ import (
 	"github.com/yi-nology/git-manage-service/biz/service/audit"
 	notificationSvc "github.com/yi-nology/git-manage-service/biz/service/notification"
 	"github.com/yi-nology/git-manage-service/pkg/response"
+	"gorm.io/gorm"
 )
+
+// eventTemplateDTO 事件模板的 JSON 传输结构
+type eventTemplateDTO struct {
+	EventType       string `json:"event_type"`
+	TitleTemplate   string `json:"title_template"`
+	ContentTemplate string `json:"content_template"`
+}
 
 // channelToProto 将 PO 转换为 proto 格式
 func channelToProto(ch *po.NotificationChannel) *notification.NotificationChannel {
-	return &notification.NotificationChannel{
+	proto := &notification.NotificationChannel{
 		Id:              int64(ch.ID),
 		Name:            ch.Name,
 		Type:            ch.Type,
@@ -31,6 +40,25 @@ func channelToProto(ch *po.NotificationChannel) *notification.NotificationChanne
 		CreatedAt:       ch.CreatedAt.Format("2006-01-02 15:04:05"),
 		UpdatedAt:       ch.UpdatedAt.Format("2006-01-02 15:04:05"),
 	}
+
+	// 查询该渠道的事件模板并序列化为 JSON
+	etDAO := db.NewNotificationEventTemplateDAO()
+	templates, err := etDAO.FindByChannelID(ch.ID)
+	if err == nil && len(templates) > 0 {
+		dtos := make([]eventTemplateDTO, 0, len(templates))
+		for _, t := range templates {
+			dtos = append(dtos, eventTemplateDTO{
+				EventType:       t.EventType,
+				TitleTemplate:   t.TitleTemplate,
+				ContentTemplate: t.ContentTemplate,
+			})
+		}
+		if data, err := json.Marshal(dtos); err == nil {
+			proto.EventTemplatesJson = string(data)
+		}
+	}
+
+	return proto
 }
 
 // ListChannels .
@@ -97,7 +125,7 @@ func CreateChannel(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	// 验证模板语法
+	// 验证渠道级模板语法
 	if err := notificationSvc.ValidateTemplate(req.TitleTemplate); err != nil {
 		response.BadRequest(c, "标题模板语法错误: "+err.Error())
 		return
@@ -105,6 +133,25 @@ func CreateChannel(ctx context.Context, c *app.RequestContext) {
 	if err := notificationSvc.ValidateTemplate(req.ContentTemplate); err != nil {
 		response.BadRequest(c, "内容模板语法错误: "+err.Error())
 		return
+	}
+
+	// 解析并验证事件级模板
+	var eventDTOs []eventTemplateDTO
+	if req.EventTemplatesJson != "" {
+		if err := json.Unmarshal([]byte(req.EventTemplatesJson), &eventDTOs); err != nil {
+			response.BadRequest(c, "事件模板 JSON 格式错误: "+err.Error())
+			return
+		}
+		for _, dto := range eventDTOs {
+			if err := notificationSvc.ValidateTemplate(dto.TitleTemplate); err != nil {
+				response.BadRequest(c, fmt.Sprintf("事件 %s 标题模板语法错误: %s", dto.EventType, err.Error()))
+				return
+			}
+			if err := notificationSvc.ValidateTemplate(dto.ContentTemplate); err != nil {
+				response.BadRequest(c, fmt.Sprintf("事件 %s 内容模板语法错误: %s", dto.EventType, err.Error()))
+				return
+			}
+		}
 	}
 
 	channel := &po.NotificationChannel{
@@ -119,8 +166,28 @@ func CreateChannel(ctx context.Context, c *app.RequestContext) {
 		ContentTemplate: req.ContentTemplate,
 	}
 
-	dao := db.NewNotificationChannelDAO()
-	if err := dao.Create(channel); err != nil {
+	// 使用事务创建渠道和事件模板
+	err := db.DB.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(channel).Error; err != nil {
+			return err
+		}
+		if len(eventDTOs) > 0 {
+			templates := make([]po.NotificationEventTemplate, 0, len(eventDTOs))
+			for _, dto := range eventDTOs {
+				templates = append(templates, po.NotificationEventTemplate{
+					ChannelID:       channel.ID,
+					EventType:       dto.EventType,
+					TitleTemplate:   dto.TitleTemplate,
+					ContentTemplate: dto.ContentTemplate,
+				})
+			}
+			if err := tx.Create(&templates).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	if err != nil {
 		response.InternalServerError(c, err.Error())
 		return
 	}
@@ -144,7 +211,7 @@ func UpdateChannel(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	// 验证模板语法
+	// 验证渠道级模板语法
 	if err := notificationSvc.ValidateTemplate(req.TitleTemplate); err != nil {
 		response.BadRequest(c, "标题模板语法错误: "+err.Error())
 		return
@@ -152,6 +219,25 @@ func UpdateChannel(ctx context.Context, c *app.RequestContext) {
 	if err := notificationSvc.ValidateTemplate(req.ContentTemplate); err != nil {
 		response.BadRequest(c, "内容模板语法错误: "+err.Error())
 		return
+	}
+
+	// 解析并验证事件级模板
+	var eventDTOs []eventTemplateDTO
+	if req.EventTemplatesJson != "" {
+		if err := json.Unmarshal([]byte(req.EventTemplatesJson), &eventDTOs); err != nil {
+			response.BadRequest(c, "事件模板 JSON 格式错误: "+err.Error())
+			return
+		}
+		for _, dto := range eventDTOs {
+			if err := notificationSvc.ValidateTemplate(dto.TitleTemplate); err != nil {
+				response.BadRequest(c, fmt.Sprintf("事件 %s 标题模板语法错误: %s", dto.EventType, err.Error()))
+				return
+			}
+			if err := notificationSvc.ValidateTemplate(dto.ContentTemplate); err != nil {
+				response.BadRequest(c, fmt.Sprintf("事件 %s 内容模板语法错误: %s", dto.EventType, err.Error()))
+				return
+			}
+		}
 	}
 
 	dao := db.NewNotificationChannelDAO()
@@ -170,7 +256,25 @@ func UpdateChannel(ctx context.Context, c *app.RequestContext) {
 	channel.TitleTemplate = req.TitleTemplate
 	channel.ContentTemplate = req.ContentTemplate
 
-	if err := dao.Save(channel); err != nil {
+	// 使用事务更新渠道和事件模板
+	etDAO := db.NewNotificationEventTemplateDAO()
+	err = db.DB.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Save(channel).Error; err != nil {
+			return err
+		}
+		// 先删后插，替换该渠道的所有事件模板
+		templates := make([]po.NotificationEventTemplate, 0, len(eventDTOs))
+		for _, dto := range eventDTOs {
+			templates = append(templates, po.NotificationEventTemplate{
+				ChannelID:       channel.ID,
+				EventType:       dto.EventType,
+				TitleTemplate:   dto.TitleTemplate,
+				ContentTemplate: dto.ContentTemplate,
+			})
+		}
+		return etDAO.ReplaceByChannelID(tx, channel.ID, templates)
+	})
+	if err != nil {
 		response.InternalServerError(c, err.Error())
 		return
 	}
@@ -200,7 +304,15 @@ func DeleteChannel(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	if err := dao.Delete(channel); err != nil {
+	// 使用事务级联删除事件模板和渠道
+	etDAO := db.NewNotificationEventTemplateDAO()
+	err = db.DB.Transaction(func(tx *gorm.DB) error {
+		if err := etDAO.DeleteByChannelID(tx, channel.ID); err != nil {
+			return err
+		}
+		return tx.Delete(channel).Error
+	})
+	if err != nil {
 		response.InternalServerError(c, err.Error())
 		return
 	}

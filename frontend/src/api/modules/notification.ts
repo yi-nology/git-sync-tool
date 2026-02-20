@@ -2,6 +2,12 @@ import request from '../request'
 
 // 通知渠道管理相关API
 
+export interface EventTemplate {
+  event_type: string
+  title_template: string
+  content_template: string
+}
+
 export interface NotificationChannel {
   id: number
   name: string
@@ -13,6 +19,7 @@ export interface NotificationChannel {
   trigger_events: string
   title_template: string
   content_template: string
+  event_templates_json: string
   created_at: string
   updated_at: string
 }
@@ -27,6 +34,7 @@ export interface CreateChannelParams {
   trigger_events: string
   title_template: string
   content_template: string
+  event_templates_json: string
 }
 
 export interface UpdateChannelParams extends CreateChannelParams {

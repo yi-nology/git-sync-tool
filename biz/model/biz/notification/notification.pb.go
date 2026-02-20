@@ -31,18 +31,19 @@ type NotificationChannel struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id              int64  `protobuf:"varint,1,opt,name=id,proto3" form:"id" json:"id,omitempty" query:"id"`
-	Name            string `protobuf:"bytes,2,opt,name=name,proto3" form:"name" json:"name,omitempty" query:"name"`                                                                           // 渠道名称
-	Type            string `protobuf:"bytes,3,opt,name=type,proto3" form:"type" json:"type,omitempty" query:"type"`                                                                           // 渠道类型: email, dingtalk, wechat, webhook
-	Config          string `protobuf:"bytes,4,opt,name=config,proto3" form:"config" json:"config,omitempty" query:"config"`                                                                   // JSON配置
-	Enabled         bool   `protobuf:"varint,5,opt,name=enabled,proto3" form:"enabled" json:"enabled,omitempty" query:"enabled"`                                                              // 是否启用
-	NotifyOnSuccess bool   `protobuf:"varint,6,opt,name=notify_on_success,json=notifyOnSuccess,proto3" form:"notify_on_success" json:"notify_on_success,omitempty" query:"notify_on_success"` // 成功时通知
-	NotifyOnFailure bool   `protobuf:"varint,7,opt,name=notify_on_failure,json=notifyOnFailure,proto3" form:"notify_on_failure" json:"notify_on_failure,omitempty" query:"notify_on_failure"` // 失败时通知
-	CreatedAt       string `protobuf:"bytes,8,opt,name=created_at,json=createdAt,proto3" form:"created_at" json:"created_at,omitempty" query:"created_at"`
-	UpdatedAt       string `protobuf:"bytes,9,opt,name=updated_at,json=updatedAt,proto3" form:"updated_at" json:"updated_at,omitempty" query:"updated_at"`
-	TriggerEvents   string `protobuf:"bytes,10,opt,name=trigger_events,json=triggerEvents,proto3" form:"trigger_events" json:"trigger_events,omitempty" query:"trigger_events"`           // 触发事件列表（JSON数组）
-	TitleTemplate   string `protobuf:"bytes,11,opt,name=title_template,json=titleTemplate,proto3" form:"title_template" json:"title_template,omitempty" query:"title_template"`           // 自定义标题模板
-	ContentTemplate string `protobuf:"bytes,12,opt,name=content_template,json=contentTemplate,proto3" form:"content_template" json:"content_template,omitempty" query:"content_template"` // 自定义内容模板
+	Id                 int64  `protobuf:"varint,1,opt,name=id,proto3" form:"id" json:"id,omitempty" query:"id"`
+	Name               string `protobuf:"bytes,2,opt,name=name,proto3" form:"name" json:"name,omitempty" query:"name"`                                                                           // 渠道名称
+	Type               string `protobuf:"bytes,3,opt,name=type,proto3" form:"type" json:"type,omitempty" query:"type"`                                                                           // 渠道类型: email, dingtalk, wechat, webhook
+	Config             string `protobuf:"bytes,4,opt,name=config,proto3" form:"config" json:"config,omitempty" query:"config"`                                                                   // JSON配置
+	Enabled            bool   `protobuf:"varint,5,opt,name=enabled,proto3" form:"enabled" json:"enabled,omitempty" query:"enabled"`                                                              // 是否启用
+	NotifyOnSuccess    bool   `protobuf:"varint,6,opt,name=notify_on_success,json=notifyOnSuccess,proto3" form:"notify_on_success" json:"notify_on_success,omitempty" query:"notify_on_success"` // 成功时通知
+	NotifyOnFailure    bool   `protobuf:"varint,7,opt,name=notify_on_failure,json=notifyOnFailure,proto3" form:"notify_on_failure" json:"notify_on_failure,omitempty" query:"notify_on_failure"` // 失败时通知
+	CreatedAt          string `protobuf:"bytes,8,opt,name=created_at,json=createdAt,proto3" form:"created_at" json:"created_at,omitempty" query:"created_at"`
+	UpdatedAt          string `protobuf:"bytes,9,opt,name=updated_at,json=updatedAt,proto3" form:"updated_at" json:"updated_at,omitempty" query:"updated_at"`
+	TriggerEvents      string `protobuf:"bytes,10,opt,name=trigger_events,json=triggerEvents,proto3" form:"trigger_events" json:"trigger_events,omitempty" query:"trigger_events"`                              // 触发事件列表（JSON数组）
+	TitleTemplate      string `protobuf:"bytes,11,opt,name=title_template,json=titleTemplate,proto3" form:"title_template" json:"title_template,omitempty" query:"title_template"`                              // 自定义标题模板
+	ContentTemplate    string `protobuf:"bytes,12,opt,name=content_template,json=contentTemplate,proto3" form:"content_template" json:"content_template,omitempty" query:"content_template"`                    // 自定义内容模板
+	EventTemplatesJson string `protobuf:"bytes,13,opt,name=event_templates_json,json=eventTemplatesJson,proto3" form:"event_templates_json" json:"event_templates_json,omitempty" query:"event_templates_json"` // 事件级模板列表（JSON字符串）
 }
 
 func (x *NotificationChannel) Reset() {
@@ -157,6 +158,13 @@ func (x *NotificationChannel) GetTitleTemplate() string {
 func (x *NotificationChannel) GetContentTemplate() string {
 	if x != nil {
 		return x.ContentTemplate
+	}
+	return ""
+}
+
+func (x *NotificationChannel) GetEventTemplatesJson() string {
+	if x != nil {
+		return x.EventTemplatesJson
 	}
 	return ""
 }
@@ -375,15 +383,16 @@ type CreateChannelRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Name            string `protobuf:"bytes,1,opt,name=name,proto3" form:"name" json:"name,omitempty"`
-	Type            string `protobuf:"bytes,2,opt,name=type,proto3" form:"type" json:"type,omitempty"`
-	Config          string `protobuf:"bytes,3,opt,name=config,proto3" form:"config" json:"config,omitempty"`
-	Enabled         bool   `protobuf:"varint,4,opt,name=enabled,proto3" form:"enabled" json:"enabled,omitempty"`
-	NotifyOnSuccess bool   `protobuf:"varint,5,opt,name=notify_on_success,json=notifyOnSuccess,proto3" form:"notify_on_success" json:"notify_on_success,omitempty"`
-	NotifyOnFailure bool   `protobuf:"varint,6,opt,name=notify_on_failure,json=notifyOnFailure,proto3" form:"notify_on_failure" json:"notify_on_failure,omitempty"`
-	TriggerEvents   string `protobuf:"bytes,7,opt,name=trigger_events,json=triggerEvents,proto3" form:"trigger_events" json:"trigger_events,omitempty"`
-	TitleTemplate   string `protobuf:"bytes,8,opt,name=title_template,json=titleTemplate,proto3" form:"title_template" json:"title_template,omitempty"`
-	ContentTemplate string `protobuf:"bytes,9,opt,name=content_template,json=contentTemplate,proto3" form:"content_template" json:"content_template,omitempty"`
+	Name               string `protobuf:"bytes,1,opt,name=name,proto3" form:"name" json:"name,omitempty"`
+	Type               string `protobuf:"bytes,2,opt,name=type,proto3" form:"type" json:"type,omitempty"`
+	Config             string `protobuf:"bytes,3,opt,name=config,proto3" form:"config" json:"config,omitempty"`
+	Enabled            bool   `protobuf:"varint,4,opt,name=enabled,proto3" form:"enabled" json:"enabled,omitempty"`
+	NotifyOnSuccess    bool   `protobuf:"varint,5,opt,name=notify_on_success,json=notifyOnSuccess,proto3" form:"notify_on_success" json:"notify_on_success,omitempty"`
+	NotifyOnFailure    bool   `protobuf:"varint,6,opt,name=notify_on_failure,json=notifyOnFailure,proto3" form:"notify_on_failure" json:"notify_on_failure,omitempty"`
+	TriggerEvents      string `protobuf:"bytes,7,opt,name=trigger_events,json=triggerEvents,proto3" form:"trigger_events" json:"trigger_events,omitempty"`
+	TitleTemplate      string `protobuf:"bytes,8,opt,name=title_template,json=titleTemplate,proto3" form:"title_template" json:"title_template,omitempty"`
+	ContentTemplate    string `protobuf:"bytes,9,opt,name=content_template,json=contentTemplate,proto3" form:"content_template" json:"content_template,omitempty"`
+	EventTemplatesJson string `protobuf:"bytes,10,opt,name=event_templates_json,json=eventTemplatesJson,proto3" form:"event_templates_json" json:"event_templates_json,omitempty"`
 }
 
 func (x *CreateChannelRequest) Reset() {
@@ -481,21 +490,29 @@ func (x *CreateChannelRequest) GetContentTemplate() string {
 	return ""
 }
 
+func (x *CreateChannelRequest) GetEventTemplatesJson() string {
+	if x != nil {
+		return x.EventTemplatesJson
+	}
+	return ""
+}
+
 // UpdateChannelRequest 更新渠道请求
 type UpdateChannelRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id              int64  `protobuf:"varint,1,opt,name=id,proto3" form:"id" json:"id,omitempty"`
-	Name            string `protobuf:"bytes,2,opt,name=name,proto3" form:"name" json:"name,omitempty"`
-	Config          string `protobuf:"bytes,3,opt,name=config,proto3" form:"config" json:"config,omitempty"`
-	Enabled         bool   `protobuf:"varint,4,opt,name=enabled,proto3" form:"enabled" json:"enabled,omitempty"`
-	NotifyOnSuccess bool   `protobuf:"varint,5,opt,name=notify_on_success,json=notifyOnSuccess,proto3" form:"notify_on_success" json:"notify_on_success,omitempty"`
-	NotifyOnFailure bool   `protobuf:"varint,6,opt,name=notify_on_failure,json=notifyOnFailure,proto3" form:"notify_on_failure" json:"notify_on_failure,omitempty"`
-	TriggerEvents   string `protobuf:"bytes,7,opt,name=trigger_events,json=triggerEvents,proto3" form:"trigger_events" json:"trigger_events,omitempty"`
-	TitleTemplate   string `protobuf:"bytes,8,opt,name=title_template,json=titleTemplate,proto3" form:"title_template" json:"title_template,omitempty"`
-	ContentTemplate string `protobuf:"bytes,9,opt,name=content_template,json=contentTemplate,proto3" form:"content_template" json:"content_template,omitempty"`
+	Id                 int64  `protobuf:"varint,1,opt,name=id,proto3" form:"id" json:"id,omitempty"`
+	Name               string `protobuf:"bytes,2,opt,name=name,proto3" form:"name" json:"name,omitempty"`
+	Config             string `protobuf:"bytes,3,opt,name=config,proto3" form:"config" json:"config,omitempty"`
+	Enabled            bool   `protobuf:"varint,4,opt,name=enabled,proto3" form:"enabled" json:"enabled,omitempty"`
+	NotifyOnSuccess    bool   `protobuf:"varint,5,opt,name=notify_on_success,json=notifyOnSuccess,proto3" form:"notify_on_success" json:"notify_on_success,omitempty"`
+	NotifyOnFailure    bool   `protobuf:"varint,6,opt,name=notify_on_failure,json=notifyOnFailure,proto3" form:"notify_on_failure" json:"notify_on_failure,omitempty"`
+	TriggerEvents      string `protobuf:"bytes,7,opt,name=trigger_events,json=triggerEvents,proto3" form:"trigger_events" json:"trigger_events,omitempty"`
+	TitleTemplate      string `protobuf:"bytes,8,opt,name=title_template,json=titleTemplate,proto3" form:"title_template" json:"title_template,omitempty"`
+	ContentTemplate    string `protobuf:"bytes,9,opt,name=content_template,json=contentTemplate,proto3" form:"content_template" json:"content_template,omitempty"`
+	EventTemplatesJson string `protobuf:"bytes,10,opt,name=event_templates_json,json=eventTemplatesJson,proto3" form:"event_templates_json" json:"event_templates_json,omitempty"`
 }
 
 func (x *UpdateChannelRequest) Reset() {
@@ -589,6 +606,13 @@ func (x *UpdateChannelRequest) GetTitleTemplate() string {
 func (x *UpdateChannelRequest) GetContentTemplate() string {
 	if x != nil {
 		return x.ContentTemplate
+	}
+	return ""
+}
+
+func (x *UpdateChannelRequest) GetEventTemplatesJson() string {
+	if x != nil {
+		return x.EventTemplatesJson
 	}
 	return ""
 }
