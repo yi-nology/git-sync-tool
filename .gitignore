@@ -41,4 +41,9 @@ git-manage-service
 .hz
 public/
 .vite/
+# Logs
+*.log
+app.log
+
+# Frontend
 frontend/.vite/
