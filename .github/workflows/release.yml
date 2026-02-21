@@ -62,15 +62,7 @@ jobs:
         run: go mod download
 
       - name: Build frontend
-        run: |
-          echo "Building frontend..."
-          cd frontend && npm ci
-          npm run build
-          cd ..
-          echo "Integrating frontend to backend..."
-          rm -rf public
-          cp -r frontend/dist public
-          echo "Frontend build complete"
+        run: make build-frontend-integrate
 
       - name: Build binary
         env:
@@ -82,7 +74,7 @@ jobs:
           GIT_COMMIT: ${{ github.sha }}
         run: |
           mkdir -p dist
-          go build -ldflags="-s -w -X 'main.Version=${VERSION}' -X 'main.BuildTime=${BUILD_TIME}' -X 'main.GitCommit=${GIT_COMMIT}'" \
+          go build -ldflags="-s -w $(echo -e \"-X 'main.Version=${VERSION}' -X 'main.BuildTime=${BUILD_TIME}' -X 'main.GitCommit=${GIT_COMMIT}'\")" \
             -o dist/${{ matrix.output }} \
             main.go
 
