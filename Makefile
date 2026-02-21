@@ -79,7 +79,7 @@ build-all:
 			EXT=""; \
 			if [ "$$OS" = "windows" ]; then EXT=".exe"; fi; \
 			echo "Building $$OS/$$ARCH..."; \
-			GOOS=$$OS GOARCH=$$ARCH CGO_ENABLED=1 go build -ldflags "$(LDFLAGS)" \
+			GOOS=$$OS GOARCH=$$ARCH go build -ldflags "$(LDFLAGS)" \
 				-o output/git-manage-service-$$OS-$$ARCH$$EXT main.go; \
 		done; \
 	done
