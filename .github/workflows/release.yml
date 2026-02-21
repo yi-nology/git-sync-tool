@@ -61,6 +61,10 @@ jobs:
       - name: Get dependencies
         run: go mod download
 
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
       - name: Build frontend
         run: make build-frontend-integrate
 
@@ -68,14 +72,13 @@ jobs:
         env:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
-          # CGO_ENABLED=1 仅用于原生平台 (linux/amd64)，其他平台使用 CGO_ENABLED=0
-          CGO_ENABLED: ${{ matrix.goarch == 'amd64' && matrix.goos == 'linux' && '1' || '0' }}
+          CGO_ENABLED: 0
           VERSION: ${{ github.ref_name }}
           BUILD_TIME: ${{ github.event.head_commit.timestamp }}
           GIT_COMMIT: ${{ github.sha }}
         run: |
           mkdir -p dist
-          go build -ldflags="-s -w $(echo -e \"-X 'main.Version=${VERSION}' -X 'main.BuildTime=${BUILD_TIME}' -X 'main.GitCommit=${GIT_COMMIT}'\")" \
+          go build -ldflags="-s -w -X main.Version=${VERSION} -X main.BuildTime=${BUILD_TIME} -X main.GitCommit=${GIT_COMMIT}" \
             -o dist/${{ matrix.output }} \
             main.go
 
