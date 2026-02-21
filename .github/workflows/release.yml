@@ -62,27 +62,20 @@ jobs:
         run: go mod download
 
       - name: Build frontend
-        run: |
-          echo "Building frontend..."
-          cd frontend && npm ci
-          npm run build
-          cd ..
-          echo "Integrating frontend to backend..."
-          rm -rf public
-          cp -r frontend/dist public
-          echo "Frontend build complete"
+        run: make build-frontend-integrate
 
       - name: Build binary
         env:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
-          CGO_ENABLED: 0
+          # CGO_ENABLED=1 仅用于原生平台 (linux/amd64)，其他平台使用 CGO_ENABLED=0
+          CGO_ENABLED: ${{ matrix.goarch == 'amd64' && matrix.goos == 'linux' && '1' || '0' }}
           VERSION: ${{ github.ref_name }}
           BUILD_TIME: ${{ github.event.head_commit.timestamp }}
           GIT_COMMIT: ${{ github.sha }}
         run: |
           mkdir -p dist
-          go build -ldflags="-s -w -X 'main.Version=${VERSION}' -X 'main.BuildTime=${BUILD_TIME}' -X 'main.GitCommit=${GIT_COMMIT}'" \
+          go build -ldflags="-s -w $(echo -e \"-X 'main.Version=${VERSION}' -X 'main.BuildTime=${BUILD_TIME}' -X 'main.GitCommit=${GIT_COMMIT}'\")" \
             -o dist/${{ matrix.output }} \
             main.go
 
