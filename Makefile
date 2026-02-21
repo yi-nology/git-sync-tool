@@ -6,6 +6,8 @@ BUILD_TIME := $(shell date -u '+%Y-%m-%d %H:%M:%S')
 GIT_COMMIT := $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 
 # 编译参数
+# 重要: SQLite 驱动需要 CGO, 因此必须设置 CGO_ENABLED=1
+export CGO_ENABLED=1
 LDFLAGS := -X 'main.Version=$(VERSION)' \
            -X 'main.BuildTime=$(BUILD_TIME)' \
            -X 'main.GitCommit=$(GIT_COMMIT)'
