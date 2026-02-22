@@ -37,7 +37,7 @@ build-full:
 	@echo ""
 	@echo "[2/2] Building Backend..."
 	@mkdir -p output
-	@go build -ldflags "$(LDFLAGS)" -o output/git-manage-service main.go
+	@go build -ldflags "$(LDFLAGS)" -o output/git-manage-service .
 	@echo "✓ Backend build complete"
 	@echo ""
 	@echo "========================================"
@@ -58,17 +58,17 @@ build:
 	@echo "Build Time: $(BUILD_TIME)"
 	@echo "Git Commit: $(GIT_COMMIT)"
 	@mkdir -p output
-	go build -ldflags "$(LDFLAGS)" -o output/git-manage-service main.go
+	go build -ldflags "$(LDFLAGS)" -o output/git-manage-service .
 
 build-http:
 	@echo "Building HTTP-only service..."
 	@mkdir -p output
-	go build -ldflags "$(LDFLAGS)" -o output/git-manage-service-http main.go
+	go build -ldflags "$(LDFLAGS)" -o output/git-manage-service-http .
 
 build-rpc:
 	@echo "Building RPC-only service..."
 	@mkdir -p output
-	go build -ldflags "$(LDFLAGS)" -o output/git-manage-service-rpc main.go
+	go build -ldflags "$(LDFLAGS)" -o output/git-manage-service-rpc .
 
 # 多平台构建
 build-all:
@@ -80,7 +80,7 @@ build-all:
 			if [ "$$OS" = "windows" ]; then EXT=".exe"; fi; \
 			echo "Building $$OS/$$ARCH..."; \
 			GOOS=$$OS GOARCH=$$ARCH go build -ldflags "$(LDFLAGS)" \
-				-o output/git-manage-service-$$OS-$$ARCH$$EXT main.go; \
+				-o output/git-manage-service-$$OS-$$ARCH$$EXT .; \
 		done; \
 	done
 	@echo "Build complete. Binaries in output/"
