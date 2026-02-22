@@ -80,7 +80,7 @@ jobs:
           mkdir -p dist
           go build -ldflags="-s -w -X main.Version=${VERSION} -X main.BuildTime=${BUILD_TIME} -X main.GitCommit=${GIT_COMMIT}" \
             -o dist/${{ matrix.output }} \
-            main.go
+            .
 
       - name: Create archive
         run: |
