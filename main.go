@@ -147,6 +147,9 @@ func initResources() {
 
 // startHTTPServer 启动 HTTP 服务器
 func startHTTPServer() *hserver.Hertz {
+	// 注入嵌入的静态资源
+	router.SetEmbedFS(GetPublicFS(), GetDocsFS())
+
 	addr := fmt.Sprintf(":%d", configs.GlobalConfig.Server.Port)
 	h := hserver.Default(hserver.WithHostPorts(addr))
 
