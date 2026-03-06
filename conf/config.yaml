@@ -1,53 +1,54 @@
+# Git Manage Service Configuration
+
+# 1. Server Configuration
 server:
+  # Service listening port
+  # Default: 8080
   port: 38080
 
-rpc:
-  port: 38888
-
+# 2. Database Configuration
 database:
-  # type: sqlite, mysql, postgres
+  # Database Type: sqlite, mysql, postgres
+  # Default: sqlite
   type: sqlite
-  # for sqlite
-  path: git_sync.db
   
-  # for mysql / postgres
+  # SQLite Configuration
+  # Path to the database file. Recommend using absolute path or path relative to working directory.
+  path: data/git_sync.db
+  
+  # MySQL / PostgreSQL Configuration
+  # Uncomment and configure if using remote database
   # host: localhost
   # port: 3306 # 5432 for postgres
   # user: root
-  # password: password
+  # password: password # It is recommended to use environment variables in production
   # dbname: git_manage
-  # dsn: "user:pass@tcp(127.0.0.1:3306)/dbname?charset=utf8mb4&parseTime=True&loc=Local" # optional override
+  
+  # Advanced: Custom DSN (Data Source Name)
+  # If provided, it overrides host/port/user/pass/dbname settings.
+  # dsn: "user:pass@tcp(127.0.0.1:3306)/dbname?charset=utf8mb4&parseTime=True&loc=Local"
 
+# 3. Webhook Configuration
 webhook:
+  # Secret key for validating webhook signatures
+  # SECURITY WARNING: Change this in production!
   secret: "my-secret-key"
+  
+  # Rate limit (requests per minute)
   rate_limit: 100
+  
+  # IP Whitelist for webhook endpoints
+  # Leave empty to allow all IPs
   ip_whitelist: []
+  # - "127.0.0.1"
+  # - "192.168.1.100"
 
-# 对象存储配置 (可选，默认使用本地存储)
-storage:
-  # type: local 或 minio
-  type: local
-  # 本地存储路径
-  local_path: ./storage
-  
-  # MinIO 配置 (当 type: minio 时启用)
-  # endpoint: "localhost:9000"
-  # access_key: "minioadmin"
-  # secret_key: "minioadmin"
-  # use_ssl: false
-  
-  # 存储桶名称 (可选，使用默认值)
-  # repo_bucket: "repos"
-  # ssh_key_bucket: "ssh-keys"
-  # audit_log_bucket: "audit-logs"
-  # backup_bucket: "backups"
+# 4. Debug Mode
+# Enable for verbose logging
+debug: false
 
-# 分布式锁配置 (可选，默认使用内存锁)
-lock:
-  # type: memory 或 redis
-  type: memory
-  
-  # Redis 配置 (当 type: redis 时启用)
-  # redis_addr: "localhost:6379"
-  # redis_password: ""
-  # redis_db: 0
+# 5. RPC Configuration
+rpc:
+  # RPC service listening port
+  # Default: 8888
+  port: 8888
