@@ -1,6 +1,8 @@
 package git
 
 import (
+	"crypto/x509"
+	"encoding/pem"
 	"fmt"
 	"io"
 	"log"
@@ -156,8 +158,35 @@ func (s *GitService) testConnectionWithGitCommand(url, privateKey, passphrase st
 	}
 	defer os.Remove(tmpFile.Name())
 
+	// 处理私钥内容
+	keyContent := privateKey
+	if !strings.HasSuffix(keyContent, "\n") {
+		keyContent += "\n"
+	}
+
+	// 如果有 passphrase，需要解密私钥
+	if passphrase != "" {
+		// 解析加密的私钥
+		rawKey, err := ssh2.ParseRawPrivateKeyWithPassphrase([]byte(keyContent), []byte(passphrase))
+		if err != nil {
+			return fmt.Errorf("failed to parse encrypted private key: %v", err)
+		}
+
+		// 重新编码为无密码的 PEM 格式
+		pemBytes, err := x509.MarshalPKCS8PrivateKey(rawKey)
+		if err != nil {
+			return fmt.Errorf("failed to marshal private key: %v", err)
+		}
+
+		pemBlock := &pem.Block{
+			Type:  "PRIVATE KEY",
+			Bytes: pemBytes,
+		}
+		keyContent = string(pem.EncodeToMemory(pemBlock))
+	}
+
 	// 写入私钥内容
-	if _, err := tmpFile.WriteString(privateKey); err != nil {
+	if _, err := tmpFile.WriteString(keyContent); err != nil {
 		tmpFile.Close()
 		return fmt.Errorf("failed to write key file: %v", err)
 	}
@@ -337,7 +366,7 @@ func (s *GitService) FetchWithAuthMethod(path, remoteURL string, auth transport.
 	return err
 }
 
-// FetchWithDBKey 使用数据库SSH密钥进行fetch（使用原生git命令，更可靠）
+// FetchWithDBKey 使用数据库 SSH密钥进行 fetch（使用原生 git 命令，更可靠）
 func (s *GitService) FetchWithDBKey(path, remoteURL, privateKey, passphrase string, progress io.Writer, refSpecs ...string) error {
 	// 创建临时私钥文件
 	tmpFile, err := os.CreateTemp("", "git_ssh_key_*")
@@ -346,7 +375,34 @@ func (s *GitService) FetchWithDBKey(path, remoteURL, privateKey, passphrase stri
 	}
 	defer os.Remove(tmpFile.Name())
 
-	if _, err := tmpFile.WriteString(privateKey); err != nil {
+	// 处理私钥内容
+	keyContent := privateKey
+	if !strings.HasSuffix(keyContent, "\n") {
+		keyContent += "\n"
+	}
+
+	// 如果有 passphrase，需要解密私钥
+	if passphrase != "" {
+		// 解析加密的私钥
+		rawKey, err := ssh2.ParseRawPrivateKeyWithPassphrase([]byte(keyContent), []byte(passphrase))
+		if err != nil {
+			return fmt.Errorf("failed to parse encrypted private key: %v", err)
+		}
+
+		// 重新编码为无密码的 PEM 格式
+		pemBytes, err := x509.MarshalPKCS8PrivateKey(rawKey)
+		if err != nil {
+			return fmt.Errorf("failed to marshal private key: %v", err)
+		}
+
+		pemBlock := &pem.Block{
+			Type:  "PRIVATE KEY",
+			Bytes: pemBytes,
+		}
+		keyContent = string(pem.EncodeToMemory(pemBlock))
+	}
+
+	if _, err := tmpFile.WriteString(keyContent); err != nil {
 		tmpFile.Close()
 		return fmt.Errorf("failed to write key file: %v", err)
 	}
@@ -427,7 +483,7 @@ func (s *GitService) CloneWithAuthMethod(remoteURL, localPath string, auth trans
 	return err
 }
 
-// CloneWithDBKey 使用数据库SSH密钥进行克隆（使用原生git命令，更可靠）
+// CloneWithDBKey 使用数据库 SSH密钥进行克隆（使用原生 git 命令，更可靠）
 func (s *GitService) CloneWithDBKey(remoteURL, localPath, privateKey, passphrase string, progressChan chan string) error {
 	// 创建临时私钥文件
 	tmpFile, err := os.CreateTemp("", "git_ssh_key_*")
@@ -436,7 +492,34 @@ func (s *GitService) CloneWithDBKey(remoteURL, localPath, privateKey, passphrase
 	}
 	defer os.Remove(tmpFile.Name())
 
-	if _, err := tmpFile.WriteString(privateKey); err != nil {
+	// 处理私钥内容
+	keyContent := privateKey
+	if !strings.HasSuffix(keyContent, "\n") {
+		keyContent += "\n"
+	}
+
+	// 如果有 passphrase，需要解密私钥
+	if passphrase != "" {
+		// 解析加密的私钥
+		rawKey, err := ssh2.ParseRawPrivateKeyWithPassphrase([]byte(keyContent), []byte(passphrase))
+		if err != nil {
+			return fmt.Errorf("failed to parse encrypted private key: %v", err)
+		}
+
+		// 重新编码为无密码的 PEM 格式
+		pemBytes, err := x509.MarshalPKCS8PrivateKey(rawKey)
+		if err != nil {
+			return fmt.Errorf("failed to marshal private key: %v", err)
+		}
+
+		pemBlock := &pem.Block{
+			Type:  "PRIVATE KEY",
+			Bytes: pemBytes,
+		}
+		keyContent = string(pem.EncodeToMemory(pemBlock))
+	}
+
+	if _, err := tmpFile.WriteString(keyContent); err != nil {
 		tmpFile.Close()
 		return fmt.Errorf("failed to write key file: %v", err)
 	}
@@ -676,7 +759,7 @@ func (s *GitService) PushWithAuthMethod(path, targetRemoteURL, sourceHash, targe
 	return err
 }
 
-// PushWithDBKey 使用数据库SSH密钥进行push（使用原生git命令，更可靠）
+// PushWithDBKey 使用数据库 SSH密钥进行 push（使用原生 git 命令，更可靠）
 func (s *GitService) PushWithDBKey(path, targetRemoteURL, sourceHash, targetBranch, privateKey, passphrase string, options []string, progress io.Writer) error {
 	// 创建临时私钥文件
 	tmpFile, err := os.CreateTemp("", "git_ssh_key_*")
@@ -685,7 +768,34 @@ func (s *GitService) PushWithDBKey(path, targetRemoteURL, sourceHash, targetBran
 	}
 	defer os.Remove(tmpFile.Name())
 
-	if _, err := tmpFile.WriteString(privateKey); err != nil {
+	// 处理私钥内容
+	keyContent := privateKey
+	if !strings.HasSuffix(keyContent, "\n") {
+		keyContent += "\n"
+	}
+
+	// 如果有 passphrase，需要解密私钥
+	if passphrase != "" {
+		// 解析加密的私钥
+		rawKey, err := ssh2.ParseRawPrivateKeyWithPassphrase([]byte(keyContent), []byte(passphrase))
+		if err != nil {
+			return fmt.Errorf("failed to parse encrypted private key: %v", err)
+		}
+
+		// 重新编码为无密码的 PEM 格式
+		pemBytes, err := x509.MarshalPKCS8PrivateKey(rawKey)
+		if err != nil {
+			return fmt.Errorf("failed to marshal private key: %v", err)
+		}
+
+		pemBlock := &pem.Block{
+			Type:  "PRIVATE KEY",
+			Bytes: pemBytes,
+		}
+		keyContent = string(pem.EncodeToMemory(pemBlock))
+	}
+
+	if _, err := tmpFile.WriteString(keyContent); err != nil {
 		tmpFile.Close()
 		return fmt.Errorf("failed to write key file: %v", err)
 	}
