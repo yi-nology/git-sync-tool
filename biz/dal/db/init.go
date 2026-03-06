@@ -7,9 +7,9 @@ import (
 	"github.com/yi-nology/git-manage-service/biz/model/po"
 	"github.com/yi-nology/git-manage-service/pkg/configs"
 
+	sqlite "github.com/glebarez/sqlite"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
-	sqlite "github.com/glebarez/sqlite"
 	"gorm.io/gorm"
 )
 
@@ -62,13 +62,14 @@ func Init() {
 		migrator.HasTable(&po.NotificationChannel{}) &&
 		migrator.HasTable(&po.NotificationEventTemplate{}) &&
 		migrator.HasTable(&po.SSHKey{}) &&
-		migrator.HasTable(&po.BackupRecord{}) {
+		migrator.HasTable(&po.BackupRecord{}) &&
+		migrator.HasTable(&po.Credential{}) {
 		log.Println("Database tables exist, skipping schema migration.")
 		return
 	}
 
 	// Migrate the schema
-	err = DB.AutoMigrate(&po.Repo{}, &po.SyncTask{}, &po.SyncRun{}, &po.AuditLog{}, &po.SystemConfig{}, &po.CommitStat{}, &po.NotificationChannel{}, &po.NotificationEventTemplate{}, &po.SSHKey{}, &po.BackupRecord{})
+	err = DB.AutoMigrate(&po.Repo{}, &po.SyncTask{}, &po.SyncRun{}, &po.AuditLog{}, &po.SystemConfig{}, &po.CommitStat{}, &po.NotificationChannel{}, &po.NotificationEventTemplate{}, &po.SSHKey{}, &po.BackupRecord{}, &po.Credential{})
 	if err != nil {
 		log.Fatal("failed to migrate database: ", err)
 	}

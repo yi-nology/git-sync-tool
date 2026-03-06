@@ -15,15 +15,17 @@ import (
 )
 
 // AuthService 统一认证解析服务
-// 支持本地文件密钥和数据库存储的SSH密钥
+// 支持本地文件密钥、数据库存储的SSH密钥和凭证池
 type AuthService struct {
-	sshKeyDAO *db.SSHKeyDAO
+	sshKeyDAO     *db.SSHKeyDAO
+	credentialDAO *db.CredentialDAO
 }
 
 // NewAuthService 创建认证服务实例
 func NewAuthService() *AuthService {
 	return &AuthService{
-		sshKeyDAO: db.NewSSHKeyDAO(),
+		sshKeyDAO:     db.NewSSHKeyDAO(),
+		credentialDAO: db.NewCredentialDAO(),
 	}
 }
 
@@ -173,4 +175,117 @@ func GetAuthInfoForRemote(remoteAuths map[string]domain.AuthInfo, remoteName str
 		Secret: defaultAuthSecret,
 		Source: "local",
 	}
+}
+
+// ResolveCredential 从凭证 ID 解析认证方法（用于 go-git）
+func (s *AuthService) ResolveCredential(credentialID uint) (transport.AuthMethod, error) {
+	if credentialID == 0 {
+		return nil, nil
+	}
+
+	cred, err := s.credentialDAO.FindByID(credentialID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load credential %d: %w", credentialID, err)
+	}
+
+	switch cred.Type {
+	case "ssh_key":
+		if cred.SSHKeyID > 0 {
+			return s.resolveDBSSHKey(cred.SSHKeyID)
+		}
+		if cred.SSHKeyPath != "" {
+			return s.resolveLocalSSHKey(cred.SSHKeyPath, cred.Secret)
+		}
+		return nil, fmt.Errorf("ssh_key credential %d has no key configured", credentialID)
+	case "http_basic", "http_token":
+		if cred.Username == "" && cred.Secret == "" {
+			return nil, nil
+		}
+		return &http.BasicAuth{
+			Username: cred.Username,
+			Password: cred.Secret,
+		}, nil
+	default:
+		return nil, fmt.Errorf("unknown credential type: %s", cred.Type)
+	}
+}
+
+// GetCredentialKeyContent 获取凭证中 SSH 密钥的原始内容（用于原生 git 命令）
+// 返回解密后的私钥和空密码（已转换为 PKCS8 无密码格式）
+func (s *AuthService) GetCredentialKeyContent(credentialID uint) (privateKey, passphrase string, err error) {
+	if credentialID == 0 {
+		return "", "", fmt.Errorf("credential ID is 0")
+	}
+
+	cred, err := s.credentialDAO.FindByID(credentialID)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to load credential %d: %w", credentialID, err)
+	}
+
+	if cred.Type != "ssh_key" {
+		return "", "", fmt.Errorf("credential %d is not SSH type", credentialID)
+	}
+
+	if cred.SSHKeyID > 0 {
+		return s.GetDBSSHKeyContent(cred.SSHKeyID)
+	}
+
+	// 本地密钥：路径 + passphrase（如果有）
+	// 对于原生 git 命令，需要使用路径而非内容
+	return "", "", fmt.Errorf("local key credentials should use key path directly, not content")
+}
+
+// IsCredentialDBKey 判断凭证是否使用数据库 SSH 密钥
+func (s *AuthService) IsCredentialDBKey(credentialID uint) bool {
+	if credentialID == 0 {
+		return false
+	}
+	cred, err := s.credentialDAO.FindByID(credentialID)
+	if err != nil {
+		return false
+	}
+	return cred.Type == "ssh_key" && cred.SSHKeyID > 0
+}
+
+// ResolveCredentialForRemote 为指定远程解析凭证
+// 优先级：remote_credentials[remoteName] > default_credential_id > 旧 RemoteAuths > 旧默认认证
+func (s *AuthService) ResolveCredentialForRemote(
+	remoteCredentials map[string]uint,
+	defaultCredentialID uint,
+	remoteAuths map[string]domain.AuthInfo,
+	remoteName string,
+	defaultAuthType, defaultAuthKey, defaultAuthSecret string,
+) (transport.AuthMethod, bool, error) {
+	// 1. 尝试新凭证系统 - 远程专属凭证
+	if remoteCredentials != nil {
+		if credID, ok := remoteCredentials[remoteName]; ok && credID > 0 {
+			auth, err := s.ResolveCredential(credID)
+			isDBKey := s.IsCredentialDBKey(credID)
+			return auth, isDBKey, err
+		}
+	}
+
+	// 2. 尝试新凭证系统 - 默认凭证
+	if defaultCredentialID > 0 {
+		auth, err := s.ResolveCredential(defaultCredentialID)
+		isDBKey := s.IsCredentialDBKey(defaultCredentialID)
+		return auth, isDBKey, err
+	}
+
+	// 3. 回退到旧系统
+	authInfo := GetAuthInfoForRemote(remoteAuths, remoteName, defaultAuthType, defaultAuthKey, defaultAuthSecret)
+	isDBKey := authInfo.Type == "ssh" && authInfo.Source == "database" && authInfo.SSHKeyID > 0
+	auth, err := s.ResolveAuth(authInfo)
+	return auth, isDBKey, err
+}
+
+// GetCredentialIDForRemote 获取远程对应的凭证 ID
+// 返回 0 表示该远程没有配置凭证（使用旧系统或无认证）
+func GetCredentialIDForRemote(remoteCredentials map[string]uint, defaultCredentialID uint, remoteName string) uint {
+	if remoteCredentials != nil {
+		if credID, ok := remoteCredentials[remoteName]; ok && credID > 0 {
+			return credID
+		}
+	}
+	return defaultCredentialID
 }

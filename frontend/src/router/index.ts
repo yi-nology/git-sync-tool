@@ -19,6 +19,18 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '仓库管理' },
       },
       {
+        path: 'repos/register',
+        name: 'RepoRegister',
+        component: () => import('@/views/repo/RepoRegisterPage.vue'),
+        meta: { title: '注册仓库' },
+      },
+      {
+        path: 'repos/clone',
+        name: 'RepoClone',
+        component: () => import('@/views/repo/RepoClonePage.vue'),
+        meta: { title: '克隆仓库' },
+      },
+      {
         path: 'repos/:repoKey',
         name: 'RepoDetail',
         component: () => import('@/views/repo/RepoDetailPage.vue'),
@@ -65,6 +77,12 @@ const routes: RouteRecordRaw[] = [
         name: 'SSHKeys',
         component: () => import('@/views/settings/SSHKeysPage.vue'),
         meta: { title: 'SSH 密钥管理' },
+      },
+      {
+        path: 'settings/credentials',
+        name: 'Credentials',
+        component: () => import('@/views/settings/CredentialPage.vue'),
+        meta: { title: '凭证管理' },
       },
     ],
   },

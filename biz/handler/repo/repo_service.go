@@ -97,14 +97,16 @@ func Create(ctx context.Context, c *app.RequestContext) {
 	}
 
 	repo := po.Repo{
-		Key:         uuid.New().String(),
-		Name:        req.Name,
-		Path:        req.Path,
-		RemoteURL:   req.RemoteURL,
-		AuthType:    req.AuthType,
-		AuthKey:     req.AuthKey,
-		AuthSecret:  req.AuthSecret,
-		RemoteAuths: req.RemoteAuths,
+		Key:                 uuid.New().String(),
+		Name:                req.Name,
+		Path:                req.Path,
+		RemoteURL:           req.RemoteURL,
+		AuthType:            req.AuthType,
+		AuthKey:             req.AuthKey,
+		AuthSecret:          req.AuthSecret,
+		RemoteAuths:         req.RemoteAuths,
+		DefaultCredentialID: req.DefaultCredentialID,
+		RemoteCredentials:   req.RemoteCredentials,
 	}
 	if err := db.NewRepoDAO().Create(&repo); err != nil {
 		response.InternalServerError(c, err.Error())
@@ -188,6 +190,8 @@ func Update(ctx context.Context, c *app.RequestContext) {
 	repo.AuthKey = req.AuthKey
 	repo.AuthSecret = req.AuthSecret
 	repo.RemoteAuths = req.RemoteAuths
+	repo.DefaultCredentialID = req.DefaultCredentialID
+	repo.RemoteCredentials = req.RemoteCredentials
 
 	if err := repoDAO.Save(repo); err != nil {
 		response.InternalServerError(c, err.Error())
@@ -293,8 +297,29 @@ func Clone(ctx context.Context, c *app.RequestContext) {
 		var err error
 		authSvc := auth.NewAuthService()
 
-		// 如果指定了数据库SSH密钥，使用原生git命令（更可靠）
-		if req.SSHKeyID > 0 {
+		// 优先使用新凭证系统
+		if req.CredentialID > 0 {
+			if authSvc.IsCredentialDBKey(req.CredentialID) {
+				// 数据库 SSH 密钥凭证 — 使用原生 git 命令
+				privateKey, passphrase, keyErr := authSvc.GetCredentialKeyContent(req.CredentialID)
+				if keyErr != nil {
+					git.GlobalTaskManager.UpdateStatus(taskID, "failed", "Failed to load credential key: "+keyErr.Error())
+					close(progressChan)
+					return
+				}
+				git.GlobalTaskManager.AppendLog(taskID, "Using credential (DB SSH key) for clone...")
+				err = gitSvc.CloneWithDBKey(req.RemoteURL, req.LocalPath, privateKey, passphrase, progressChan)
+			} else {
+				// go-git 方式（HTTP 或本地 SSH 密钥凭证）
+				authMethod, authErr := authSvc.ResolveCredential(req.CredentialID)
+				if authErr != nil {
+					git.GlobalTaskManager.AppendLog(taskID, "Warning: credential resolution failed: "+authErr.Error())
+				}
+				git.GlobalTaskManager.AppendLog(taskID, "Using credential for clone...")
+				err = gitSvc.CloneWithAuthMethod(req.RemoteURL, req.LocalPath, authMethod, progressChan)
+			}
+		} else if req.SSHKeyID > 0 {
+			// 兼容旧接口：数据库SSH密钥
 			privateKey, passphrase, keyErr := authSvc.GetDBSSHKeyContent(req.SSHKeyID)
 			if keyErr != nil {
 				git.GlobalTaskManager.UpdateStatus(taskID, "failed", "Failed to load SSH key: "+keyErr.Error())
@@ -304,7 +329,7 @@ func Clone(ctx context.Context, c *app.RequestContext) {
 			git.GlobalTaskManager.AppendLog(taskID, "Using database SSH key for clone...")
 			err = gitSvc.CloneWithDBKey(req.RemoteURL, req.LocalPath, privateKey, passphrase, progressChan)
 		} else {
-			// 使用 go-git 方式
+			// 兼容旧接口：go-git 方式
 			authMethod, authErr := authSvc.ResolveAuthFromParams(req.AuthType, req.AuthKey, req.AuthSecret, 0)
 			if authErr != nil {
 				git.GlobalTaskManager.AppendLog(taskID, "Warning: auth resolution failed: "+authErr.Error())
@@ -322,13 +347,14 @@ func Clone(ctx context.Context, c *app.RequestContext) {
 
 		name := filepath.Base(req.LocalPath)
 		repo := po.Repo{
-			Key:        uuid.New().String(),
-			Name:       name,
-			Path:       req.LocalPath,
-			RemoteURL:  req.RemoteURL,
-			AuthType:   req.AuthType,
-			AuthKey:    req.AuthKey,
-			AuthSecret: req.AuthSecret,
+			Key:                 uuid.New().String(),
+			Name:                name,
+			Path:                req.LocalPath,
+			RemoteURL:           req.RemoteURL,
+			AuthType:            req.AuthType,
+			AuthKey:             req.AuthKey,
+			AuthSecret:          req.AuthSecret,
+			DefaultCredentialID: req.CredentialID,
 		}
 		db.NewRepoDAO().Create(&repo)
 
@@ -363,10 +389,24 @@ func Fetch(ctx context.Context, c *app.RequestContext) {
 	gitSvc := git.NewGitService()
 	authSvc := auth.NewAuthService()
 
-	// 检查是否有任何远程使用数据库SSH密钥
+	// 检查是否有任何远程使用数据库SSH密钥（新凭证系统 + 旧系统）
 	useDBKey := false
 	var dbPrivateKey, dbPassphrase string
-	if repo.RemoteAuths != nil {
+
+	// 优先检查新凭证系统
+	if repo.DefaultCredentialID > 0 && authSvc.IsCredentialDBKey(repo.DefaultCredentialID) {
+		pk, pp, err := authSvc.GetCredentialKeyContent(repo.DefaultCredentialID)
+		if err != nil {
+			response.InternalServerError(c, "failed to resolve credential key: "+err.Error())
+			return
+		}
+		dbPrivateKey = pk
+		dbPassphrase = pp
+		useDBKey = true
+	}
+
+	// 如果新系统没有配置，回退到旧系统
+	if !useDBKey && repo.RemoteAuths != nil {
 		for _, authInfo := range repo.RemoteAuths {
 			if authInfo.Type == "ssh" && authInfo.Source == "database" && authInfo.SSHKeyID > 0 {
 				pk, pp, err := authSvc.GetDBSSHKeyContent(authInfo.SSHKeyID)
