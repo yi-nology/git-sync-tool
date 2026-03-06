@@ -282,42 +282,64 @@
               <el-input v-model="editForm.path" />
             </el-form-item>
             <el-form-item label="远程 URL">
-              <el-input v-model="editForm.remote_url" placeholder="自动从 Remotes 填充" />
+              <div class="url-input-group">
+                <el-radio-group v-model="editUrlMode" size="small" class="url-mode-switch">
+                  <el-radio-button value="ssh">SSH</el-radio-button>
+                  <el-radio-button value="https">HTTPS</el-radio-button>
+                </el-radio-group>
+                <el-input
+                  v-model="editForm.remote_url"
+                  :placeholder="editUrlMode === 'ssh' ? 'git@github.com:user/repo.git' : 'https://github.com/user/repo.git'"
+                  @blur="validateEditUrl"
+                  :class="{ 'is-error-input': editUrlError }"
+                />
+              </div>
+              <div v-if="editUrlError" class="field-error">{{ editUrlError }}</div>
             </el-form-item>
           </el-form>
         </el-tab-pane>
 
-        <el-tab-pane label="远程仓库 (Remotes) 配置" name="remote">
+        <el-tab-pane label="认证与远程配置" name="remote">
+          <el-form label-width="100px" style="margin-bottom: 16px;">
+            <el-form-item label="默认凭证">
+              <CredentialSelector
+                v-model="editDefaultCredentialId"
+                :url="editForm.remote_url"
+                placeholder="选择默认凭证（可选）"
+              />
+            </el-form-item>
+          </el-form>
+
           <div style="margin-bottom: 12px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
               <span style="font-weight: 600;">远程仓库 (Remotes)</span>
               <el-button size="small" type="primary" @click="addEditRemote">+ 新增</el-button>
             </div>
-            <el-table :data="editRemotes" border size="small">
-              <el-table-column label="Name" width="120">
-                <template #default="{ row }">
-                  <el-input v-model="row.name" size="small" placeholder="origin" />
-                </template>
-              </el-table-column>
-              <el-table-column label="URL">
-                <template #default="{ row }">
-                  <el-input v-model="row.fetch_url" size="small" placeholder="Fetch URL" class="mb-1" />
-                  <el-input v-model="row.push_url" size="small" placeholder="Push URL (选填)" />
-                </template>
-              </el-table-column>
-              <el-table-column label="Mirror" width="70" align="center">
-                <template #default="{ row }">
-                  <el-checkbox v-model="row.is_mirror" />
-                </template>
-              </el-table-column>
-              <el-table-column label="操作" width="160" align="center">
-                <template #default="{ row, $index }">
-                  <el-button size="small" :icon="Connection" circle @click="testEditRemote($index)" title="测试连接" :loading="row._testing" />
-                  <el-button size="small" :icon="Lock" circle :type="row._auth?.type && row._auth.type !== 'none' ? 'success' : 'default'" @click="openEditRemoteAuth($index)" title="配置认证" />
-                  <el-button size="small" :icon="Delete" circle type="danger" @click="editRemotes.splice($index, 1)" title="删除" />
-                </template>
-              </el-table-column>
-            </el-table>
+            <div v-for="(remote, index) in editRemotes" :key="index" class="edit-remote-item">
+              <el-card shadow="hover" style="margin-bottom: 8px;">
+                <div class="edit-remote-row">
+                  <el-input v-model="remote.name" size="small" placeholder="名称 (如 origin)" style="width: 120px;" />
+                  <el-radio-group v-model="remoteUrlModes[index]" size="small" class="url-mode-switch-sm">
+                    <el-radio-button value="ssh">SSH</el-radio-button>
+                    <el-radio-button value="https">HTTPS</el-radio-button>
+                  </el-radio-group>
+                  <el-input v-model="remote.fetch_url" size="small" :placeholder="remoteUrlModes[index] === 'ssh' ? 'git@host:user/repo.git' : 'https://host/repo.git'" style="flex: 1;" @blur="validateRemoteUrl(index)" :class="{ 'is-error-input': remoteUrlErrors[index] }" />
+                  <el-button size="small" :icon="Connection" circle @click="testEditRemote(index)" title="测试连接" :loading="remote._testing" />
+                  <el-button size="small" :icon="Delete" circle type="danger" @click="removeEditRemote(index)" title="删除" />
+                </div>
+                <div v-if="remoteUrlErrors[index]" class="field-error" style="margin-left: 128px;">{{ remoteUrlErrors[index] }}</div>
+                <div class="edit-remote-cred">
+                  <span class="cred-label">凭证:</span>
+                  <CredentialSelector
+                    :model-value="editRemoteCredentials[remote.name]"
+                    :url="remote.fetch_url"
+                    placeholder="选择凭证（可选）"
+                    @update:model-value="(v) => updateEditRemoteCred(remote.name, v)"
+                  />
+                </div>
+              </el-card>
+            </div>
+            <el-empty v-if="editRemotes.length === 0" description="无远程仓库配置" :image-size="60" />
           </div>
 
           <!-- Tracking Branches -->
@@ -340,58 +362,7 @@
       </template>
     </el-dialog>
 
-    <!-- Remote Auth Dialog -->
-    <el-dialog v-model="showRemoteAuthDialog" :title="`配置认证: ${remoteAuthName}`" width="480px" destroy-on-close>
-      <el-form label-width="110px">
-        <el-form-item label="认证方式">
-          <el-select v-model="remoteAuthForm.type" style="width: 100%">
-            <el-option label="无 (None)" value="none" />
-            <el-option label="SSH 密钥" value="ssh" />
-            <el-option label="用户名/密码 (HTTP)" value="http" />
-          </el-select>
-        </el-form-item>
-        <template v-if="remoteAuthForm.type === 'ssh'">
-          <el-form-item label="密钥来源">
-            <el-radio-group v-model="remoteAuthForm.source">
-              <el-radio value="local">本地文件</el-radio>
-              <el-radio value="database">数据库密钥</el-radio>
-            </el-radio-group>
-          </el-form-item>
-          <template v-if="remoteAuthForm.source === 'local'">
-            <el-form-item label="SSH 密钥">
-              <el-select v-model="remoteAuthForm.key" filterable allow-create placeholder="手动输入路径..." style="width: 100%">
-                <el-option v-for="k in sshKeyList" :key="k" :label="k" :value="k" />
-              </el-select>
-            </el-form-item>
-            <el-form-item label="密钥密码">
-              <el-input v-model="remoteAuthForm.secret" type="password" show-password placeholder="Passphrase (可选)" />
-            </el-form-item>
-          </template>
-          <template v-if="remoteAuthForm.source === 'database'">
-            <el-form-item label="选择密钥">
-              <el-select v-model="remoteAuthForm.ssh_key_id" placeholder="请选择数据库密钥" style="width: 100%">
-                <el-option v-for="k in dbSSHKeyList" :key="k.id" :label="`${k.name} (${k.key_type})`" :value="k.id" />
-              </el-select>
-            </el-form-item>
-            <div v-if="selectedDbKeyInfo" style="padding: 0 110px; color: #909399; font-size: 12px;">
-              {{ selectedDbKeyInfo }}
-            </div>
-          </template>
-        </template>
-        <template v-if="remoteAuthForm.type === 'http'">
-          <el-form-item label="用户名">
-            <el-input v-model="remoteAuthForm.key" placeholder="用户名" />
-          </el-form-item>
-          <el-form-item label="密码 / Token">
-            <el-input v-model="remoteAuthForm.secret" type="password" show-password placeholder="密码或 Token" />
-          </el-form-item>
-        </template>
-      </el-form>
-      <template #footer>
-        <el-button @click="showRemoteAuthDialog = false">取消</el-button>
-        <el-button type="primary" @click="saveEditRemoteAuth">确定</el-button>
-      </template>
-    </el-dialog>
+
 
     <!-- Exclude Config Dialog -->
     <el-dialog v-model="showExcludeDialog" title="排除配置" width="550px" destroy-on-close>
@@ -465,15 +436,14 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ArrowLeft, Share, Switch, Refresh, Edit, Search, Download, Setting, Plus, Top, Delete, CopyDocument, Connection, Lock } from '@element-plus/icons-vue'
+import { ArrowLeft, Share, Switch, Refresh, Edit, Search, Download, Setting, Plus, Top, Delete, CopyDocument, Connection } from '@element-plus/icons-vue'
 import { getRepoDetail, scanRepo, updateRepo, fetchRepo } from '@/api/modules/repo'
-import { getSSHKeys, testConnection } from '@/api/modules/system'
-import { listDBSSHKeys, type DBSSHKey } from '@/api/modules/sshkey'
+import { testConnection } from '@/api/modules/system'
 import { getStatsAnalyze, getStatsAuthors, getStatsBranches, getStatsCommits, getLineStats, getLineStatsConfig, saveLineStatsConfig, exportStatsCsv } from '@/api/modules/stats'
 import { getVersionList, getCurrentVersion, getNextVersion } from '@/api/modules/version'
 import type { VersionTag, NextVersionInfo } from '@/api/modules/version'
 import { createTag, deleteTag, pushTag } from '@/api/modules/branch'
-import type { RepoDTO, ScanResult, GitRemote, AuthInfo, TrackingBranch } from '@/types/repo'
+import type { RepoDTO, ScanResult, GitRemote, TrackingBranch } from '@/types/repo'
 import type { StatsResponse, LineStatsResponse } from '@/types/stats'
 import { formatDate, formatRelativeTime } from '@/utils/format'
 import GitStatsCharts from '@/components/stats/GitStatsCharts.vue'
@@ -482,6 +452,8 @@ import FileBrowser from '@/components/repo/FileBrowser.vue'
 import CommitSearch from '@/components/repo/CommitSearch.vue'
 import StashManager from '@/components/repo/StashManager.vue'
 import SubmoduleManager from '@/components/repo/SubmoduleManager.vue'
+import CredentialSelector from '@/components/credential/CredentialSelector.vue'
+import { validateGitRemoteUrl, detectGitProtocol } from '@/utils/git'
 
 const route = useRoute()
 const repoKey = route.params.repoKey as string
@@ -538,19 +510,16 @@ const editActiveTab = ref('basic')
 const editForm = ref({ name: '', path: '', remote_url: '' })
 
 interface EditRemoteRow extends GitRemote {
-  _auth?: AuthInfo
   _testing?: boolean
 }
 const editRemotes = ref<EditRemoteRow[]>([])
 const editTrackingBranches = ref<TrackingBranch[]>([])
-
-// Remote Auth
-const showRemoteAuthDialog = ref(false)
-const remoteAuthName = ref('')
-const remoteAuthIndex = ref(-1)
-const remoteAuthForm = ref<AuthInfo>({ type: 'none', key: '', secret: '', source: 'local', ssh_key_id: 0 })
-const sshKeyList = ref<string[]>([])
-const dbSSHKeyList = ref<DBSSHKey[]>([])
+const editDefaultCredentialId = ref<number | undefined>()
+const editRemoteCredentials = ref<Record<string, number | undefined>>({})
+const editUrlError = ref('')
+const remoteUrlErrors = ref<Record<number, string>>({})
+const editUrlMode = ref<'ssh' | 'https'>('ssh')
+const remoteUrlModes = ref<Record<number, 'ssh' | 'https'>>({})
 
 // Exclude config
 const showExcludeDialog = ref(false)
@@ -785,21 +754,34 @@ function openEditDialog() {
   editActiveTab.value = 'basic'
   editRemotes.value = []
   editTrackingBranches.value = []
+  editDefaultCredentialId.value = repo.value.default_credential_id
+  editRemoteCredentials.value = { ...(repo.value.remote_credentials || {}) }
+  editUrlError.value = ''
+  remoteUrlErrors.value = {}
+  remoteUrlModes.value = {}
+  // 检测主 URL 协议模式
+  const mainProto = detectGitProtocol(repo.value.remote_url || '')
+  editUrlMode.value = mainProto === 'http' ? 'https' : 'ssh'
   showEditDialog.value = true
 
   // Scan repo to populate remotes & tracking branches
   if (repo.value.path) {
-    const storedAuths = repo.value.remote_auths || {}
     scanRepo(repo.value.path).then(result => {
       editRemotes.value = (result.remotes || []).map(r => ({
         ...r,
-        _auth: storedAuths[r.name] || { type: 'none', key: '', secret: '', source: 'local', ssh_key_id: 0 },
         _testing: false,
       }))
       editTrackingBranches.value = result.branches || []
+      // 检测每个 remote 的协议模式
+      editRemotes.value.forEach((r, i) => {
+        const p = detectGitProtocol(r.fetch_url || '')
+        remoteUrlModes.value[i] = p === 'http' ? 'https' : 'ssh'
+      })
       // Auto-fill remote_url from first remote if empty
       if (!editForm.value.remote_url && editRemotes.value.length > 0) {
         editForm.value.remote_url = editRemotes.value[0]!.fetch_url
+        const p = detectGitProtocol(editForm.value.remote_url)
+        editUrlMode.value = p === 'http' ? 'https' : 'ssh'
       }
     }).catch(() => { /* ignore scan failure */ })
   }
@@ -809,6 +791,28 @@ async function handleSaveEdit() {
   if (!editForm.value.name || !editForm.value.path) {
     ElMessage.warning('名称和路径不能为空')
     return
+  }
+  // 校验远程 URL
+  if (editForm.value.remote_url) {
+    const err = validateGitRemoteUrl(editForm.value.remote_url)
+    if (err) {
+      editUrlError.value = err
+      editActiveTab.value = 'basic'
+      return
+    }
+  }
+  // 校验各远程的 fetch_url
+  for (let i = 0; i < editRemotes.value.length; i++) {
+    const r = editRemotes.value[i]!
+    if (r.fetch_url) {
+      const err = validateGitRemoteUrl(r.fetch_url)
+      if (err) {
+        remoteUrlErrors.value[i] = err
+        editActiveTab.value = 'remote'
+        ElMessage.warning(`远程 "${r.name || 'unnamed'}" 的 URL 格式不正确`)
+        return
+      }
+    }
   }
   editSaving.value = true
   try {
@@ -821,18 +825,11 @@ async function handleSaveEdit() {
         is_mirror: r.is_mirror,
       }))
 
-    const remoteAuths: Record<string, AuthInfo> = {}
-    editRemotes.value.forEach(r => {
-      if (r.name && r._auth && r._auth.type !== 'none') {
-        remoteAuths[r.name] = { 
-          type: r._auth.type, 
-          key: r._auth.key, 
-          secret: r._auth.secret,
-          source: r._auth.source || 'local',
-          ssh_key_id: r._auth.ssh_key_id || 0
-        }
-      }
-    })
+    // Build remote_credentials map
+    const rc: Record<string, number> = {}
+    for (const [k, v] of Object.entries(editRemoteCredentials.value)) {
+      if (v) rc[k] = v
+    }
 
     await updateRepo({
       key: repoKey,
@@ -840,7 +837,8 @@ async function handleSaveEdit() {
       path: editForm.value.path,
       remote_url: editForm.value.remote_url || undefined,
       remotes,
-      remote_auths: remoteAuths,
+      default_credential_id: editDefaultCredentialId.value,
+      remote_credentials: Object.keys(rc).length > 0 ? rc : undefined,
     })
     ElMessage.success('保存成功')
     showEditDialog.value = false
@@ -863,9 +861,53 @@ function addEditRemote() {
     fetch_url: '',
     push_url: '',
     is_mirror: false,
-    _auth: { type: 'none', key: '', secret: '', source: 'local', ssh_key_id: 0 },
     _testing: false,
   })
+}
+
+function updateEditRemoteCred(name: string, val: number | undefined) {
+  if (val) {
+    editRemoteCredentials.value[name] = val
+  } else {
+    delete editRemoteCredentials.value[name]
+  }
+}
+
+function validateEditUrl() {
+  const url = editForm.value.remote_url
+  if (!url) {
+    editUrlError.value = ''
+    return
+  }
+  const proto = detectGitProtocol(url)
+  if (proto === 'ssh') editUrlMode.value = 'ssh'
+  else if (proto === 'http') editUrlMode.value = 'https'
+  editUrlError.value = validateGitRemoteUrl(url)
+}
+
+function validateRemoteUrl(index: number) {
+  const remote = editRemotes.value[index]
+  if (!remote) return
+  if (!remote.fetch_url) {
+    delete remoteUrlErrors.value[index]
+    return
+  }
+  const proto = detectGitProtocol(remote.fetch_url)
+  if (proto === 'ssh') remoteUrlModes.value[index] = 'ssh'
+  else if (proto === 'http') remoteUrlModes.value[index] = 'https'
+  const err = validateGitRemoteUrl(remote.fetch_url)
+  if (err) {
+    remoteUrlErrors.value[index] = err
+  } else {
+    delete remoteUrlErrors.value[index]
+  }
+}
+
+function removeEditRemote(index: number) {
+  editRemotes.value.splice(index, 1)
+  // 清理对应的错误和模式记录
+  delete remoteUrlErrors.value[index]
+  delete remoteUrlModes.value[index]
 }
 
 async function testEditRemote(index: number) {
@@ -887,48 +929,6 @@ async function testEditRemote(index: number) {
   } finally {
     row._testing = false
   }
-}
-
-function openEditRemoteAuth(index: number) {
-  const row = editRemotes.value[index]
-  if (!row) return
-  remoteAuthIndex.value = index
-  remoteAuthName.value = row.name || 'New Remote'
-  remoteAuthForm.value = { 
-    type: row._auth?.type || 'none', 
-    key: row._auth?.key || '', 
-    secret: row._auth?.secret || '',
-    source: row._auth?.source || 'local',
-    ssh_key_id: row._auth?.ssh_key_id || 0
-  }
-  showRemoteAuthDialog.value = true
-  // Load local SSH keys
-  getSSHKeys().then(keys => { sshKeyList.value = keys }).catch(() => {})
-  // Load database SSH keys
-  listDBSSHKeys().then(keys => { dbSSHKeyList.value = keys }).catch(() => {})
-}
-
-// Computed property for selected database key info
-const selectedDbKeyInfo = computed(() => {
-  if (remoteAuthForm.value.source !== 'database' || !remoteAuthForm.value.ssh_key_id) return ''
-  const key = dbSSHKeyList.value.find(k => k.id === remoteAuthForm.value.ssh_key_id)
-  if (!key) return ''
-  return key.description || `创建于 ${key.created_at}`
-})
-
-function saveEditRemoteAuth() {
-  const row = editRemotes.value[remoteAuthIndex.value]
-  if (row) {
-    // If using database key, store key name for display
-    if (remoteAuthForm.value.type === 'ssh' && remoteAuthForm.value.source === 'database') {
-      const dbKey = dbSSHKeyList.value.find(k => k.id === remoteAuthForm.value.ssh_key_id)
-      if (dbKey) {
-        remoteAuthForm.value.key = dbKey.name  // Store name for display
-      }
-    }
-    row._auth = { ...remoteAuthForm.value }
-  }
-  showRemoteAuthDialog.value = false
 }
 
 async function handleExportCsv(type: string) {
@@ -1034,5 +1034,43 @@ async function handleSaveExclude() {
   font-size: 14px;
   line-height: 1.8;
   color: #606266;
+}
+.edit-remote-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.edit-remote-cred {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.edit-remote-cred .cred-label {
+  font-size: 13px;
+  color: #606266;
+  flex-shrink: 0;
+}
+.field-error {
+  color: #f56c6c;
+  font-size: 12px;
+  margin-top: 4px;
+}
+.is-error-input :deep(.el-input__wrapper) {
+  box-shadow: 0 0 0 1px #f56c6c inset;
+}
+.url-input-group {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+.url-mode-switch {
+  flex-shrink: 0;
+}
+.url-mode-switch-sm {
+  flex-shrink: 0;
+}
+.url-input-group .el-input {
+  flex: 1;
 }
 </style>

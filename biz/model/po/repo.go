@@ -14,12 +14,17 @@ type Repo struct {
 	Name       string `gorm:"uniqueIndex" json:"name"`
 	Path       string `json:"path"`
 	RemoteURL  string `json:"remote_url"`
-	AuthType   string `json:"auth_type"`   // ssh, http, none
-	AuthKey    string `json:"auth_key"`    // SSH Key Path or Username
-	AuthSecret string `json:"auth_secret"` // Passphrase or Password (Encrypted in DB)
+	AuthType   string `json:"auth_type"`   // ssh, http, none (deprecated, kept for compatibility)
+	AuthKey    string `json:"auth_key"`    // SSH Key Path or Username (deprecated)
+	AuthSecret string `json:"auth_secret"` // Passphrase or Password (Encrypted in DB) (deprecated)
 
-	RemoteAuthsJSON string                     `json:"-"`                     // Stored in DB
-	RemoteAuths     map[string]domain.AuthInfo `gorm:"-" json:"remote_auths"` // Memory & API
+	RemoteAuthsJSON string                     `json:"-"`                     // Stored in DB (deprecated)
+	RemoteAuths     map[string]domain.AuthInfo `gorm:"-" json:"remote_auths"` // Memory & API (deprecated)
+
+	// 新凭证池字段
+	DefaultCredentialID   uint            `json:"default_credential_id"`       // 默认凭证 ID
+	RemoteCredentialsJSON string          `json:"-"`                           // Stored in DB: {"origin": 1, "upstream": 2}
+	RemoteCredentials     map[string]uint `gorm:"-" json:"remote_credentials"` // Memory & API: remote name -> credential ID
 }
 
 func (Repo) TableName() string {
@@ -36,7 +41,7 @@ func (r *Repo) BeforeSave(tx *gorm.DB) (err error) {
 		r.AuthSecret = enc
 	}
 
-	// Handle RemoteAuths
+	// Handle RemoteAuths (deprecated, kept for compatibility)
 	if r.RemoteAuths != nil {
 		// Encrypt secrets in map
 		encryptedMap := make(map[string]domain.AuthInfo)
@@ -57,6 +62,15 @@ func (r *Repo) BeforeSave(tx *gorm.DB) (err error) {
 		r.RemoteAuthsJSON = string(bytes)
 	}
 
+	// Handle RemoteCredentials (new)
+	if r.RemoteCredentials != nil {
+		bytes, err := json.Marshal(r.RemoteCredentials)
+		if err != nil {
+			return err
+		}
+		r.RemoteCredentialsJSON = string(bytes)
+	}
+
 	return nil
 }
 
@@ -69,7 +83,7 @@ func (r *Repo) AfterFind(tx *gorm.DB) (err error) {
 		}
 	}
 
-	// Handle RemoteAuths
+	// Handle RemoteAuths (deprecated, kept for compatibility)
 	if r.RemoteAuthsJSON != "" {
 		var encryptedMap map[string]domain.AuthInfo
 		if err := json.Unmarshal([]byte(r.RemoteAuthsJSON), &encryptedMap); err == nil {
@@ -84,6 +98,14 @@ func (r *Repo) AfterFind(tx *gorm.DB) (err error) {
 				decryptedMap[k] = v
 			}
 			r.RemoteAuths = decryptedMap
+		}
+	}
+
+	// Handle RemoteCredentials (new)
+	if r.RemoteCredentialsJSON != "" {
+		var remoteCreds map[string]uint
+		if err := json.Unmarshal([]byte(r.RemoteCredentialsJSON), &remoteCreds); err == nil {
+			r.RemoteCredentials = remoteCreds
 		}
 	}
 

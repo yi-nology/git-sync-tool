@@ -212,6 +212,43 @@ func (s *GitService) testConnectionWithGitCommand(url, privateKey, passphrase st
 	return nil
 }
 
+// TestRemoteConnectionWithLocalKey 使用本地SSH密钥文件测试远程连接
+func (s *GitService) TestRemoteConnectionWithLocalKey(url, keyPath, passphrase string) error {
+	publicKeys, err := ssh.NewPublicKeysFromFile("git", keyPath, passphrase)
+	if err != nil {
+		return fmt.Errorf("failed to load SSH key from file %s: %v", keyPath, err)
+	}
+	publicKeys.HostKeyCallback = ssh2.InsecureIgnoreHostKey()
+
+	remote := git.NewRemote(nil, &config.RemoteConfig{
+		Name: "test",
+		URLs: []string{url},
+	})
+	_, err = remote.List(&git.ListOptions{Auth: publicKeys})
+	if err != nil {
+		return fmt.Errorf("connection failed: %v", err)
+	}
+	return nil
+}
+
+// TestRemoteConnectionWithHTTP 使用HTTP认证测试远程连接
+func (s *GitService) TestRemoteConnectionWithHTTP(url, username, password string) error {
+	auth := &http.BasicAuth{
+		Username: username,
+		Password: password,
+	}
+
+	remote := git.NewRemote(nil, &config.RemoteConfig{
+		Name: "test",
+		URLs: []string{url},
+	})
+	_, err := remote.List(&git.ListOptions{Auth: auth})
+	if err != nil {
+		return fmt.Errorf("connection failed: %v", err)
+	}
+	return nil
+}
+
 func (s *GitService) detectSSHAuth(urlStr string) transport.AuthMethod {
 	// Simple check for SSH
 	// git@... or ssh://...

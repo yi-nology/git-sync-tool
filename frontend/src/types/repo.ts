@@ -23,6 +23,8 @@ export interface RepoDTO {
   auth_key: string
   auth_secret: string
   remote_auths: Record<string, AuthInfo>
+  default_credential_id?: number
+  remote_credentials?: Record<string, number>
   created_at: string
   updated_at: string
 }
@@ -36,6 +38,8 @@ export interface RegisterRepoReq {
   auth_secret?: string
   remotes?: GitRemote[]
   remote_auths?: Record<string, AuthInfo>
+  default_credential_id?: number
+  remote_credentials?: Record<string, number>
 }
 
 export interface CloneRepoReq {
@@ -46,6 +50,7 @@ export interface CloneRepoReq {
   auth_key?: string
   auth_secret?: string
   ssh_key_id?: number
+  credential_id?: number
 }
 
 export interface ScanRepoReq {

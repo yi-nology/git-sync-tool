@@ -10,6 +10,14 @@
       </el-button>
     </el-card>
 
+    <el-card header="凭证管理" class="mb-4">
+      <p>统一管理 Git 仓库认证凭证，支持 SSH 密钥、HTTP 账号密码和 Token。配置 URL 匹配模式后可自动推荐。</p>
+      <el-button type="primary" @click="$router.push('/settings/credentials')">
+        <el-icon><Lock /></el-icon>
+        管理凭证
+      </el-button>
+    </el-card>
+
     <el-card header="通知渠道管理" class="mb-4">
       <NotificationManager />
     </el-card>
@@ -47,7 +55,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Key } from '@element-plus/icons-vue'
+import { Key, Lock } from '@element-plus/icons-vue'
 import { getSystemConfig, updateSystemConfig } from '@/api/modules/system'
 import type { SystemConfig } from '@/types/stats'
 import NotificationManager from '@/components/settings/NotificationManager.vue'
