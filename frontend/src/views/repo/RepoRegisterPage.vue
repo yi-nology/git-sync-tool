@@ -2,305 +2,280 @@
   <div class="register-page">
     <h2>注册本地仓库</h2>
 
-    <el-steps :active="step" align-center class="mb-6">
-      <el-step title="扫描仓库" description="输入本地路径" />
-      <el-step title="配置信息" description="名称和远程" />
-      <el-step title="认证配置" description="选择凭证" />
-    </el-steps>
+    <!-- Step 1: 选择目录 -->
+    <el-card class="step-card">
+      <template #header>
+        <div class="card-header">
+          <span>1. 选择仓库目录</span>
+          <el-tag v-if="selectedPath" type="success">已选择</el-tag>
+        </div>
+      </template>
 
-    <!-- Step 1: Scan -->
-    <div v-show="step === 0">
-      <el-card>
-        <el-form :model="step1Form" :rules="step1Rules" ref="step1FormRef" label-width="100px">
-          <el-form-item label="仓库路径" prop="path">
-            <el-input
-              v-model="step1Form.path"
-              placeholder="/path/to/your/repo"
-              clearable
-            >
-              <template #append>
-                <el-button :icon="Folder" @click="handleScan" :loading="scanning">
-                  扫描
-                </el-button>
-              </template>
-            </el-input>
-          </el-form-item>
-        </el-form>
-        <el-result v-if="scanError" icon="error" :title="scanError" />
-      </el-card>
-    </div>
+      <div class="path-section">
+        <el-input
+          v-model="selectedPath"
+          placeholder="点击下方按钮选择目录..."
+          readonly
+          size="large"
+        >
+          <template #prefix>
+            <el-icon><Folder /></el-icon>
+          </template>
+        </el-input>
 
-    <!-- Step 2: Info -->
-    <div v-show="step === 1">
-      <el-card>
-        <el-form :model="form" :rules="step2Rules" ref="step2FormRef" label-width="100px">
-          <el-form-item label="仓库名称" prop="name">
-            <el-input
-              v-model="form.name"
-              placeholder="仓库名称（必填）"
-              clearable
-              maxlength="100"
-              show-word-limit
-            />
-          </el-form-item>
+        <div class="btn-group">
+          <el-button type="primary" size="large" @click="handleSelectDir" :loading="selectingDir">
+            <el-icon><FolderOpened /></el-icon>
+            选择目录
+          </el-button>
+          <el-button size="large" @click="handleScan" :disabled="!selectedPath" :loading="scanning">
+            <el-icon><Search /></el-icon>
+            扫描仓库
+          </el-button>
+        </div>
+      </div>
+    </el-card>
 
-          <el-form-item label="主远程 URL" prop="remote_url">
-            <div class="url-input-group">
-              <el-radio-group v-model="urlMode" size="small" @change="onModeChange" class="url-mode-switch">
-                <el-radio-button value="ssh">SSH</el-radio-button>
-                <el-radio-button value="https">HTTPS</el-radio-button>
-              </el-radio-group>
-              <el-input
-                v-model="form.remote_url"
-                :placeholder="urlMode === 'ssh' ? 'git@github.com:user/repo.git' : 'https://github.com/user/repo.git'"
-                @blur="validateUrl"
-                clearable
-              />
+    <!-- Step 2: 选择仓库 -->
+    <el-card class="step-card" v-if="scannedRepos.length > 0">
+      <template #header>
+        <div class="card-header">
+          <span>2. 选择要注册的仓库 (共 {{ scannedRepos.length }} 个)</span>
+          <div class="header-actions">
+            <el-button size="small" @click="selectAll">全选</el-button>
+            <el-button size="small" @click="selectNone">取消全选</el-button>
+          </div>
+        </div>
+      </template>
+
+      <div class="repo-list">
+        <div
+          v-for="repo in scannedRepos"
+          :key="repo.path"
+          class="repo-item"
+          :class="{ selected: selectedRepos.includes(repo.path) }"
+          @click="toggleRepo(repo.path)"
+        >
+          <el-checkbox
+            :model-value="selectedRepos.includes(repo.path)"
+            @click.stop
+            @change="toggleRepo(repo.path)"
+          />
+
+          <div class="repo-info">
+            <div class="repo-name">
+              <el-icon><FolderChecked /></el-icon>
+              {{ repo.name }}
             </div>
-            <div class="url-format-hint">
-              <template v-if="urlMode === 'ssh'">格式: <code>git@host:user/repo.git</code> 或 <code>ssh://git@host/path</code></template>
-              <template v-else>格式: <code>https://host/user/repo.git</code></template>
+            <div class="repo-meta">
+              <el-tag size="small" type="info">{{ repo.current_branch || 'unknown' }}</el-tag>
+              <span class="repo-path">{{ repo.path }}</span>
             </div>
-          </el-form-item>
-
-          <el-divider>检测到的远程仓库</el-divider>
-          <div v-if="scanResult && scanResult.remotes.length > 0">
-            <div v-for="remote in scanResult.remotes" :key="remote.name" class="remote-item">
-              <el-tag>{{ remote.name }}</el-tag>
-              <span class="remote-url">{{ remote.fetch_url }}</span>
+            <div class="repo-remote" v-if="repo.remotes.length > 0">
+              <el-icon><Link /></el-icon>
+              {{ getMainRemote(repo) }}
             </div>
           </div>
-          <el-empty v-else description="未检测到远程仓库" :image-size="60" />
 
-          <el-form-item class="mt-4">
-            <el-button @click="step = 0">上一步</el-button>
-            <el-button type="primary" @click="goStep3">下一步</el-button>
-          </el-form-item>
-        </el-form>
-      </el-card>
-    </div>
+          <div class="repo-status">
+            <el-tag v-if="repo.has_changes" size="small" type="warning">有更改</el-tag>
+            <el-tag v-else size="small" type="success">干净</el-tag>
+            <span class="commit-hash" v-if="repo.last_commit">{{ repo.last_commit }}</span>
+          </div>
+        </div>
+      </div>
 
-    <!-- Step 3: Credential -->
-    <div v-show="step === 2">
-      <el-card>
-        <el-form label-width="120px">
-          <el-form-item label="默认凭证">
-            <CredentialSelector
-              v-model="form.default_credential_id"
-              :url="form.remote_url"
-              placeholder="选择默认认证凭证（可选）"
-            />
-          </el-form-item>
+      <div class="selection-info">
+        已选择 <strong>{{ selectedRepos.length }}</strong> 个仓库
+      </div>
+    </el-card>
 
-          <template v-if="scanResult && scanResult.remotes.length > 0">
-            <el-divider>各远程凭证配置</el-divider>
-            <div v-for="remote in scanResult.remotes" :key="remote.name">
-              <RemoteCard
-                :remote="remote"
-                :credential-id="remoteCredentials[remote.name]"
-                @update:credential-id="(v) => updateRemoteCred(remote.name, v)"
-              />
-            </div>
-          </template>
+    <!-- Step 3: 凭证配置（可选） -->
+    <el-card class="step-card" v-if="selectedRepos.length > 0">
+      <template #header>
+        <div class="card-header">
+          <span>3. 凭证配置（可选）</span>
+        </div>
+      </template>
 
-          <el-form-item class="mt-4">
-            <el-button @click="step = 1">上一步</el-button>
-            <el-button type="primary" @click="handleRegister" :loading="submitting">注册仓库</el-button>
-          </el-form-item>
-        </el-form>
-      </el-card>
-    </div>
+      <div class="credential-section">
+        <p class="hint">为所有选中的仓库设置默认凭证（可选，后续可在仓库详情中配置）</p>
+        <CredentialSelector
+          v-model="defaultCredentialId"
+          placeholder="选择默认认证凭证（可选）"
+          style="width: 100%"
+        />
+      </div>
+
+      <div class="action-buttons">
+        <el-button @click="router.push('/repos')">取消</el-button>
+        <el-button type="primary" size="large" @click="handleRegister" :loading="registering">
+          <el-icon><Check /></el-icon>
+          注册 {{ selectedRepos.length }} 个仓库
+        </el-button>
+      </div>
+    </el-card>
+
+    <!-- 空状态 -->
+    <el-empty
+      v-if="!scanning && scannedRepos.length === 0 && selectedPath && hasScanned"
+      description="在该目录下未找到 Git 仓库"
+    >
+      <el-button @click="handleSelectDir">选择其他目录</el-button>
+    </el-empty>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { Folder } from '@element-plus/icons-vue'
-import type { FormInstance, FormRules } from 'element-plus'
-import { scanRepo, createRepo } from '@/api/modules/repo'
-import type { ScanResult, RegisterRepoReq } from '@/types/repo'
+import {
+  Folder,
+  FolderOpened,
+  FolderChecked,
+  Search,
+  Link,
+  Check,
+} from '@element-plus/icons-vue'
+import { selectDirectory, scanDirectory, batchCreateRepos } from '@/api/modules/repo'
+import type { ScannedRepo } from '@/types/repo'
 import CredentialSelector from '@/components/credential/CredentialSelector.vue'
-import RemoteCard from '@/components/repo/RemoteCard.vue'
-import { validateGitRemoteUrl, detectGitProtocol } from '@/utils/git'
 import { useNotification } from '@/composables/useNotification'
 
 const router = useRouter()
 const { showSuccess, showError } = useNotification()
 
-const step = ref(0)
+const selectedPath = ref('')
+const selectingDir = ref(false)
 const scanning = ref(false)
-const scanError = ref('')
-const scanResult = ref<ScanResult | null>(null)
-const submitting = ref(false)
-const remoteCredentials = reactive<Record<string, number | undefined>>({})
-const urlMode = ref<'ssh' | 'https'>('ssh')
+const hasScanned = ref(false)
+const scannedRepos = ref<ScannedRepo[]>([])
+const selectedRepos = ref<string[]>([])
+const defaultCredentialId = ref<number | undefined>()
+const registering = ref(false)
 
-// Step 1 form
-const step1FormRef = ref<FormInstance>()
-const step1Form = reactive({
-  path: ''
-})
-
-const step1Rules: FormRules = {
-  path: [
-    { required: true, message: '请输入仓库路径', trigger: 'blur' },
-    { min: 1, message: '路径不能为空', trigger: 'blur' },
-  ]
-}
-
-// Step 2 form
-const step2FormRef = ref<FormInstance>()
-const form = reactive<RegisterRepoReq>({
-  name: '',
-  path: '',
-  remote_url: '',
-})
-
-const step2Rules: FormRules = {
-  name: [
-    { required: true, message: '请输入仓库名称', trigger: 'blur' },
-    { min: 1, max: 100, message: '名称长度为 1-100 个字符', trigger: 'blur' },
-    {
-      validator: (_rule, value, callback) => {
-        if (!value || !value.trim()) {
-          callback(new Error('仓库名称不能为空'))
-        } else {
-          callback()
-        }
-      },
-      trigger: 'blur'
-    }
-  ],
-  remote_url: [
-    {
-      validator: (_rule, value, callback) => {
-        if (value && value.trim()) {
-          const error = validateGitRemoteUrl(value)
-          if (error) {
-            callback(new Error(error))
-          } else {
-            callback()
-          }
-        } else {
-          callback() // 可选字段，允许为空
-        }
-      },
-      trigger: 'blur'
-    }
-  ]
-}
-
-async function handleScan() {
-  // 验证表单
-  if (!step1FormRef.value) return
-
+// 选择目录
+async function handleSelectDir() {
+  selectingDir.value = true
   try {
-    await step1FormRef.value.validate()
-  } catch {
-    return
+    const res = await selectDirectory('选择 Git 仓库所在目录')
+    if (res.cancelled !== 'true' && res.path) {
+      selectedPath.value = res.path
+      scannedRepos.value = []
+      selectedRepos.value = []
+      hasScanned.value = false
+      // 自动开始扫描
+      await handleScan()
+    }
+  } catch (e: any) {
+    showError('选择目录失败', e)
+  } finally {
+    selectingDir.value = false
   }
+}
+
+// 扫描目录
+async function handleScan() {
+  if (!selectedPath.value) return
 
   scanning.value = true
-  scanError.value = ''
   try {
-    scanResult.value = await scanRepo(step1Form.path)
-    form.path = step1Form.path
+    const res = await scanDirectory(selectedPath.value, 2, true)
+    scannedRepos.value = res.repos || []
+    // 默认全选
+    selectedRepos.value = scannedRepos.value.map(r => r.path)
+    hasScanned.value = true
 
-    // 自动填充名称和远程 URL
-    const pathParts = step1Form.path.split('/')
-    form.name = pathParts[pathParts.length - 1] || ''
-    if (scanResult.value.remotes.length > 0) {
-      const origin = scanResult.value.remotes.find(r => r.name === 'origin')
-      const autoUrl = origin?.fetch_url || scanResult.value.remotes[0]!.fetch_url
-      form.remote_url = autoUrl
-      form.remotes = scanResult.value.remotes
-      // 自动检测协议模式
-      const proto = detectGitProtocol(autoUrl)
-      if (proto === 'ssh') urlMode.value = 'ssh'
-      else if (proto === 'http') urlMode.value = 'https'
+    if (res.total === 0) {
+      // 未找到仓库，提示用户
+    } else {
+      showSuccess(`找到 ${res.total} 个 Git 仓库`)
     }
-    step.value = 1
-    showSuccess('仓库扫描成功')
   } catch (e: any) {
-    scanError.value = e?.message || '扫描失败，请检查路径是否为有效的 Git 仓库'
     showError('扫描失败', e)
   } finally {
     scanning.value = false
   }
 }
 
-function updateRemoteCred(name: string, val: number | undefined) {
-  if (val) {
-    remoteCredentials[name] = val
+// 切换仓库选择
+function toggleRepo(path: string) {
+  const idx = selectedRepos.value.indexOf(path)
+  if (idx >= 0) {
+    selectedRepos.value.splice(idx, 1)
   } else {
-    delete remoteCredentials[name]
+    selectedRepos.value.push(path)
   }
 }
 
-function validateUrl() {
-  // 自动触发表单验证
-  if (step2FormRef.value) {
-    step2FormRef.value.validateField('remote_url')
-  }
-
-  // 自动检测协议并同步模式
-  if (form.remote_url) {
-    const proto = detectGitProtocol(form.remote_url)
-    if (proto === 'ssh') urlMode.value = 'ssh'
-    else if (proto === 'http') urlMode.value = 'https'
-  }
+// 全选
+function selectAll() {
+  selectedRepos.value = scannedRepos.value.map(r => r.path)
 }
 
-function onModeChange() {
-  form.remote_url = ''
-  if (step2FormRef.value) {
-    step2FormRef.value.clearValidate('remote_url')
-  }
+// 取消全选
+function selectNone() {
+  selectedRepos.value = []
 }
 
-async function goStep3() {
-  if (!step2FormRef.value) return
-
-  try {
-    await step2FormRef.value.validate()
-    step.value = 2
-  } catch {
-    // 验证失败，Element Plus 会自动显示错误
+// 获取主要远程
+function getMainRemote(repo: ScannedRepo): string {
+  const origin = repo.remotes.find(r => r.name === 'origin')
+  const remote = origin || repo.remotes[0]
+  if (!remote) return '无远程'
+  // 简化 URL 显示
+  const url = remote.fetch_url
+  if (url.startsWith('https://github.com/')) {
+    return url.replace('https://github.com/', 'github:')
   }
+  if (url.startsWith('git@github.com:')) {
+    return url.replace('git@github.com:', 'github:')
+  }
+  return url
 }
 
+// 注册仓库
 async function handleRegister() {
-  if (!step2FormRef.value) return
-
-  try {
-    // 再次验证表单
-    await step2FormRef.value.validate()
-  } catch {
-    showError('请完善必填信息')
+  if (selectedRepos.value.length === 0) {
+    showError('请至少选择一个仓库')
     return
   }
 
-  submitting.value = true
+  registering.value = true
   try {
-    // 组装 remote_credentials
-    const rc: Record<string, number> = {}
-    for (const [k, v] of Object.entries(remoteCredentials)) {
-      if (v) rc[k] = v
+    const repos = selectedRepos.value.map(path => {
+      const repo = scannedRepos.value.find(r => r.path === path)!
+      return {
+        name: repo.name,
+        path: repo.path,
+        default_credential_id: defaultCredentialId.value,
+      }
+    })
+
+    const res = await batchCreateRepos({ repos })
+
+    // 处理失败项（可能为 null）
+    const failedList = res.failed || []
+    const successList = res.success || []
+
+    if (failedList.length > 0) {
+      const failedNames = failedList.map(f => f.name).join(', ')
+      showError(`${failedList.length} 个仓库注册失败: ${failedNames}`)
     }
 
-    const req: RegisterRepoReq = {
-      ...form,
-      remote_credentials: Object.keys(rc).length > 0 ? rc : undefined,
+    if (successList.length > 0) {
+      showSuccess(`成功注册 ${successList.length} 个仓库`)
+      router.push('/repos')
     }
 
-    await createRepo(req)
-    showSuccess('仓库注册成功')
-    router.push('/repos')
-  } catch (error: any) {
-    showError('注册失败', error)
+    // 如果全部失败，不跳转
+    if (failedList.length > 0 && successList.length === 0) {
+      // 保持在当前页面
+    }
+  } catch (e: any) {
+    showError('注册失败', e)
   } finally {
-    submitting.value = false
+    registering.value = false
   }
 }
 </script>
@@ -308,62 +283,142 @@ async function handleRegister() {
 <style scoped>
 .register-page {
   padding: 20px;
+  max-width: 900px;
+  margin: 0 auto;
 }
 
 .register-page h2 {
-  margin-bottom: 20px;
+  margin-bottom: 24px;
   font-size: 20px;
   font-weight: 600;
 }
 
-.mb-6 {
-  margin-bottom: 24px;
+.step-card {
+  margin-bottom: 20px;
 }
 
-.mt-4 {
-  margin-top: 16px;
-}
-
-.remote-item {
+.card-header {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 8px;
 }
 
-.remote-url {
-  color: #606266;
-  font-size: 13px;
-  word-break: break-all;
+.header-actions {
+  display: flex;
+  gap: 8px;
 }
 
-.url-input-group {
+.path-section {
   display: flex;
   flex-direction: column;
+  gap: 16px;
+}
+
+.btn-group {
+  display: flex;
+  gap: 12px;
+}
+
+.repo-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.repo-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid var(--el-border-color);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.repo-item:hover {
+  border-color: var(--el-color-primary-light-5);
+  background-color: var(--el-fill-color-light);
+}
+
+.repo-item.selected {
+  border-color: var(--el-color-primary);
+  background-color: var(--el-color-primary-light-9);
+}
+
+.repo-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.repo-name {
+  display: flex;
+  align-items: center;
   gap: 8px;
-  width: 100%;
+  font-weight: 600;
+  font-size: 15px;
+  margin-bottom: 6px;
 }
 
-.url-mode-switch {
-  width: fit-content;
+.repo-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 4px;
 }
 
-.url-format-hint {
+.repo-path {
+  color: var(--el-text-color-secondary);
   font-size: 12px;
-  color: #909399;
-  margin-top: 4px;
-}
-
-.url-format-hint code {
-  background-color: #f5f7fa;
-  padding: 2px 6px;
-  border-radius: 3px;
   font-family: monospace;
 }
 
-/* 深色模式 */
-:global(.dark) .url-format-hint code {
-  background-color: #2c2e30;
+.repo-remote {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--el-text-color-regular);
+}
+
+.repo-status {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.commit-hash {
+  font-family: monospace;
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+
+.selection-info {
+  margin-top: 16px;
+  padding: 12px;
+  background-color: var(--el-fill-color-light);
+  border-radius: 6px;
+  text-align: center;
+  color: var(--el-text-color-regular);
+}
+
+.credential-section {
+  margin-bottom: 20px;
+}
+
+.hint {
+  color: var(--el-text-color-secondary);
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+.action-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
 }
 
 /* 响应式 */
@@ -372,8 +427,19 @@ async function handleRegister() {
     padding: 16px;
   }
 
-  .url-input-group {
-    gap: 12px;
+  .repo-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .repo-status {
+    flex-direction: row;
+    width: 100%;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--el-border-color-lighter);
   }
 }
 </style>

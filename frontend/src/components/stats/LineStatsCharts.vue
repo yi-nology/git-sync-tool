@@ -32,9 +32,12 @@ const langChart = useEcharts(langChartRef)
 
 function updateCharts() {
   if (!props.lineStatsData || props.lineStatsData.status !== 'ready') return
+  // 使用双重 nextTick 确保 DOM 完全准备好
   nextTick(() => {
-    renderCompositionChart()
-    renderLangChart()
+    setTimeout(() => {
+      renderCompositionChart()
+      renderLangChart()
+    }, 0)
   })
 }
 

@@ -16,6 +16,7 @@ import (
 	"github.com/yi-nology/git-manage-service/biz/router/credential"
 	"github.com/yi-nology/git-manage-service/biz/router/file"
 	"github.com/yi-nology/git-manage-service/biz/router/notification"
+	"github.com/yi-nology/git-manage-service/biz/router/patch"
 	"github.com/yi-nology/git-manage-service/biz/router/repo"
 	"github.com/yi-nology/git-manage-service/biz/router/sshkey"
 	"github.com/yi-nology/git-manage-service/biz/router/stash"
@@ -60,6 +61,7 @@ func GeneratedRegister(h *server.Hertz) {
 	submodule.Register(h)
 	sshkey.Register(h)     // SSH密钥管理路由
 	credential.Register(h) // 凭证管理路由
+	patch.RegisterCustomRoutes(h) // Patch 管理路由
 
 	// Swagger 文档 - 从嵌入的 FS 读取
 	h.GET("/docs/swagger.json", func(ctx context.Context, c *app.RequestContext) {
