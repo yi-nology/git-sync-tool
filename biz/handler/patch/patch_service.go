@@ -120,7 +120,16 @@ func ListPatches(ctx context.Context, c *app.RequestContext) {
 
 	var dtos []api.PatchInfoDTO
 	for _, p := range patches {
-		dtos = append(dtos, api.PatchInfoDTO(p))
+		dtos = append(dtos, api.PatchInfoDTO{
+			Name:        p.Name,
+			Path:        p.Path,
+			Size:        p.Size,
+			ModTime:     p.ModTime,
+			Sequence:    p.Sequence,
+			IsApplied:   p.IsApplied,
+			CanApply:    p.CanApply,
+			HasConflict: p.HasConflict,
+		})
 	}
 
 	response.Success(c, dtos)
@@ -216,8 +225,8 @@ func ApplyPatch(ctx context.Context, c *app.RequestContext) {
 // @router /api/v1/patch/check [POST]
 func CheckPatch(ctx context.Context, c *app.RequestContext) {
 	var req struct {
-		RepoKey    string `json:"repo_key" form:"repo_key"`
-		PatchPath  string `json:"patch_path" form:"patch_path"`
+		RepoKey   string `json:"repo_key" form:"repo_key"`
+		PatchPath string `json:"patch_path" form:"patch_path"`
 	}
 	if err := c.BindAndValidate(&req); err != nil {
 		response.BadRequest(c, err.Error())

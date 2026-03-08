@@ -9,19 +9,28 @@ import (
 
 // RegisterCustomRoutes 注册自定义路由（cherry-pick, rebase等）
 func RegisterCustomRoutes(r *server.Hertz) {
-	branchGroup := r.Group("/api/v1/branch")
+	root := r.Group("/")
 	{
-		// Cherry-pick
-		branchGroup.POST("/cherry-pick", branch.CherryPick)
-
-		// Rebase
-		branchGroup.POST("/rebase", branch.Rebase)
-
-		// Rebase子路由
-		rebaseGroup := branchGroup.Group("/rebase")
+		_api := root.Group("/api")
 		{
-			rebaseGroup.POST("/abort", branch.RebaseAbort)
-			rebaseGroup.POST("/continue", branch.RebaseContinue)
+			_v1 := _api.Group("/v1")
+			{
+				_branch := _v1.Group("/branch")
+				{
+					// Cherry-pick
+					_branch.POST("/cherry-pick", branch.CherryPick)
+
+					// Rebase
+					_branch.POST("/rebase", branch.Rebase)
+
+					// Rebase子路由
+					rebaseGroup := _branch.Group("/rebase")
+					{
+						rebaseGroup.POST("/abort", branch.RebaseAbort)
+						rebaseGroup.POST("/continue", branch.RebaseContinue)
+					}
+				}
+			}
 		}
 	}
 }

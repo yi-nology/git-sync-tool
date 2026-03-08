@@ -12,13 +12,167 @@ import (
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/google/uuid"
 	"github.com/yi-nology/git-manage-service/biz/dal/db"
-	branch "github.com/yi-nology/git-manage-service/biz/model/biz/branch"
+	"github.com/yi-nology/git-manage-service/biz/model/branch"
 	"github.com/yi-nology/git-manage-service/biz/model/domain"
 	"github.com/yi-nology/git-manage-service/biz/service/audit"
 	"github.com/yi-nology/git-manage-service/biz/service/auth"
 	"github.com/yi-nology/git-manage-service/biz/service/git"
 	"github.com/yi-nology/git-manage-service/pkg/response"
 )
+
+// CherryPick .
+// @router /api/v1/branch/cherry-pick [POST]
+func CherryPick(ctx context.Context, c *app.RequestContext) {
+	var req branch.CherryPickRequest
+	if err := c.BindAndValidate(&req); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	repo, err := db.NewRepoDAO().FindByKey(req.GetRepoKey())
+	if err != nil {
+		response.NotFound(c, "repo not found")
+		return
+	}
+
+	gitSvc := git.NewGitService()
+	newCommit, conflicts, err := gitSvc.CherryPick(repo.Path, req.GetCommitHash(), false)
+	if err != nil {
+		if len(conflicts) > 0 {
+			// 返回冲突信息
+			c.JSON(200, response.Response{
+				Code: 409,
+				Msg:  "Cherry-pick conflict",
+				Data: map[string]interface{}{
+					"conflicts": conflicts,
+				},
+			})
+			return
+		}
+		response.InternalServerError(c, err.Error())
+		return
+	}
+
+	audit.AuditSvc.Log(c, "CHERRY_PICK", "repo:"+repo.Key, map[string]string{
+		"commit":     req.GetCommitHash(),
+		"new_commit": newCommit,
+	})
+	response.Success(c, map[string]interface{}{
+		"success":    true,
+		"new_commit": newCommit,
+	})
+}
+
+// Rebase .
+// @router /api/v1/branch/rebase [POST]
+func Rebase(ctx context.Context, c *app.RequestContext) {
+	var req branch.RebaseRequest
+	if err := c.BindAndValidate(&req); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	repo, err := db.NewRepoDAO().FindByKey(req.GetRepoKey())
+	if err != nil {
+		response.NotFound(c, "repo not found")
+		return
+	}
+
+	gitSvc := git.NewGitService()
+	success, conflicts, err := gitSvc.Rebase(repo.Path, req.GetUpstream(), "")
+	if err != nil {
+		response.InternalServerError(c, err.Error())
+		return
+	}
+
+	if !success {
+		c.JSON(200, response.Response{
+			Code: 409,
+			Msg:  "Rebase conflict",
+			Data: map[string]interface{}{
+				"success":     false,
+				"in_progress": true,
+				"conflicts":   conflicts,
+			},
+		})
+		return
+	}
+
+	audit.AuditSvc.Log(c, "REBASE", "repo:"+repo.Key, map[string]string{
+		"upstream": req.GetUpstream(),
+	})
+	response.Success(c, map[string]interface{}{
+		"success":     true,
+		"in_progress": false,
+	})
+}
+
+// RebaseAbort .
+// @router /api/v1/branch/rebase/abort [POST]
+func RebaseAbort(ctx context.Context, c *app.RequestContext) {
+	repoKey := c.Query("repo_key")
+	if repoKey == "" {
+		response.BadRequest(c, "repo_key is required")
+		return
+	}
+
+	repo, err := db.NewRepoDAO().FindByKey(repoKey)
+	if err != nil {
+		response.NotFound(c, "repo not found")
+		return
+	}
+
+	gitSvc := git.NewGitService()
+	if err := gitSvc.RebaseAbort(repo.Path); err != nil {
+		response.InternalServerError(c, err.Error())
+		return
+	}
+
+	audit.AuditSvc.Log(c, "REBASE_ABORT", "repo:"+repo.Key, nil)
+	response.Success(c, map[string]string{"message": "rebase aborted"})
+}
+
+// RebaseContinue .
+// @router /api/v1/branch/rebase/continue [POST]
+func RebaseContinue(ctx context.Context, c *app.RequestContext) {
+	repoKey := c.Query("repo_key")
+	if repoKey == "" {
+		response.BadRequest(c, "repo_key is required")
+		return
+	}
+
+	repo, err := db.NewRepoDAO().FindByKey(repoKey)
+	if err != nil {
+		response.NotFound(c, "repo not found")
+		return
+	}
+
+	gitSvc := git.NewGitService()
+	success, conflicts, err := gitSvc.RebaseContinue(repo.Path)
+	if err != nil {
+		response.InternalServerError(c, err.Error())
+		return
+	}
+
+	if !success {
+		c.JSON(200, response.Response{
+			Code: 409,
+			Msg:  "Rebase conflict",
+			Data: map[string]interface{}{
+				"success":     false,
+				"in_progress": true,
+				"conflicts":   conflicts,
+			},
+		})
+		return
+	}
+
+	audit.AuditSvc.Log(c, "REBASE_CONTINUE", "repo:"+repo.Key, nil)
+	response.Success(c, map[string]interface{}{
+		"success":     true,
+		"in_progress": false,
+	})
+}
 
 // List .
 // @router /api/v1/branch/list [GET]
@@ -29,12 +183,12 @@ func List(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	if req.RepoKey == "" {
+	if req.GetRepoKey() == "" {
 		response.BadRequest(c, "repo_key is required")
 		return
 	}
 
-	repo, err := db.NewRepoDAO().FindByKey(req.RepoKey)
+	repo, err := db.NewRepoDAO().FindByKey(req.GetRepoKey())
 	if err != nil {
 		response.NotFound(c, "repo not found")
 		return
@@ -60,9 +214,9 @@ func List(ctx context.Context, c *app.RequestContext) {
 	}
 
 	// Filter
-	if req.Keyword != "" {
+	if req.GetKeyword() != "" {
 		var filtered []domain.BranchInfo
-		keyword := strings.ToLower(req.Keyword)
+		keyword := strings.ToLower(req.GetKeyword())
 		for _, b := range branches {
 			if strings.Contains(strings.ToLower(b.Name), keyword) ||
 				strings.Contains(strings.ToLower(b.Author), keyword) {
@@ -73,11 +227,11 @@ func List(ctx context.Context, c *app.RequestContext) {
 	}
 
 	// Pagination
-	page := int(req.Page)
+	page := int(req.GetPage())
 	if page < 1 {
 		page = 1
 	}
-	pageSize := int(req.PageSize)
+	pageSize := int(req.GetPageSize())
 	if pageSize < 1 {
 		pageSize = 100
 	}
@@ -117,21 +271,21 @@ func Create(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	repo, err := db.NewRepoDAO().FindByKey(req.RepoKey)
+	repo, err := db.NewRepoDAO().FindByKey(req.GetRepoKey())
 	if err != nil {
 		response.NotFound(c, "repo not found")
 		return
 	}
 
 	gitSvc := git.NewGitService()
-	if err := gitSvc.CreateBranch(repo.Path, req.Name, req.BaseRef); err != nil {
+	if err := gitSvc.CreateBranch(repo.Path, req.GetName(), req.GetBaseRef()); err != nil {
 		response.InternalServerError(c, err.Error())
 		return
 	}
 
 	audit.AuditSvc.Log(c, "CREATE_BRANCH", "repo:"+repo.Key, map[string]string{
-		"branch": req.Name,
-		"base":   req.BaseRef,
+		"branch": req.GetName(),
+		"base":   req.GetBaseRef(),
 	})
 	response.Success(c, map[string]string{"message": "created"})
 }
@@ -145,21 +299,21 @@ func Delete(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	repo, err := db.NewRepoDAO().FindByKey(req.RepoKey)
+	repo, err := db.NewRepoDAO().FindByKey(req.GetRepoKey())
 	if err != nil {
 		response.NotFound(c, "repo not found")
 		return
 	}
 
 	gitSvc := git.NewGitService()
-	if err := gitSvc.DeleteBranch(repo.Path, req.Name, req.Force); err != nil {
+	if err := gitSvc.DeleteBranch(repo.Path, req.GetName(), req.GetForce()); err != nil {
 		response.InternalServerError(c, err.Error())
 		return
 	}
 
 	audit.AuditSvc.Log(c, "DELETE_BRANCH", "repo:"+repo.Key, map[string]string{
-		"branch": req.Name,
-		"force":  strconv.FormatBool(req.Force),
+		"branch": req.GetName(),
+		"force":  strconv.FormatBool(req.GetForce()),
 	})
 	response.Success(c, map[string]string{"message": "deleted"})
 }
@@ -173,35 +327,35 @@ func Update(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	repo, err := db.NewRepoDAO().FindByKey(req.RepoKey)
+	repo, err := db.NewRepoDAO().FindByKey(req.GetRepoKey())
 	if err != nil {
 		response.NotFound(c, "repo not found")
 		return
 	}
 
 	gitSvc := git.NewGitService()
-	currentName := req.Name
+	currentName := req.GetName()
 
 	// Rename
-	if req.NewName != "" && req.NewName != currentName {
-		if err := gitSvc.RenameBranch(repo.Path, currentName, req.NewName); err != nil {
+	if req.GetNewName() != "" && req.GetNewName() != currentName {
+		if err := gitSvc.RenameBranch(repo.Path, currentName, req.GetNewName()); err != nil {
 			response.InternalServerError(c, err.Error())
 			return
 		}
-		currentName = req.NewName
+		currentName = req.GetNewName()
 	}
 
 	// Description
-	if req.Desc != "" {
-		if err := gitSvc.SetBranchDescription(repo.Path, currentName, req.Desc); err != nil {
+	if req.GetDesc() != "" {
+		if err := gitSvc.SetBranchDescription(repo.Path, currentName, req.GetDesc()); err != nil {
 			// Log but don't fail
 		}
 	}
 
 	audit.AuditSvc.Log(c, "UPDATE_BRANCH", "repo:"+repo.Key, map[string]string{
-		"old_name": req.Name,
-		"new_name": req.NewName,
-		"desc":     req.Desc,
+		"old_name": req.GetName(),
+		"new_name": req.GetNewName(),
+		"desc":     req.GetDesc(),
 	})
 	response.Success(c, map[string]string{"message": "updated"})
 }
@@ -215,22 +369,22 @@ func Checkout(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	repo, err := db.NewRepoDAO().FindByKey(req.RepoKey)
+	repo, err := db.NewRepoDAO().FindByKey(req.GetRepoKey())
 	if err != nil {
 		response.NotFound(c, "repo not found")
 		return
 	}
 
 	gitSvc := git.NewGitService()
-	if err := gitSvc.CheckoutBranch(repo.Path, req.Name); err != nil {
+	if err := gitSvc.CheckoutBranch(repo.Path, req.GetName()); err != nil {
 		response.BadRequest(c, "Checkout failed: "+err.Error())
 		return
 	}
 
 	audit.AuditSvc.Log(c, "CHECKOUT_BRANCH", "repo:"+repo.Key, map[string]string{
-		"branch": req.Name,
+		"branch": req.GetName(),
 	})
-	response.Success(c, map[string]string{"message": "checked out " + req.Name})
+	response.Success(c, map[string]string{"message": "checked out " + req.GetName()})
 }
 
 // Push .
@@ -242,7 +396,7 @@ func Push(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	repo, err := db.NewRepoDAO().FindByKey(req.RepoKey)
+	repo, err := db.NewRepoDAO().FindByKey(req.GetRepoKey())
 	if err != nil {
 		response.NotFound(c, "repo not found")
 		return
@@ -252,7 +406,7 @@ func Push(ctx context.Context, c *app.RequestContext) {
 	authSvc := auth.NewAuthService()
 
 	var errors []string
-	for _, remote := range req.Remotes {
+	for _, remote := range req.GetRemotes() {
 		// 获取该 remote 的认证配置
 		authInfo := auth.GetAuthInfoForRemote(repo.RemoteAuths, remote, repo.AuthType, repo.AuthKey, repo.AuthSecret)
 
@@ -263,12 +417,12 @@ func Push(ctx context.Context, c *app.RequestContext) {
 				errors = append(errors, fmt.Sprintf("%s: failed to load SSH key: %v", remote, err))
 				continue
 			}
-			if err := gitSvc.PushBranchWithDBKey(repo.Path, remote, req.Name, privateKey, passphrase); err != nil {
+			if err := gitSvc.PushBranchWithDBKey(repo.Path, remote, req.GetName(), privateKey, passphrase); err != nil {
 				errors = append(errors, fmt.Sprintf("%s: %v", remote, err))
 			}
 		} else {
 			// 使用 go-git 默认方式
-			if err := gitSvc.PushBranch(repo.Path, remote, req.Name); err != nil {
+			if err := gitSvc.PushBranch(repo.Path, remote, req.GetName()); err != nil {
 				errors = append(errors, fmt.Sprintf("%s: %v", remote, err))
 			}
 		}
@@ -280,8 +434,8 @@ func Push(ctx context.Context, c *app.RequestContext) {
 	}
 
 	audit.AuditSvc.Log(c, "PUSH_BRANCH", "repo:"+repo.Key, map[string]interface{}{
-		"branch":  req.Name,
-		"remotes": req.Remotes,
+		"branch":  req.GetName(),
+		"remotes": req.GetRemotes(),
 	})
 	response.Success(c, map[string]string{"message": "pushed"})
 }
@@ -295,7 +449,7 @@ func Pull(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	repo, err := db.NewRepoDAO().FindByKey(req.RepoKey)
+	repo, err := db.NewRepoDAO().FindByKey(req.GetRepoKey())
 	if err != nil {
 		response.NotFound(c, "repo not found")
 		return
@@ -310,7 +464,7 @@ func Pull(ctx context.Context, c *app.RequestContext) {
 	var remoteBranch string
 
 	for _, b := range branches {
-		if b.Name == req.Name {
+		if b.Name == req.GetName() {
 			isCurrent = b.IsCurrent
 			if b.Upstream != "" {
 				parts := strings.Split(b.Upstream, "/")
@@ -331,7 +485,7 @@ func Pull(ctx context.Context, c *app.RequestContext) {
 	}
 
 	if remoteBranch == "" {
-		remoteBranch = req.Name
+		remoteBranch = req.GetName()
 	}
 
 	// 获取该 remote 的认证配置
@@ -353,7 +507,7 @@ func Pull(ctx context.Context, c *app.RequestContext) {
 		if useDBKey {
 			updateErr = gitSvc.FetchBranchWithDBKey(repo.Path, upstreamRemote, remoteBranch, privateKey, passphrase)
 		} else {
-			updateErr = gitSvc.UpdateBranchFastForward(repo.Path, upstreamRemote, req.Name, remoteBranch)
+			updateErr = gitSvc.UpdateBranchFastForward(repo.Path, upstreamRemote, req.GetName(), remoteBranch)
 		}
 		if updateErr != nil {
 			response.InternalServerError(c, fmt.Sprintf("Update failed (must be fast-forward): %v", updateErr))
@@ -361,7 +515,7 @@ func Pull(ctx context.Context, c *app.RequestContext) {
 		}
 
 		audit.AuditSvc.Log(c, "UPDATE_BRANCH", "repo:"+repo.Key, map[string]string{
-			"branch": req.Name,
+			"branch": req.GetName(),
 			"remote": upstreamRemote,
 			"type":   "fast-forward",
 		})
@@ -371,9 +525,9 @@ func Pull(ctx context.Context, c *app.RequestContext) {
 
 	var pullErr error
 	if useDBKey {
-		pullErr = gitSvc.PullBranchWithDBKey(repo.Path, upstreamRemote, req.Name, privateKey, passphrase)
+		pullErr = gitSvc.PullBranchWithDBKey(repo.Path, upstreamRemote, req.GetName(), privateKey, passphrase)
 	} else {
-		pullErr = gitSvc.PullBranch(repo.Path, upstreamRemote, req.Name)
+		pullErr = gitSvc.PullBranch(repo.Path, upstreamRemote, req.GetName())
 	}
 	if pullErr != nil {
 		response.InternalServerError(c, pullErr.Error())
@@ -381,7 +535,7 @@ func Pull(ctx context.Context, c *app.RequestContext) {
 	}
 
 	audit.AuditSvc.Log(c, "PULL_BRANCH", "repo:"+repo.Key, map[string]string{
-		"branch": req.Name,
+		"branch": req.GetName(),
 		"remote": upstreamRemote,
 	})
 	response.Success(c, map[string]string{"message": "synced"})
@@ -390,16 +544,13 @@ func Pull(ctx context.Context, c *app.RequestContext) {
 // Compare .
 // @router /api/v1/branch/compare [GET]
 func Compare(ctx context.Context, c *app.RequestContext) {
-	repoKey := c.Query("repo_key")
-	base := c.Query("base")
-	target := c.Query("target")
-
-	if base == "" || target == "" {
-		response.BadRequest(c, "base and target branches are required")
+	var req branch.CompareBranchRequest
+	if err := c.BindAndValidate(&req); err != nil {
+		response.BadRequest(c, err.Error())
 		return
 	}
 
-	repo, err := db.NewRepoDAO().FindByKey(repoKey)
+	repo, err := db.NewRepoDAO().FindByKey(req.GetRepoKey())
 	if err != nil {
 		response.NotFound(c, "repo not found")
 		return
@@ -407,13 +558,13 @@ func Compare(ctx context.Context, c *app.RequestContext) {
 
 	gitSvc := git.NewGitService()
 
-	stat, err := gitSvc.GetDiffStat(repo.Path, base, target)
+	stat, err := gitSvc.GetDiffStat(repo.Path, req.GetBase(), req.GetTarget())
 	if err != nil {
 		response.InternalServerError(c, err.Error())
 		return
 	}
 
-	files, err := gitSvc.GetDiffFiles(repo.Path, base, target)
+	files, err := gitSvc.GetDiffFiles(repo.Path, req.GetBase(), req.GetTarget())
 	if err != nil {
 		response.InternalServerError(c, err.Error())
 		return
@@ -425,53 +576,6 @@ func Compare(ctx context.Context, c *app.RequestContext) {
 	})
 }
 
-// GetDiff .
-// @router /api/v1/branch/diff [GET]
-func GetDiff(ctx context.Context, c *app.RequestContext) {
-	repoKey := c.Query("repo_key")
-	base := c.Query("base")
-	target := c.Query("target")
-	file := c.Query("file")
-
-	repo, err := db.NewRepoDAO().FindByKey(repoKey)
-	if err != nil {
-		response.NotFound(c, "repo not found")
-		return
-	}
-
-	gitSvc := git.NewGitService()
-	content, err := gitSvc.GetRawDiff(repo.Path, base, target, file)
-	if err != nil {
-		response.InternalServerError(c, err.Error())
-		return
-	}
-
-	response.Success(c, map[string]string{"diff": content})
-}
-
-// MergeCheck .
-// @router /api/v1/branch/merge/check [GET]
-func MergeCheck(ctx context.Context, c *app.RequestContext) {
-	repoKey := c.Query("repo_key")
-	base := c.Query("base")
-	target := c.Query("target")
-
-	repo, err := db.NewRepoDAO().FindByKey(repoKey)
-	if err != nil {
-		response.NotFound(c, "repo not found")
-		return
-	}
-
-	gitSvc := git.NewGitService()
-	result, err := gitSvc.MergeDryRun(repo.Path, base, target)
-	if err != nil {
-		response.InternalServerError(c, err.Error())
-		return
-	}
-
-	response.Success(c, result)
-}
-
 // Merge .
 // @router /api/v1/branch/merge [POST]
 func Merge(ctx context.Context, c *app.RequestContext) {
@@ -481,7 +585,7 @@ func Merge(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	repo, err := db.NewRepoDAO().FindByKey(req.RepoKey)
+	repo, err := db.NewRepoDAO().FindByKey(req.GetRepoKey())
 	if err != nil {
 		response.NotFound(c, "repo not found")
 		return
@@ -489,18 +593,18 @@ func Merge(ctx context.Context, c *app.RequestContext) {
 
 	gitSvc := git.NewGitService()
 
-	check, err := gitSvc.MergeDryRun(repo.Path, req.Source, req.Target)
+	check, err := gitSvc.MergeDryRun(repo.Path, req.GetSource(), req.GetTarget())
 	if err != nil {
 		response.InternalServerError(c, "Pre-merge check failed: "+err.Error())
 		return
 	}
 	if !check.Success {
 		mergeID := uuid.New().String()
-		reportURL := fmt.Sprintf("/merge_report.html?repo_key=%s&source=%s&target=%s&merge_id=%s", repo.Key, req.Source, req.Target, mergeID)
+		reportURL := fmt.Sprintf("/merge_report.html?repo_key=%s&source=%s&target=%s&merge_id=%s", repo.Key, req.GetSource(), req.GetTarget(), mergeID)
 
 		audit.AuditSvc.Log(c, "MERGE_CONFLICT", "repo:"+repo.Key, map[string]interface{}{
-			"source":    req.Source,
-			"target":    req.Target,
+			"source":    req.GetSource(),
+			"target":    req.GetTarget(),
 			"conflicts": check.Conflicts,
 			"merge_id":  mergeID,
 		})
@@ -517,195 +621,92 @@ func Merge(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	if err := gitSvc.Merge(repo.Path, req.Source, req.Target, req.Message, req.NoFf, req.Squash); err != nil {
+	if err := gitSvc.Merge(repo.Path, req.GetSource(), req.GetTarget(), req.GetMessage(), req.GetNoFf(), req.GetSquash()); err != nil {
 		response.InternalServerError(c, "Merge execution failed: "+err.Error())
 		return
 	}
 
 	audit.AuditSvc.Log(c, "MERGE_SUCCESS", "repo:"+repo.Key, map[string]string{
-		"source": req.Source,
-		"target": req.Target,
+		"source": req.GetSource(),
+		"target": req.GetTarget(),
 	})
 
 	response.Success(c, map[string]string{"status": "merged"})
 }
 
-// GetPatch .
-// @router /api/v1/branch/patch [GET]
-func GetPatch(ctx context.Context, c *app.RequestContext) {
-	repoKey := c.Query("repo_key")
-	base := c.Query("base")
-	target := c.Query("target")
+// MergeCheck .
+// @router /api/v1/branch/merge/check [GET]
+func MergeCheck(ctx context.Context, c *app.RequestContext) {
+	var req branch.MergeCheckRequest
+	if err := c.BindAndValidate(&req); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
 
-	repo, err := db.NewRepoDAO().FindByKey(repoKey)
+	repo, err := db.NewRepoDAO().FindByKey(req.GetRepoKey())
 	if err != nil {
 		response.NotFound(c, "repo not found")
 		return
 	}
 
 	gitSvc := git.NewGitService()
-	patch, err := gitSvc.GetPatch(repo.Path, base, target)
+	result, err := gitSvc.MergeDryRun(repo.Path, req.GetBase(), req.GetTarget())
+	if err != nil {
+		response.InternalServerError(c, err.Error())
+		return
+	}
+
+	response.Success(c, result)
+}
+
+// GetDiff .
+// @router /api/v1/branch/diff [GET]
+func GetDiff(ctx context.Context, c *app.RequestContext) {
+	var req branch.GetDiffRequest
+	if err := c.BindAndValidate(&req); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	repo, err := db.NewRepoDAO().FindByKey(req.GetRepoKey())
+	if err != nil {
+		response.NotFound(c, "repo not found")
+		return
+	}
+
+	gitSvc := git.NewGitService()
+	content, err := gitSvc.GetRawDiff(repo.Path, req.GetBase(), req.GetTarget(), req.GetFile())
+	if err != nil {
+		response.InternalServerError(c, err.Error())
+		return
+	}
+
+	response.Success(c, map[string]string{"diff": content})
+}
+
+// GetPatch .
+// @router /api/v1/branch/patch [GET]
+func GetPatch(ctx context.Context, c *app.RequestContext) {
+	var req branch.GetPatchRequest
+	if err := c.BindAndValidate(&req); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	repo, err := db.NewRepoDAO().FindByKey(req.GetRepoKey())
+	if err != nil {
+		response.NotFound(c, "repo not found")
+		return
+	}
+
+	gitSvc := git.NewGitService()
+	patch, err := gitSvc.GetPatch(repo.Path, req.GetBase(), req.GetTarget())
 	if err != nil {
 		response.InternalServerError(c, err.Error())
 		return
 	}
 
 	c.Header("Content-Type", "application/octet-stream")
-	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%s-%s-%s.patch", repo.Name, base, time.Now().Format("20060102")))
+	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%s-%s-%s.patch", repo.Name, req.GetBase(), time.Now().Format("20060102")))
 	c.Write([]byte(patch))
-}
-
-// CherryPick .
-// @router /api/v1/branch/cherry-pick [POST]
-func CherryPick(ctx context.Context, c *app.RequestContext) {
-	var req branch.CherryPickRequest
-	if err := c.BindAndValidate(&req); err != nil {
-		response.BadRequest(c, err.Error())
-		return
-	}
-
-	repo, err := db.NewRepoDAO().FindByKey(req.RepoKey)
-	if err != nil {
-		response.NotFound(c, "repo not found")
-		return
-	}
-
-	gitSvc := git.NewGitService()
-	newCommit, conflicts, err := gitSvc.CherryPick(repo.Path, req.CommitHash, req.NoCommit)
-	if err != nil {
-		if len(conflicts) > 0 {
-			// 返回冲突信息
-			c.JSON(200, response.Response{
-				Code: 409,
-				Msg:  "Cherry-pick conflict",
-				Data: map[string]interface{}{
-					"conflicts": conflicts,
-				},
-			})
-			return
-		}
-		response.InternalServerError(c, err.Error())
-		return
-	}
-
-	audit.AuditSvc.Log(c, "CHERRY_PICK", "repo:"+repo.Key, map[string]string{
-		"commit":     req.CommitHash,
-		"new_commit": newCommit,
-	})
-	response.Success(c, map[string]interface{}{
-		"success":    true,
-		"new_commit": newCommit,
-	})
-}
-
-// Rebase .
-// @router /api/v1/branch/rebase [POST]
-func Rebase(ctx context.Context, c *app.RequestContext) {
-	var req branch.RebaseRequest
-	if err := c.BindAndValidate(&req); err != nil {
-		response.BadRequest(c, err.Error())
-		return
-	}
-
-	repo, err := db.NewRepoDAO().FindByKey(req.RepoKey)
-	if err != nil {
-		response.NotFound(c, "repo not found")
-		return
-	}
-
-	gitSvc := git.NewGitService()
-	success, conflicts, err := gitSvc.Rebase(repo.Path, req.Upstream, req.Onto)
-	if err != nil {
-		response.InternalServerError(c, err.Error())
-		return
-	}
-
-	if !success {
-		c.JSON(200, response.Response{
-			Code: 409,
-			Msg:  "Rebase conflict",
-			Data: map[string]interface{}{
-				"success":     false,
-				"in_progress": true,
-				"conflicts":   conflicts,
-			},
-		})
-		return
-	}
-
-	audit.AuditSvc.Log(c, "REBASE", "repo:"+repo.Key, map[string]string{
-		"upstream": req.Upstream,
-		"onto":     req.Onto,
-	})
-	response.Success(c, map[string]interface{}{
-		"success":     true,
-		"in_progress": false,
-	})
-}
-
-// RebaseAbort .
-// @router /api/v1/branch/rebase/abort [POST]
-func RebaseAbort(ctx context.Context, c *app.RequestContext) {
-	var req branch.RebaseAbortRequest
-	if err := c.BindAndValidate(&req); err != nil {
-		response.BadRequest(c, err.Error())
-		return
-	}
-
-	repo, err := db.NewRepoDAO().FindByKey(req.RepoKey)
-	if err != nil {
-		response.NotFound(c, "repo not found")
-		return
-	}
-
-	gitSvc := git.NewGitService()
-	if err := gitSvc.RebaseAbort(repo.Path); err != nil {
-		response.InternalServerError(c, err.Error())
-		return
-	}
-
-	audit.AuditSvc.Log(c, "REBASE_ABORT", "repo:"+repo.Key, nil)
-	response.Success(c, map[string]string{"message": "rebase aborted"})
-}
-
-// RebaseContinue .
-// @router /api/v1/branch/rebase/continue [POST]
-func RebaseContinue(ctx context.Context, c *app.RequestContext) {
-	var req branch.RebaseContinueRequest
-	if err := c.BindAndValidate(&req); err != nil {
-		response.BadRequest(c, err.Error())
-		return
-	}
-
-	repo, err := db.NewRepoDAO().FindByKey(req.RepoKey)
-	if err != nil {
-		response.NotFound(c, "repo not found")
-		return
-	}
-
-	gitSvc := git.NewGitService()
-	success, conflicts, err := gitSvc.RebaseContinue(repo.Path)
-	if err != nil {
-		response.InternalServerError(c, err.Error())
-		return
-	}
-
-	if !success {
-		c.JSON(200, response.Response{
-			Code: 409,
-			Msg:  "Rebase conflict",
-			Data: map[string]interface{}{
-				"success":     false,
-				"in_progress": true,
-				"conflicts":   conflicts,
-			},
-		})
-		return
-	}
-
-	audit.AuditSvc.Log(c, "REBASE_CONTINUE", "repo:"+repo.Key, nil)
-	response.Success(c, map[string]interface{}{
-		"success":     true,
-		"in_progress": false,
-	})
 }

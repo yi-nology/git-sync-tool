@@ -112,11 +112,16 @@ func (s *GitService) PushBranch(path, remote, branch string) error {
 		}
 	}
 
-	err = r.Push(&git.PushOptions{
+	// 只在auth不为nil时传递认证信息
+	pushOptions := &git.PushOptions{
 		RemoteName: remote,
 		RefSpecs:   []config.RefSpec{refSpec},
-		Auth:       auth,
-	})
+	}
+	if auth != nil {
+		pushOptions.Auth = auth
+	}
+
+	err = r.Push(pushOptions)
 	if err == git.NoErrAlreadyUpToDate {
 		return nil
 	}
@@ -145,11 +150,16 @@ func (s *GitService) PullBranch(path, remote, branch string) error {
 		}
 	}
 
-	err = w.Pull(&git.PullOptions{
+	// 只在auth不为nil时传递认证信息
+	pullOptions := &git.PullOptions{
 		RemoteName:    remote,
 		ReferenceName: plumbing.ReferenceName("refs/heads/" + branch),
-		Auth:          auth,
-	})
+	}
+	if auth != nil {
+		pullOptions.Auth = auth
+	}
+
+	err = w.Pull(pullOptions)
 	if err == git.NoErrAlreadyUpToDate {
 		return nil
 	}
@@ -167,22 +177,29 @@ func (s *GitService) UpdateBranchFastForward(path, remote, branch, remoteBranch 
 	// Detect Auth
 	var auth transport.AuthMethod
 	rem, err := r.Remote(remote)
-	if err == nil {
-		urls := rem.Config().URLs
-		if len(urls) > 0 {
-			auth = s.detectSSHAuth(urls[0])
-		}
+	if err != nil {
+		return err
+	}
+
+	urls := rem.Config().URLs
+	if len(urls) > 0 {
+		auth = s.detectSSHAuth(urls[0])
 	}
 
 	// git fetch remote remoteBranch:branch
 	// e.g. git fetch origin main:main
 	refSpec := config.RefSpec(fmt.Sprintf("refs/heads/%s:refs/heads/%s", remoteBranch, branch))
 
-	err = rem.Fetch(&git.FetchOptions{
+	// 只在auth不为nil时传递认证信息
+	fetchOptions := &git.FetchOptions{
 		RemoteName: remote,
 		RefSpecs:   []config.RefSpec{refSpec},
-		Auth:       auth,
-	})
+	}
+	if auth != nil {
+		fetchOptions.Auth = auth
+	}
+
+	err = rem.Fetch(fetchOptions)
 
 	if err == git.NoErrAlreadyUpToDate {
 		return nil
@@ -209,13 +226,18 @@ func (s *GitService) FetchAll(path string) error {
 			auth = s.detectSSHAuth(urls[0])
 		}
 
-		err := remote.Fetch(&git.FetchOptions{
-			Auth: auth,
+		// 只在auth不为nil时传递认证信息
+		fetchOptions := &git.FetchOptions{
 			RefSpecs: []config.RefSpec{
 				config.RefSpec("+refs/heads/*:refs/remotes/" + remote.Config().Name + "/*"),
 				config.RefSpec("+refs/tags/*:refs/tags/*"),
 			},
-		})
+		}
+		if auth != nil {
+			fetchOptions.Auth = auth
+		}
+
+		err := remote.Fetch(fetchOptions)
 		if err != nil && err != git.NoErrAlreadyUpToDate {
 			// Log error but continue?
 		}

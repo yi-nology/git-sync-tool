@@ -1,0 +1,20 @@
+{
+  "name": "docs-site",
+  "version": "1.0.0",
+  "description": "Git Manage Service Documentation",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "dev": "vuepress dev docs",
+    "build": "vuepress build docs"
+  },
+  "keywords": ["git", "service", "documentation"],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "vuepress": "^1.9.10"
+  }
+}

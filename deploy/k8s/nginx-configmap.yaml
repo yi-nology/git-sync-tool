@@ -43,14 +43,7 @@ data:
             proxy_read_timeout 300s;
         }
 
-        # Swagger 文档代理
-        location /swagger/ {
-            proxy_pass http://git-manage-backend:8080;
-            proxy_set_header Host $host;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
-        }
+
 
         # 静态资源缓存策略
         location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {

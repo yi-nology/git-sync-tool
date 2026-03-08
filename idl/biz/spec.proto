@@ -1,0 +1,253 @@
+// idl/biz/spec.proto - Spec 相关 API 定义
+syntax = "proto2";
+
+package spec;
+
+import "api.proto";
+import "common.proto";
+
+option go_package = "/spec";
+
+// Spec 服务
+service SpecService {
+    // 文件操作 API
+    rpc GetSpecTree(common.EmptyRequest) returns (SpecTreeResponse) {
+        option (api.get) = "/api/v1/spec/tree";
+    }
+    
+    rpc ListSpecFiles(common.EmptyRequest) returns (SpecFileListResponse) {
+        option (api.get) = "/api/v1/spec/list";
+    }
+    
+    rpc GetSpecContent(SpecContentRequest) returns (SpecContentResponse) {
+        option (api.get) = "/api/v1/spec/content";
+    }
+    
+    rpc GetSpecContentByPath(SpecContentByPathRequest) returns (SpecContentResponse) {
+        option (api.get) = "/api/v1/spec/content/:path";
+    }
+    
+    rpc SaveSpecContent(SaveSpecContentRequest) returns (common.EmptyResponse) {
+        option (api.post) = "/api/v1/spec/save";
+    }
+    
+    rpc SaveSpecContentByPath(SaveSpecContentByPathRequest) returns (common.EmptyResponse) {
+        option (api.put) = "/api/v1/spec/content/:path";
+    }
+    
+    // Linting API
+    rpc LintSpec(LintRequest) returns (LintResponse) {
+        option (api.post) = "/api/v1/spec/lint";
+    }
+    
+    rpc GetLintRules(common.EmptyRequest) returns (LintRuleListResponse) {
+        option (api.get) = "/api/v1/spec/rules";
+    }
+    
+    rpc UpdateLintRule(UpdateLintRuleRequest) returns (LintRuleResponse) {
+        option (api.put) = "/api/v1/spec/rules/:id";
+    }
+    
+    rpc CreateLintRule(CreateLintRuleRequest) returns (LintRuleResponse) {
+        option (api.post) = "/api/v1/spec/rules";
+    }
+    
+    // Git 操作 API
+    rpc CommitSpec(CommitSpecRequest) returns (common.EmptyResponse) {
+        option (api.post) = "/api/v1/spec/commit/:path";
+    }
+    
+    // 兼容旧 API
+    rpc ValidateSpec(ValidateSpecRequest) returns (ValidateSpecResponse) {
+        option (api.post) = "/api/v1/spec/validate";
+    }
+    
+    rpc CreateSpecFile(CreateSpecFileRequest) returns (common.EmptyResponse) {
+        option (api.post) = "/api/v1/spec/create";
+    }
+    
+    rpc DeleteSpecFile(DeleteSpecFileRequest) returns (common.EmptyResponse) {
+        option (api.post) = "/api/v1/spec/delete";
+    }
+}
+
+// Spec 树响应
+message SpecTreeResponse {
+    optional common.BaseResponse base = 1;
+    repeated SpecFile files = 2;
+}
+
+// Spec 文件列表响应
+message SpecFileListResponse {
+    optional common.BaseResponse base = 1;
+    repeated SpecFile files = 2;
+}
+
+// Spec 文件信息
+message SpecFile {
+    optional string name = 1;
+    optional string path = 2;
+    optional bool is_dir = 3;
+    optional int64 size = 4;
+    optional string mod_time = 5;
+    repeated SpecFile children = 6;
+}
+
+// Spec 内容请求
+message SpecContentRequest {
+    optional string repo_key = 1 [(api.query) = "repo_key"];
+    optional string path = 2 [(api.query) = "path"];
+}
+
+// Spec 内容按路径请求
+message SpecContentByPathRequest {
+    optional string repo_key = 1 [(api.query) = "repo_key"];
+    optional string path = 2 [(api.path) = "path"];
+}
+
+// Spec 内容响应
+message SpecContentResponse {
+    optional common.BaseResponse base = 1;
+    optional string content = 2;
+    optional string path = 3;
+}
+
+// 保存 Spec 内容请求
+message SaveSpecContentRequest {
+    optional string repo_key = 1;
+    optional string path = 2;
+    optional string content = 3;
+    optional string commit_message = 4;
+}
+
+// 保存 Spec 内容按路径请求
+message SaveSpecContentByPathRequest {
+    optional string repo_key = 1;
+    optional string path = 2 [(api.path) = "path"];
+    optional string content = 3;
+    optional string message = 4;
+    optional bool auto_commit = 5;
+}
+
+// Lint 请求
+message LintRequest {
+    optional string content = 1;
+    optional string rules = 2;
+}
+
+// Lint 响应
+message LintResponse {
+    optional common.BaseResponse base = 1;
+    optional string file = 2;
+    repeated LintIssue issues = 3;
+    optional LintStats stats = 4;
+}
+
+// Lint 问题
+message LintIssue {
+    optional string rule_id = 1;
+    optional string severity = 2;
+    optional string message = 3;
+    optional int32 line = 4;
+}
+
+// Lint 统计
+message LintStats {
+    optional int32 error_count = 1;
+    optional int32 warning_count = 2;
+    optional int32 info_count = 3;
+}
+
+// Lint 规则列表响应
+message LintRuleListResponse {
+    optional common.BaseResponse base = 1;
+    repeated LintRule rules = 2;
+}
+
+// Lint 规则
+message LintRule {
+    optional string id = 1;
+    optional string name = 2;
+    optional string description = 3;
+    optional string category = 4;
+    optional string severity = 5;
+    optional string pattern = 6;
+    optional bool enabled = 7;
+    optional int32 priority = 8;
+    optional string created_at = 9;
+    optional string updated_at = 10;
+}
+
+// 更新 Lint 规则请求
+message UpdateLintRuleRequest {
+    optional string id = 1 [(api.path) = "id"];
+    optional string name = 2;
+    optional string description = 3;
+    optional string category = 4;
+    optional string severity = 5;
+    optional string pattern = 6;
+    optional bool enabled = 7;
+    optional int32 priority = 8;
+}
+
+// 创建 Lint 规则请求
+message CreateLintRuleRequest {
+    optional string id = 1;
+    optional string name = 2;
+    optional string description = 3;
+    optional string category = 4;
+    optional string severity = 5;
+    optional string pattern = 6;
+    optional bool enabled = 7;
+    optional int32 priority = 8;
+}
+
+// Lint 规则响应
+message LintRuleResponse {
+    optional common.BaseResponse base = 1;
+    optional LintRule rule = 2;
+}
+
+// 提交 Spec 请求
+message CommitSpecRequest {
+    optional string repo_key = 1;
+    optional string path = 2 [(api.path) = "path"];
+    optional string message = 3;
+    optional string content = 4;
+}
+
+// 验证 Spec 请求
+message ValidateSpecRequest {
+    optional string content = 1;
+}
+
+// 验证 Spec 响应
+message ValidateSpecResponse {
+    optional common.BaseResponse base = 1;
+    optional bool valid = 2;
+    repeated LintIssue issues = 3;
+    repeated LintIssue warnings = 4;
+    optional ValidateStats stats = 5;
+}
+
+// 验证统计
+message ValidateStats {
+    optional string errors = 1;
+    optional string total_lines = 2;
+    optional string warnings = 3;
+}
+
+// 创建 Spec 文件请求
+message CreateSpecFileRequest {
+    optional string repo_key = 1;
+    optional string path = 2;
+    optional string name = 3;
+    optional string content = 4;
+}
+
+// 删除 Spec 文件请求
+message DeleteSpecFileRequest {
+    optional string repo_key = 1;
+    optional string path = 2;
+    optional string commit_message = 3;
+}

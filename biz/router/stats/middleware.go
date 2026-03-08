@@ -80,3 +80,18 @@ func _linesExportMw() []app.HandlerFunc {
 func _exportlinestatscsvMw() []app.HandlerFunc {
 	return nil
 }
+
+func _getlinestatsconfigMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
+func _savelinestatsconfigMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
+func _export0Mw() []app.HandlerFunc {
+	// your code...
+	return nil
+}

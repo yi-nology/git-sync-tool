@@ -2,20 +2,20 @@ package api
 
 // GeneratePatchReq 生成 patch 请求
 type GeneratePatchReq struct {
-	RepoKey string `json:"repo_key" form:"repo_key"`
-	Base    string `json:"base" form:"base"`       // 基准分支/commit
-	Target  string `json:"target" form:"target"`   // 目标分支/commit
+	RepoKey string   `json:"repo_key" form:"repo_key"`
+	Base    string   `json:"base" form:"base"`       // 基准分支/commit
+	Target  string   `json:"target" form:"target"`   // 目标分支/commit
 	Commits []string `json:"commits" form:"commits"` // 指定 commit 列表（可选）
 }
 
 // SavePatchReq 保存 patch 请求
 type SavePatchReq struct {
 	RepoKey       string `json:"repo_key" form:"repo_key"`
-	PatchName     string `json:"patch_name" form:"patch_name"`       // patch 文件名
-	PatchContent  string `json:"patch_content" form:"patch_content"` // patch 内容
-	CustomPath    string `json:"custom_path" form:"custom_path"`     // 自定义保存路径（可选）
+	PatchName     string `json:"patch_name" form:"patch_name"`         // patch 文件名
+	PatchContent  string `json:"patch_content" form:"patch_content"`   // patch 内容
+	CustomPath    string `json:"custom_path" form:"custom_path"`       // 自定义保存路径（可选）
 	CommitMessage string `json:"commit_message" form:"commit_message"` // 提交消息（可选，为空则不提交）
-	Sequence      int    `json:"sequence" form:"sequence"`           // 序号（用于排序）
+	Sequence      int    `json:"sequence" form:"sequence"`             // 序号（用于排序）
 }
 
 // ApplyPatchReq 应用 patch 请求
@@ -57,14 +57,14 @@ type PatchStatsDTO struct {
 
 // PatchSeriesDTO patch 序列状态
 type PatchSeriesDTO struct {
-	RepoKey        string          `json:"repo_key"`
-	TotalPatches   int             `json:"total_patches"`
-	AppliedCount   int             `json:"applied_count"`
-	PendingCount   int             `json:"pending_count"`
-	ConflictCount  int             `json:"conflict_count"`
-	Patches        []PatchInfoDTO  `json:"patches"`
-	CanApplyNext   bool            `json:"can_apply_next"`   // 是否可以应用下一个
-	NextPatchIndex int             `json:"next_patch_index"` // 下一个待应用的 patch 索引
+	RepoKey        string         `json:"repo_key"`
+	TotalPatches   int            `json:"total_patches"`
+	AppliedCount   int            `json:"applied_count"`
+	PendingCount   int            `json:"pending_count"`
+	ConflictCount  int            `json:"conflict_count"`
+	Patches        []PatchInfoDTO `json:"patches"`
+	CanApplyNext   bool           `json:"can_apply_next"`   // 是否可以应用下一个
+	NextPatchIndex int            `json:"next_patch_index"` // 下一个待应用的 patch 索引
 }
 
 // ReorderPatchReq 重排 patch 顺序

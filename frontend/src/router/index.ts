@@ -91,12 +91,26 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '凭证管理' },
       },
       {
+        path: 'settings/notification-channels',
+        name: 'NotificationChannels',
+        component: () => import('@/views/settings/NotificationChannelsPage.vue'),
+        meta: { title: '通知渠道管理' },
+      },
+      {
         path: 'spec-editor',
         name: 'SpecEditor',
         component: () => import('@/views/spec/SpecEditorPage.vue'),
         meta: { title: 'Spec 编辑器' },
       },
+
     ],
+  },
+  // 404 页面
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'NotFound',
+    component: () => import('@/views/error/NotFoundPage.vue'),
+    meta: { title: '页面未找到' },
   },
 ]
 

@@ -95,8 +95,7 @@ COPY --from=backend-builder /app/git-manage-service .
 # Copy frontend assets (already integrated in backend builder)
 COPY --from=backend-builder /app/public ./public
 
-# Copy swagger docs
-COPY --from=backend-builder /app/docs ./docs
+
 
 # Copy default config
 COPY --from=backend-builder /app/conf/config.yaml ./conf/config.yaml
