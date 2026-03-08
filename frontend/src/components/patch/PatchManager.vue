@@ -3,8 +3,29 @@
     <el-card>
       <template #header>
         <div class="card-header">
-          <span>Patch 管理</span>
+          <div class="header-left">
+            <span>Patch 管理</span>
+            <el-tag v-if="seriesStats" type="info" size="small">
+              {{ seriesStats.applied_count }}/{{ seriesStats.total_patches }} 已应用
+            </el-tag>
+          </div>
           <div class="header-actions">
+            <el-button
+              v-if="seriesStats && seriesStats.can_apply_next"
+              type="success"
+              size="small"
+              @click="applyNextPatch"
+            >
+              <el-icon><ArrowRight /></el-icon> 应用下一个 ({{ getNextPatchName() }})
+            </el-button>
+            <el-button
+              v-if="seriesStats && seriesStats.pending_count > 1"
+              type="warning"
+              size="small"
+              @click="applyAllPending"
+            >
+              <el-icon><Finished /></el-icon> 批量应用 ({{ seriesStats.pending_count }}个)
+            </el-button>
             <el-button type="primary" size="small" @click="openGenerateDialog">
               <el-icon><Plus /></el-icon> 生成 Patch
             </el-button>
@@ -14,6 +35,20 @@
           </div>
         </div>
       </template>
+
+      <!-- 进度条 -->
+      <div v-if="seriesStats && seriesStats.total_patches > 0" class="progress-section">
+        <el-progress
+          :percentage="getProgress()"
+          :status="seriesStats.conflict_count > 0 ? 'exception' : 'success'"
+        />
+        <div class="progress-text">
+          已应用 {{ seriesStats.applied_count }} / 共 {{ seriesStats.total_patches }} 个 patch
+          <span v-if="seriesStats.conflict_count > 0" class="error-text">
+            ({{ seriesStats.conflict_count }} 个冲突)
+          </span>
+        </div>
+      </div>
 
       <!-- Patch 列表 -->
       <el-table :data="patches" v-loading="loading" stripe border size="small">
@@ -289,7 +324,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Refresh, CircleCheck, Clock, Warning } from '@element-plus/icons-vue'
+import { Plus, Refresh, CircleCheck, Clock, Warning, ArrowRight, Finished } from '@element-plus/icons-vue'
 import {
   generatePatch,
   savePatch as savePatchApi,
@@ -317,6 +352,7 @@ const { showSuccess, showError } = useNotification()
 
 const loading = ref(false)
 const patches = ref<PatchInfoDTO[]>([])
+const seriesStats = ref<any>(null)
 
 // 生成
 const showGenerateDialog = ref(false)
@@ -362,7 +398,25 @@ onMounted(() => {
 async function loadPatches() {
   loading.value = true
   try {
-    patches.value = await listPatches(props.repoKey)
+    const result = await listPatches(props.repoKey)
+    patches.value = result
+
+    // 计算统计信息
+    const applied = patches.value.filter(p => p.is_applied).length
+    const pending = patches.value.filter(p => !p.is_applied && p.can_apply).length
+    const conflict = patches.value.filter(p => !p.is_applied && !p.can_apply).length
+
+    // 找到下一个待应用的 patch
+    const nextIndex = patches.value.findIndex(p => !p.is_applied && p.can_apply)
+
+    seriesStats.value = {
+      total_patches: patches.value.length,
+      applied_count: applied,
+      pending_count: pending,
+      conflict_count: conflict,
+      can_apply_next: nextIndex >= 0,
+      next_patch_index: nextIndex,
+    }
   } catch (e: any) {
     showError('加载失败', e)
   } finally {
@@ -583,6 +637,70 @@ function copyContent() {
   showSuccess('已复制到剪贴板')
 }
 
+function getProgress(): number {
+  if (!seriesStats.value || seriesStats.value.total_patches === 0) return 0
+  return Math.round((seriesStats.value.applied_count / seriesStats.value.total_patches) * 100)
+}
+
+function getNextPatchName(): string {
+  if (!seriesStats.value || seriesStats.value.next_patch_index < 0) return ''
+  const patch = patches.value[seriesStats.value.next_patch_index]
+  return patch ? patch.name : ''
+}
+
+async function applyNextPatch() {
+  if (!seriesStats.value || seriesStats.value.next_patch_index < 0) {
+    ElMessage.warning('没有待应用的 patch')
+    return
+  }
+
+  const patch = patches.value[seriesStats.value.next_patch_index]
+  if (patch) {
+    await openApplyDialog(patch)
+  }
+}
+
+async function applyAllPending() {
+  if (!seriesStats.value || seriesStats.value.pending_count === 0) {
+    ElMessage.warning('没有待应用的 patch')
+    return
+  }
+
+  try {
+    await ElMessageBox.confirm(
+      `确定要批量应用 ${seriesStats.value.pending_count} 个待应用的 patch 吗？`,
+      '批量应用 Patch',
+      {
+        type: 'warning',
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+      }
+    )
+
+    // 依次应用所有待应用的 patch
+    const pendingPatches = patches.value.filter(p => !p.is_applied && p.can_apply)
+    for (const patch of pendingPatches) {
+      try {
+        await applyPatch({
+          repo_key: props.repoKey,
+          patch_path: patch.path,
+          commit_message: `feat: apply patch ${patch.name}`,
+        })
+      } catch (e: any) {
+        ElMessage.error(`应用 ${patch.name} 失败: ${e.message || e}`)
+        break
+      }
+    }
+
+    ElMessage.success(`已成功应用 ${pendingPatches.length} 个 patch`)
+    loadPatches()
+  } catch (e) {
+    if (e !== 'cancel') {
+      console.error('Batch apply failed:', e)
+    }
+  }
+}
+
 function formatSize(bytes: number): string {
   if (bytes < 1024) return bytes + ' B'
   if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
@@ -651,5 +769,35 @@ function formatSize(bytes: number): string {
 
 .patch-name .el-icon {
   flex-shrink: 0;
+}
+
+.progress-section {
+  margin-bottom: 16px;
+  padding: 12px;
+  background: #f5f7fa;
+  border-radius: 4px;
+}
+
+.progress-text {
+  margin-top: 8px;
+  font-size: 13px;
+  color: #606266;
+}
+
+.error-text {
+  color: #F56C6C;
+  margin-left: 8px;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 </style>
