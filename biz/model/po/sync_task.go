@@ -19,6 +19,10 @@ type SyncTask struct {
 	Enabled       bool   `json:"enabled"`
 	WebhookToken  string `gorm:"index" json:"webhook_token"`      // 用于Webhook触发的Token
 	SyncMode      string `gorm:"default:single" json:"sync_mode"` // single: 单分支同步, all-branch: 全分支同步
+	GitTags       bool   `gorm:"default:false" json:"git_tags"`
+	GitForce      bool   `gorm:"default:false" json:"git_force"`
+	GitPrune      bool   `gorm:"default:false" json:"git_prune"`
+	GitNoVerify   bool   `gorm:"default:false" json:"git_no_verify"`
 
 	// Associations
 	SourceRepo Repo `gorm:"foreignKey:SourceRepoKey;references:Key" json:"source_repo"`

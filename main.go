@@ -23,8 +23,6 @@ import (
 	"github.com/yi-nology/git-manage-service/biz/utils"
 	"github.com/yi-nology/git-manage-service/pkg/appinfo"
 	"github.com/yi-nology/git-manage-service/pkg/configs"
-
-	_ "github.com/yi-nology/git-manage-service/docs"
 )
 
 // @title Git Manage Service API
@@ -35,7 +33,7 @@ import (
 // @contact.email support@example.com
 
 // @license.name Apache 2.0
-// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+// @license.url `http://www.apache.org/licenses/LICENSE-2.0.html`
 
 // @host localhost:8080
 // @BasePath /api
@@ -150,8 +148,6 @@ func initResources() {
 
 // startHTTPServer 启动 HTTP 服务器
 func startHTTPServer() *hserver.Hertz {
-	// 注入嵌入的静态资源
-	router.SetEmbedFS(GetPublicFS(), GetDocsFS())
 
 	addr := fmt.Sprintf(":%d", configs.GlobalConfig.Server.Port)
 	h := hserver.Default(hserver.WithHostPorts(addr))

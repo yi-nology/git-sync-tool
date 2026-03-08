@@ -129,7 +129,7 @@ docker-compose logs -f app
 **访问地址**：
 - 前端页面：http://localhost （由 Nginx 提供）
 - API 接口：http://localhost/api/v1 （代理到 Go 服务）
-- Swagger 文档：http://localhost/swagger/index.html
+
 - MinIO 控制台：http://localhost:9001
 
 ### 1.2 PostgreSQL 部署

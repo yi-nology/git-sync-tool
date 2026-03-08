@@ -9,15 +9,24 @@ import (
 
 // RegisterCustomRoutes 注册自定义 patch 路由
 func RegisterCustomRoutes(r *server.Hertz) {
-	patchGroup := r.Group("/api/v1/patch")
+	root := r.Group("/")
 	{
-		patchGroup.POST("/generate", patch.GeneratePatch)
-		patchGroup.POST("/save", patch.SavePatch)
-		patchGroup.GET("/list", patch.ListPatches)
-		patchGroup.GET("/content", patch.GetPatchContent)
-		patchGroup.GET("/download", patch.DownloadPatch)
-		patchGroup.POST("/apply", patch.ApplyPatch)
-		patchGroup.POST("/check", patch.CheckPatch)
-		patchGroup.POST("/delete", patch.DeletePatch)
+		_api := root.Group("/api")
+		{
+			_v1 := _api.Group("/v1")
+			{
+				_patch := _v1.Group("/patch")
+				{
+					_patch.POST("/generate", patch.GeneratePatch)
+					_patch.POST("/save", patch.SavePatch)
+					_patch.GET("/list", patch.ListPatches)
+					_patch.GET("/content", patch.GetPatchContent)
+					_patch.GET("/download", patch.DownloadPatch)
+					_patch.POST("/apply", patch.ApplyPatch)
+					_patch.POST("/check", patch.CheckPatch)
+					_patch.POST("/delete", patch.DeletePatch)
+				}
+			}
+		}
 	}
 }

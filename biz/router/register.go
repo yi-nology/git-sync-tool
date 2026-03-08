@@ -30,9 +30,10 @@ import (
 	"github.com/yi-nology/git-manage-service/biz/router/webhook"
 )
 
+// 嵌入的文件系统变量
 var (
-	embeddedPublicFS fs.FS // 嵌入的前端资源
-	embeddedDocsFS   fs.FS // 嵌入的文档资源
+	embeddedPublicFS fs.FS
+	embeddedDocsFS   fs.FS
 )
 
 // SetEmbedFS 设置嵌入的文件系统（由 main.go 调用）
@@ -43,36 +44,25 @@ func SetEmbedFS(public, docs fs.FS) {
 
 // GeneratedRegister registers all routes
 func GeneratedRegister(h *server.Hertz) {
-	// 注册各模块路由（/api/v1）
-	repo.Register(h)
-	branch.Register(h)
-	branch.RegisterCustomRoutes(h) // 注册自定义分支路由（cherry-pick, rebase等）
-	tag.Register(h)
-	version.Register(h)
-	system.Register(h)
-	system.RegisterCustomRoutes(h) // 注册自定义系统路由（app-info等）
-	sync.Register(h)
-	stats.Register(h)
+	// 注册 Hz 生成的路由
 	audit.Register(h)
-	webhook.Register(h)
-	file.Register(h)
+	branch.Register(h)
 	commit.Register(h)
+	credential.Register(h)
+	file.Register(h)
 	notification.Register(h)
+	repo.Register(h)
+	sshkey.Register(h)
 	stash.Register(h)
 	submodule.Register(h)
-	sshkey.Register(h)     // SSH密钥管理路由
-	credential.Register(h) // 凭证管理路由
-	patch.RegisterCustomRoutes(h) // Patch 管理路由
-	spec.RegisterCustomRoutes(h)  // Spec 编辑器路由
-
-	// Swagger 文档 - 从嵌入的 FS 读取
-	h.GET("/docs/swagger.json", func(ctx context.Context, c *app.RequestContext) {
-		serveEmbedFile(c, embeddedDocsFS, "swagger.json", "application/json")
-	})
-	h.GET("/docs/*filepath", func(ctx context.Context, c *app.RequestContext) {
-		fp := c.Param("filepath")
-		serveEmbedFile(c, embeddedDocsFS, fp, "")
-	})
+	sync.Register(h)
+	system.Register(h)
+	tag.Register(h)
+	version.Register(h)
+	webhook.Register(h)
+	patch.Register(h)
+	spec.Register(h)
+	stats.Register(h)
 
 	// 前端 SPA - 从嵌入的 FS 读取
 	h.GET("/*filepath", func(ctx context.Context, c *app.RequestContext) {
@@ -81,8 +71,12 @@ func GeneratedRegister(h *server.Hertz) {
 			fp = "index.html"
 		}
 		// 尝试读取文件，失败则回退到 index.html (SPA)
-		if !serveEmbedFile(c, embeddedPublicFS, fp, "") {
-			serveEmbedFile(c, embeddedPublicFS, "index.html", "text/html; charset=utf-8")
+		if embeddedPublicFS != nil {
+			if !serveEmbedFile(c, embeddedPublicFS, fp, "") {
+				serveEmbedFile(c, embeddedPublicFS, "index.html", "text/html; charset=utf-8")
+			}
+		} else {
+			c.String(http.StatusInternalServerError, "Embedded file system not initialized")
 		}
 	})
 
@@ -91,14 +85,22 @@ func GeneratedRegister(h *server.Hertz) {
 		if fp == "" {
 			fp = "index.html"
 		}
-		if !serveEmbedFile(c, embeddedPublicFS, fp, "") {
-			serveEmbedFile(c, embeddedPublicFS, "index.html", "text/html; charset=utf-8")
+		if embeddedPublicFS != nil {
+			if !serveEmbedFile(c, embeddedPublicFS, fp, "") {
+				serveEmbedFile(c, embeddedPublicFS, "index.html", "text/html; charset=utf-8")
+			}
+		} else {
+			c.String(http.StatusInternalServerError, "Embedded file system not initialized")
 		}
 	})
 
 	// 根路径重定向到 index.html
 	h.GET("/", func(ctx context.Context, c *app.RequestContext) {
-		serveEmbedFile(c, embeddedPublicFS, "index.html", "text/html; charset=utf-8")
+		if embeddedPublicFS != nil {
+			serveEmbedFile(c, embeddedPublicFS, "index.html", "text/html; charset=utf-8")
+		} else {
+			c.String(http.StatusInternalServerError, "Embedded file system not initialized")
+		}
 	})
 }
 
@@ -108,6 +110,11 @@ func serveEmbedFile(c *app.RequestContext, fsys fs.FS, path string, contentType 
 	path = strings.TrimPrefix(path, "/")
 	if path == "" {
 		path = "index.html"
+	}
+
+	// 检查文件系统是否为 nil
+	if fsys == nil {
+		return false
 	}
 
 	data, err := fs.ReadFile(fsys, path)

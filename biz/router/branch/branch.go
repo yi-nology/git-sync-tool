@@ -24,6 +24,7 @@ func Register(r *server.Hertz) {
 			{
 				_branch := _v1.Group("/branch", _branchMw()...)
 				_branch.POST("/checkout", append(_checkoutMw(), branch.Checkout)...)
+				_branch.POST("/cherry-pick", append(_cherrypickMw(), branch.CherryPick)...)
 				_branch.GET("/compare", append(_compareMw(), branch.Compare)...)
 				_branch.POST("/create", append(_createMw(), branch.Create)...)
 				_branch.POST("/delete", append(_deleteMw(), branch.Delete)...)
@@ -35,6 +36,10 @@ func Register(r *server.Hertz) {
 				_branch.GET("/patch", append(_getpatchMw(), branch.GetPatch)...)
 				_branch.POST("/pull", append(_pullMw(), branch.Pull)...)
 				_branch.POST("/push", append(_pushMw(), branch.Push)...)
+				_branch.POST("/rebase", append(_rebase0Mw(), branch.Rebase)...)
+				_rebase := _branch.Group("/rebase", _rebaseMw()...)
+				_rebase.POST("/abort", append(_rebaseabortMw(), branch.RebaseAbort)...)
+				_rebase.POST("/continue", append(_rebasecontinueMw(), branch.RebaseContinue)...)
 				_branch.POST("/update", append(_updateMw(), branch.Update)...)
 			}
 		}

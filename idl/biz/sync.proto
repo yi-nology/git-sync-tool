@@ -3,7 +3,7 @@ syntax = "proto3";
 
 package sync;
 
-option go_package = "github.com/yi-nology/git-manage-service/biz/model/biz/sync";
+option go_package = "sync";
 
 import "api.proto";
 import "common.proto";
@@ -45,6 +45,11 @@ service SyncService {
     option (api.post) = "/api/v1/sync/execute";
   }
   
+  // PreviewSync 预览同步变更
+  rpc PreviewSync(PreviewSyncRequest) returns (PreviewSyncResponse) {
+    option (api.post) = "/api/v1/sync/preview";
+  }
+  
   // ListHistory 获取同步历史
   rpc ListHistory(ListHistoryRequest) returns (ListHistoryResponse) {
     option (api.get) = "/api/v1/sync/history";
@@ -53,6 +58,16 @@ service SyncService {
   // DeleteHistory 删除同步历史
   rpc DeleteHistory(DeleteHistoryRequest) returns (common.EmptyResponse) {
     option (api.post) = "/api/v1/sync/history/delete";
+  }
+  
+  // AnalyzeRepoForSync 分析仓库以获取同步建议
+  rpc AnalyzeRepoForSync(AnalyzeRepoForSyncRequest) returns (common.EmptyResponse) {
+    option (api.post) = "/api/v1/sync/analyze-repo";
+  }
+  
+  // BatchSync 批量执行同步任务
+  rpc BatchSync(BatchSyncRequest) returns (common.EmptyResponse) {
+    option (api.post) = "/api/v1/sync/batch";
   }
 }
 
@@ -75,6 +90,10 @@ message SyncTask {
   string created_at = 15;
   string updated_at = 16;
   string sync_mode = 17;
+  bool git_tags = 18;
+  bool git_force = 19;
+  bool git_prune = 20;
+  bool git_no_verify = 21;
 }
 
 // SyncRun 同步运行记录
@@ -125,6 +144,10 @@ message CreateTaskRequest {
   string cron = 8 [(api.body) = "cron"];
   bool enabled = 9 [(api.body) = "enabled"];
   string sync_mode = 10 [(api.body) = "sync_mode"];
+  bool git_tags = 11 [(api.body) = "git_tags"];
+  bool git_force = 12 [(api.body) = "git_force"];
+  bool git_prune = 13 [(api.body) = "git_prune"];
+  bool git_no_verify = 14 [(api.body) = "git_no_verify"];
 }
 
 // UpdateTaskRequest 更新任务请求
@@ -140,6 +163,10 @@ message UpdateTaskRequest {
   string cron = 9 [(api.body) = "cron"];
   bool enabled = 10 [(api.body) = "enabled"];
   string sync_mode = 11 [(api.body) = "sync_mode"];
+  bool git_tags = 12 [(api.body) = "git_tags"];
+  bool git_force = 13 [(api.body) = "git_force"];
+  bool git_prune = 14 [(api.body) = "git_prune"];
+  bool git_no_verify = 15 [(api.body) = "git_no_verify"];
 }
 
 // DeleteTaskRequest 删除任务请求
@@ -169,6 +196,38 @@ message ExecuteSyncResponse {
   string status = 3;
 }
 
+// PreviewSyncRequest 预览同步请求
+message PreviewSyncRequest {
+  string repo_key = 1 [(api.body) = "repo_key"];
+  string source_remote = 2 [(api.body) = "source_remote"];
+  string source_branch = 3 [(api.body) = "source_branch"];
+  string target_remote = 4 [(api.body) = "target_remote"];
+  string target_branch = 5 [(api.body) = "target_branch"];
+  bool git_tags = 6 [(api.body) = "git_tags"];
+  bool git_force = 7 [(api.body) = "git_force"];
+  bool git_prune = 8 [(api.body) = "git_prune"];
+  bool git_no_verify = 9 [(api.body) = "git_no_verify"];
+}
+
+// PreviewSyncResponse 预览同步响应
+message PreviewSyncResponse {
+  common.BaseResponse base = 1;
+  string command = 2;
+  int32 commits_to_push = 3;
+  repeated string tags_to_push = 4;
+  repeated CommitInfo commits = 5;
+  bool fast_forward = 6;
+  string warning = 7;
+}
+
+// CommitInfo 提交信息
+message CommitInfo {
+  string hash = 1;
+  string message = 2;
+  string author = 3;
+  string date = 4;
+}
+
 // ListHistoryRequest 历史列表请求
 message ListHistoryRequest {
   string repo_key = 1 [(api.query) = "repo_key"];
@@ -185,4 +244,15 @@ message ListHistoryResponse {
 // DeleteHistoryRequest 删除历史请求
 message DeleteHistoryRequest {
   int64 id = 1 [(api.body) = "id"];
+}
+
+// AnalyzeRepoForSyncRequest 分析仓库请求
+message AnalyzeRepoForSyncRequest {
+  string repoPath = 1 [(api.body) = "repoPath"];
+  string repoKey = 2 [(api.body) = "repoKey"];
+}
+
+// BatchSyncRequest 批量同步请求
+message BatchSyncRequest {
+  repeated string task_keys = 1 [(api.body) = "task_keys"];
 }

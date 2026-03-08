@@ -428,13 +428,13 @@ type SpecValidationResult struct {
 
 // SpecIssue spec 问题
 type SpecIssue struct {
-	Line      int    `json:"line"`
-	Column    int    `json:"column"`
-	Message   string `json:"message"`
-	Severity  string `json:"severity"`
-	Rule      string `json:"rule"`
-	RuleDesc  string `json:"rule_desc"`
-	QuickFix  string `json:"quick_fix,omitempty"`
+	Line     int    `json:"line"`
+	Column   int    `json:"column"`
+	Message  string `json:"message"`
+	Severity string `json:"severity"`
+	Rule     string `json:"rule"`
+	RuleDesc string `json:"rule_desc"`
+	QuickFix string `json:"quick_fix,omitempty"`
 }
 
 // SpecRule spec 规则

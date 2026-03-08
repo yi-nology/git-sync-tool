@@ -3,7 +3,7 @@ syntax = "proto3";
 
 package notification;
 
-option go_package = "github.com/yi-nology/git-manage-service/biz/model/biz/notification";
+option go_package = "notification";
 
 import "api.proto";
 import "common.proto";

@@ -24,7 +24,7 @@ type LineCounter struct {
 
 // LineCacheItem 缓存项
 type LineCacheItem struct {
-	Status    string               // processing, ready, failed
+	Status    string // processing, ready, failed
 	Data      *api.LineStatsResponse
 	Error     error
 	CreatedAt time.Time
@@ -456,22 +456,22 @@ func (lc *LineCounter) getGitBlameInfo(repoPath, filePath, branch string) (map[i
 	if branch != "" {
 		args = append(args, branch, "--")
 	}
-	
+
 	// 获取相对路径
 	relPath, err := filepath.Rel(repoPath, filePath)
 	if err != nil {
 		relPath = filePath
 	}
 	args = append(args, relPath)
-	
+
 	cmd := exec.Command("git", args...)
 	cmd.Dir = repoPath
-	
+
 	output, err := cmd.Output()
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return lc.parseBlameOutput(string(output))
 }
 
@@ -479,13 +479,13 @@ func (lc *LineCounter) getGitBlameInfo(repoPath, filePath, branch string) (map[i
 func (lc *LineCounter) parseBlameOutput(output string) (map[int]*BlameLineInfo, error) {
 	result := make(map[int]*BlameLineInfo)
 	lines := strings.Split(output, "\n")
-	
+
 	var currentLine int
 	var currentInfo *BlameLineInfo
-	
+
 	for i := 0; i < len(lines); i++ {
 		line := lines[i]
-		
+
 		// 提交哈希行 (40字符的hex + 行号信息)
 		if len(line) >= 40 && isHexString(line[:40]) {
 			parts := strings.Fields(line)
@@ -496,11 +496,11 @@ func (lc *LineCounter) parseBlameOutput(output string) (map[int]*BlameLineInfo, 
 			}
 			continue
 		}
-		
+
 		if currentInfo == nil {
 			continue
 		}
-		
+
 		// 解析作者信息
 		if strings.HasPrefix(line, "author ") {
 			currentInfo.Author = strings.TrimPrefix(line, "author ")
@@ -519,7 +519,7 @@ func (lc *LineCounter) parseBlameOutput(output string) (map[int]*BlameLineInfo, 
 			currentInfo = nil
 		}
 	}
-	
+
 	return result, nil
 }
 
@@ -538,7 +538,7 @@ func (lc *LineCounter) shouldCountLine(info *BlameLineInfo, config CountConfig) 
 	if info == nil {
 		return true // 无blame信息时默认统计
 	}
-	
+
 	// 作者过滤
 	if config.Author != "" {
 		authorMatch := strings.Contains(strings.ToLower(info.Author), strings.ToLower(config.Author)) ||
@@ -547,7 +547,7 @@ func (lc *LineCounter) shouldCountLine(info *BlameLineInfo, config CountConfig) 
 			return false
 		}
 	}
-	
+
 	// 时间范围过滤
 	if config.Since != "" {
 		sinceTime, err := time.Parse("2006-01-02", config.Since)
@@ -555,7 +555,7 @@ func (lc *LineCounter) shouldCountLine(info *BlameLineInfo, config CountConfig) 
 			return false
 		}
 	}
-	
+
 	if config.Until != "" {
 		untilTime, err := time.Parse("2006-01-02", config.Until)
 		if err == nil {
@@ -566,7 +566,7 @@ func (lc *LineCounter) shouldCountLine(info *BlameLineInfo, config CountConfig) 
 			}
 		}
 	}
-	
+
 	return true
 }
 

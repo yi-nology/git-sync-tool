@@ -32,28 +32,6 @@ _testmain.go
 /.idea
 /.vscode
 /output
-/dist
 *.local.yml
 dumped_hertz_remote_config.json
-git-manage-service
-*.db
-.qoder/
-.hz
-public/
-.vite/
-# Logs
-*.log
-app.log
-
-# Frontend
-frontend/.vite/
-
-# Node.js (root level - for testing only)
-node_modules/
-package.json
-package-lock.json
-
-# Test artifacts
-test-*.js
-test-results/
-check-*.js
+		  

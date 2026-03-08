@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Webhook 接口文档 | Git Manage Service</title>
+    <meta name="generator" content="VuePress 1.9.10">
+    
+    <meta name="description" content="Git 管理服务文档">
+    
+    <link rel="preload" href="/assets/css/0.styles.f3e2e2a4.css" as="style"><link rel="preload" href="/assets/js/app.df0f3889.js" as="script"><link rel="preload" href="/assets/js/2.2d1a46ee.js" as="script"><link rel="preload" href="/assets/js/1.1823ac01.js" as="script"><link rel="preload" href="/assets/js/42.ada5b9e2.js" as="script"><link rel="prefetch" href="/assets/js/10.7bdf68e6.js"><link rel="prefetch" href="/assets/js/11.4edc918e.js"><link rel="prefetch" href="/assets/js/12.1e32ca21.js"><link rel="prefetch" href="/assets/js/13.72a5c39d.js"><link rel="prefetch" href="/assets/js/14.df9b7535.js"><link rel="prefetch" href="/assets/js/15.10c40130.js"><link rel="prefetch" href="/assets/js/16.843e3084.js"><link rel="prefetch" href="/assets/js/17.7e574cc5.js"><link rel="prefetch" href="/assets/js/18.99e6bfc2.js"><link rel="prefetch" href="/assets/js/19.3df63a97.js"><link rel="prefetch" href="/assets/js/20.6455ee20.js"><link rel="prefetch" href="/assets/js/21.19032784.js"><link rel="prefetch" href="/assets/js/22.570a455a.js"><link rel="prefetch" href="/assets/js/23.182b3f99.js"><link rel="prefetch" href="/assets/js/24.745db78e.js"><link rel="prefetch" href="/assets/js/25.e1ff6ba5.js"><link rel="prefetch" href="/assets/js/26.bb06367d.js"><link rel="prefetch" href="/assets/js/27.3d1465cd.js"><link rel="prefetch" href="/assets/js/28.d3d7deae.js"><link rel="prefetch" href="/assets/js/29.c8b5adbf.js"><link rel="prefetch" href="/assets/js/3.c4e49a14.js"><link rel="prefetch" href="/assets/js/30.4bd04cd5.js"><link rel="prefetch" href="/assets/js/31.e2f61de3.js"><link rel="prefetch" href="/assets/js/32.f33e32ca.js"><link rel="prefetch" href="/assets/js/33.fb015ec5.js"><link rel="prefetch" href="/assets/js/34.6412c765.js"><link rel="prefetch" href="/assets/js/35.3ce53f68.js"><link rel="prefetch" href="/assets/js/36.b98cb815.js"><link rel="prefetch" href="/assets/js/37.73287d4c.js"><link rel="prefetch" href="/assets/js/38.f10a4bf0.js"><link rel="prefetch" href="/assets/js/39.afa80b01.js"><link rel="prefetch" href="/assets/js/4.db06a48d.js"><link rel="prefetch" href="/assets/js/40.e2e52641.js"><link rel="prefetch" href="/assets/js/41.a13ae655.js"><link rel="prefetch" href="/assets/js/5.8fe2100d.js"><link rel="prefetch" href="/assets/js/6.14a21915.js"><link rel="prefetch" href="/assets/js/7.af088f0b.js"><link rel="prefetch" href="/assets/js/vendors~docsearch.cc58001a.js">
+    <link rel="stylesheet" href="/assets/css/0.styles.f3e2e2a4.css">
+  </head>
+  <body>
+    <div id="app" data-server-rendered="true"><div class="theme-container"><header class="navbar"><div class="sidebar-button"><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" viewBox="0 0 448 512" class="icon"><path fill="currentColor" d="M436 124H12c-6.627 0-12-5.373-12-12V80c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12z"></path></svg></div> <a href="/" class="home-link router-link-active"><!----> <span class="site-name">Git Manage Service</span></a> <div class="links"><div class="search-box"><input aria-label="Search" autocomplete="off" spellcheck="false" value=""> <!----></div> <nav class="nav-links can-hide"><div class="nav-item"><a href="/" class="nav-link">
+  首页
+</a></div><div class="nav-item"><a href="/usage.html" class="nav-link">
+  使用指南
+</a></div><div class="nav-item"><a href="/deployment.html" class="nav-link">
+  部署指南
+</a></div><div class="nav-item"><a href="/product_manual.html" class="nav-link">
+  产品手册
+</a></div><div class="nav-item"><a href="/webhook.html" aria-current="page" class="nav-link router-link-exact-active router-link-active">
+  Webhook
+</a></div><div class="nav-item"><a href="/dev-notes/" class="nav-link">
+  开发笔记
+</a></div> <!----></nav></div></header> <div class="sidebar-mask"></div> <aside class="sidebar"><nav class="nav-links"><div class="nav-item"><a href="/" class="nav-link">
+  首页
+</a></div><div class="nav-item"><a href="/usage.html" class="nav-link">
+  使用指南
+</a></div><div class="nav-item"><a href="/deployment.html" class="nav-link">
+  部署指南
+</a></div><div class="nav-item"><a href="/product_manual.html" class="nav-link">
+  产品手册
+</a></div><div class="nav-item"><a href="/webhook.html" aria-current="page" class="nav-link router-link-exact-active router-link-active">
+  Webhook
+</a></div><div class="nav-item"><a href="/dev-notes/" class="nav-link">
+  开发笔记
+</a></div> <!----></nav>  <ul class="sidebar-links"><li><a href="/" aria-current="page" class="sidebar-link">/</a></li><li><a href="/usage.html" class="sidebar-link">使用指南</a></li><li><a href="/deployment.html" class="sidebar-link">部署指南</a></li><li><a href="/product_manual.html" class="sidebar-link">Git Manage Service - 产品文档</a></li><li><a href="/webhook.html" aria-current="page" class="active sidebar-link">Webhook 接口文档</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/webhook.html#_1-接口信息" class="sidebar-link">1. 接口信息</a></li><li class="sidebar-sub-header"><a href="/webhook.html#_2-安全验证" class="sidebar-link">2. 安全验证</a></li><li class="sidebar-sub-header"><a href="/webhook.html#_3-请求参数" class="sidebar-link">3. 请求参数</a></li><li class="sidebar-sub-header"><a href="/webhook.html#_4-响应" class="sidebar-link">4. 响应</a></li><li class="sidebar-sub-header"><a href="/webhook.html#_5-调用示例" class="sidebar-link">5. 调用示例</a></li></ul></li></ul> </aside> <main class="page"> <div class="theme-default-content content__default"><h1 id="webhook-接口文档"><a href="#webhook-接口文档" class="header-anchor">#</a> Webhook 接口文档</h1> <p>分支管理工具支持通过 Webhook 触发多仓同步。</p> <h2 id="_1-接口信息"><a href="#_1-接口信息" class="header-anchor">#</a> 1. 接口信息</h2> <ul><li><strong>Endpoint</strong>: <code>/api/webhooks/task-sync</code></li> <li><strong>Method</strong>: <code>POST</code></li> <li><strong>Content-Type</strong>: <code>application/json</code></li></ul> <h2 id="_2-安全验证"><a href="#_2-安全验证" class="header-anchor">#</a> 2. 安全验证</h2> <h3 id="_2-1-签名验证"><a href="#_2-1-签名验证" class="header-anchor">#</a> 2.1 签名验证</h3> <p>所有请求必须包含 <code>X-Hub-Signature-256</code> 头，值为请求体的 HMAC-SHA256 签名。</p> <p>算法：<code>hmac_sha256(secret_key, request_body)</code>
+格式：<code>sha256=&lt;hex_digest&gt;</code></p> <h3 id="_2-2-频率限制"><a href="#_2-2-频率限制" class="header-anchor">#</a> 2.2 频率限制</h3> <ul><li>限制：100 请求/分钟</li> <li>超出返回：429 Too Many Requests</li></ul> <h3 id="_2-3-ip-白名单-可选"><a href="#_2-3-ip-白名单-可选" class="header-anchor">#</a> 2.3 IP 白名单 (可选)</h3> <p>可通过配置环境变量限制允许的 IP 来源。</p> <h2 id="_3-请求参数"><a href="#_3-请求参数" class="header-anchor">#</a> 3. 请求参数</h2> <h3 id="header"><a href="#header" class="header-anchor">#</a> Header</h3> <table><thead><tr><th>Key</th> <th>Value</th> <th>说明</th></tr></thead> <tbody><tr><td>X-Hub-Signature-256</td> <td>sha256=...</td> <td>签名</td></tr> <tr><td>Content-Type</td> <td>application/json</td> <td></td></tr></tbody></table> <h3 id="body"><a href="#body" class="header-anchor">#</a> Body</h3> <div class="language-json line-numbers-mode"><pre class="language-json"><code><span class="token punctuation">{</span>
+  <span class="token property">&quot;task_id&quot;</span><span class="token operator">:</span> <span class="token number">1</span>
+<span class="token punctuation">}</span>
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br></div></div><table><thead><tr><th>字段</th> <th>类型</th> <th>必填</th> <th>说明</th></tr></thead> <tbody><tr><td>task_id</td> <td>uint</td> <td>是</td> <td>需要触发的多仓同步 ID</td></tr></tbody></table> <h2 id="_4-响应"><a href="#_4-响应" class="header-anchor">#</a> 4. 响应</h2> <h3 id="成功-200-ok"><a href="#成功-200-ok" class="header-anchor">#</a> 成功 (200 OK)</h3> <div class="language-json line-numbers-mode"><pre class="language-json"><code><span class="token punctuation">{</span>
+  <span class="token property">&quot;message&quot;</span><span class="token operator">:</span> <span class="token string">&quot;Sync triggered successfully&quot;</span><span class="token punctuation">,</span>
+  <span class="token property">&quot;task_id&quot;</span><span class="token operator">:</span> <span class="token number">1</span>
+<span class="token punctuation">}</span>
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br></div></div><h3 id="错误"><a href="#错误" class="header-anchor">#</a> 错误</h3> <ul><li><strong>400 Bad Request</strong>: 请求体格式错误或缺少参数</li> <li><strong>401 Unauthorized</strong>: 签名无效或缺失</li> <li><strong>403 Forbidden</strong>: IP 不在白名单</li> <li><strong>429 Too Many Requests</strong>: 请求过于频繁</li></ul> <h2 id="_5-调用示例"><a href="#_5-调用示例" class="header-anchor">#</a> 5. 调用示例</h2> <h3 id="python"><a href="#python" class="header-anchor">#</a> Python</h3> <div class="language-python line-numbers-mode"><pre class="language-python"><code><span class="token keyword">import</span> hmac
+<span class="token keyword">import</span> hashlib
+<span class="token keyword">import</span> json
+<span class="token keyword">import</span> requests
+
+SECRET <span class="token operator">=</span> <span class="token string">b'my-secret-key'</span>
+URL <span class="token operator">=</span> <span class="token string">'http://localhost:8080/api/webhooks/task-sync'</span>
+DATA <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token string">'task_id'</span><span class="token punctuation">:</span> <span class="token number">1</span><span class="token punctuation">}</span>
+
+body <span class="token operator">=</span> json<span class="token punctuation">.</span>dumps<span class="token punctuation">(</span>DATA<span class="token punctuation">)</span><span class="token punctuation">.</span>encode<span class="token punctuation">(</span><span class="token string">'utf-8'</span><span class="token punctuation">)</span>
+signature <span class="token operator">=</span> <span class="token string">'sha256='</span> <span class="token operator">+</span> hmac<span class="token punctuation">.</span>new<span class="token punctuation">(</span>SECRET<span class="token punctuation">,</span> body<span class="token punctuation">,</span> hashlib<span class="token punctuation">.</span>sha256<span class="token punctuation">)</span><span class="token punctuation">.</span>hexdigest<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+headers <span class="token operator">=</span> <span class="token punctuation">{</span>
+    <span class="token string">'Content-Type'</span><span class="token punctuation">:</span> <span class="token string">'application/json'</span><span class="token punctuation">,</span>
+    <span class="token string">'X-Hub-Signature-256'</span><span class="token punctuation">:</span> signature
+<span class="token punctuation">}</span>
+
+response <span class="token operator">=</span> requests<span class="token punctuation">.</span>post<span class="token punctuation">(</span>URL<span class="token punctuation">,</span> data<span class="token operator">=</span>body<span class="token punctuation">,</span> headers<span class="token operator">=</span>headers<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>response<span class="token punctuation">.</span>status_code<span class="token punctuation">,</span> response<span class="token punctuation">.</span>text<span class="token punctuation">)</span>
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br><span class="line-number">11</span><br><span class="line-number">12</span><br><span class="line-number">13</span><br><span class="line-number">14</span><br><span class="line-number">15</span><br><span class="line-number">16</span><br><span class="line-number">17</span><br><span class="line-number">18</span><br><span class="line-number">19</span><br></div></div><h3 id="go"><a href="#go" class="header-anchor">#</a> Go</h3> <div class="language-go line-numbers-mode"><pre class="language-go"><code><span class="token keyword">package</span> main
+
+<span class="token keyword">import</span> <span class="token punctuation">(</span>
+	<span class="token string">&quot;bytes&quot;</span>
+	<span class="token string">&quot;crypto/hmac&quot;</span>
+	<span class="token string">&quot;crypto/sha256&quot;</span>
+	<span class="token string">&quot;encoding/hex&quot;</span>
+	<span class="token string">&quot;fmt&quot;</span>
+	<span class="token string">&quot;net/http&quot;</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+	secret <span class="token operator">:=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token function">byte</span><span class="token punctuation">(</span><span class="token string">&quot;my-secret-key&quot;</span><span class="token punctuation">)</span>
+	url <span class="token operator">:=</span> <span class="token string">&quot;http://localhost:8080/api/webhooks/task-sync&quot;</span>
+	body <span class="token operator">:=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token function">byte</span><span class="token punctuation">(</span><span class="token string">`{&quot;task_id&quot;: 1}`</span><span class="token punctuation">)</span>
+
+	mac <span class="token operator">:=</span> hmac<span class="token punctuation">.</span><span class="token function">New</span><span class="token punctuation">(</span>sha256<span class="token punctuation">.</span>New<span class="token punctuation">,</span> secret<span class="token punctuation">)</span>
+	mac<span class="token punctuation">.</span><span class="token function">Write</span><span class="token punctuation">(</span>body<span class="token punctuation">)</span>
+	signature <span class="token operator">:=</span> <span class="token string">&quot;sha256=&quot;</span> <span class="token operator">+</span> hex<span class="token punctuation">.</span><span class="token function">EncodeToString</span><span class="token punctuation">(</span>mac<span class="token punctuation">.</span><span class="token function">Sum</span><span class="token punctuation">(</span><span class="token boolean">nil</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+	req<span class="token punctuation">,</span> <span class="token boolean">_</span> <span class="token operator">:=</span> http<span class="token punctuation">.</span><span class="token function">NewRequest</span><span class="token punctuation">(</span><span class="token string">&quot;POST&quot;</span><span class="token punctuation">,</span> url<span class="token punctuation">,</span> bytes<span class="token punctuation">.</span><span class="token function">NewBuffer</span><span class="token punctuation">(</span>body<span class="token punctuation">)</span><span class="token punctuation">)</span>
+	req<span class="token punctuation">.</span>Header<span class="token punctuation">.</span><span class="token function">Set</span><span class="token punctuation">(</span><span class="token string">&quot;Content-Type&quot;</span><span class="token punctuation">,</span> <span class="token string">&quot;application/json&quot;</span><span class="token punctuation">)</span>
+	req<span class="token punctuation">.</span>Header<span class="token punctuation">.</span><span class="token function">Set</span><span class="token punctuation">(</span><span class="token string">&quot;X-Hub-Signature-256&quot;</span><span class="token punctuation">,</span> signature<span class="token punctuation">)</span>
+
+	client <span class="token operator">:=</span> <span class="token operator">&amp;</span>http<span class="token punctuation">.</span>Client<span class="token punctuation">{</span><span class="token punctuation">}</span>
+	resp<span class="token punctuation">,</span> err <span class="token operator">:=</span> client<span class="token punctuation">.</span><span class="token function">Do</span><span class="token punctuation">(</span>req<span class="token punctuation">)</span>
+	<span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+		<span class="token function">panic</span><span class="token punctuation">(</span>err<span class="token punctuation">)</span>
+	<span class="token punctuation">}</span>
+	<span class="token keyword">defer</span> resp<span class="token punctuation">.</span>Body<span class="token punctuation">.</span><span class="token function">Close</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+	fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span><span class="token string">&quot;Status:&quot;</span><span class="token punctuation">,</span> resp<span class="token punctuation">.</span>Status<span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br><span class="line-number">11</span><br><span class="line-number">12</span><br><span class="line-number">13</span><br><span class="line-number">14</span><br><span class="line-number">15</span><br><span class="line-number">16</span><br><span class="line-number">17</span><br><span class="line-number">18</span><br><span class="line-number">19</span><br><span class="line-number">20</span><br><span class="line-number">21</span><br><span class="line-number">22</span><br><span class="line-number">23</span><br><span class="line-number">24</span><br><span class="line-number">25</span><br><span class="line-number">26</span><br><span class="line-number">27</span><br><span class="line-number">28</span><br><span class="line-number">29</span><br><span class="line-number">30</span><br><span class="line-number">31</span><br><span class="line-number">32</span><br></div></div><h3 id="bash-curl"><a href="#bash-curl" class="header-anchor">#</a> Bash (curl)</h3> <div class="language-bash line-numbers-mode"><pre class="language-bash"><code><span class="token comment"># Calculate signature first (e.g. using openssl)</span>
+<span class="token comment"># echo -n '{&quot;task_id&quot;: 1}' | openssl dgst -sha256 -hmac &quot;my-secret-key&quot;</span>
+<span class="token comment"># (Output: 7d6...)</span>
+
+<span class="token function">curl</span> <span class="token parameter variable">-X</span> POST http://localhost:8080/api/webhooks/task-sync <span class="token punctuation">\</span>
+  <span class="token parameter variable">-H</span> <span class="token string">&quot;Content-Type: application/json&quot;</span> <span class="token punctuation">\</span>
+  <span class="token parameter variable">-H</span> <span class="token string">&quot;X-Hub-Signature-256: sha256=7d6...&quot;</span> <span class="token punctuation">\</span>
+  <span class="token parameter variable">-d</span> <span class="token string">'{&quot;task_id&quot;: 1}'</span>
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br></div></div></div> <footer class="page-edit"><!----> <div class="last-updated"><span class="prefix">最后更新:</span> <span class="time">1/1/2026, 9:42:25 AM</span></div></footer> <div class="page-nav"><p class="inner"><span class="prev">
+      ←
+      <a href="/product_manual.html" class="prev">
+        Git Manage Service - 产品文档
+      </a></span> <!----></p></div> </main></div><div class="global-ui"></div></div>
+    <script src="/assets/js/app.df0f3889.js" defer></script><script src="/assets/js/2.2d1a46ee.js" defer></script><script src="/assets/js/1.1823ac01.js" defer></script><script src="/assets/js/42.ada5b9e2.js" defer></script>
+  </body>
+</html>

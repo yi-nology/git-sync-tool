@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>部署指南 | Git Manage Service</title>
+    <meta name="generator" content="VuePress 1.9.10">
+    
+    <meta name="description" content="Git 管理服务文档">
+    
+    <link rel="preload" href="/assets/css/0.styles.f3e2e2a4.css" as="style"><link rel="preload" href="/assets/js/app.df0f3889.js" as="script"><link rel="preload" href="/assets/js/2.2d1a46ee.js" as="script"><link rel="preload" href="/assets/js/1.1823ac01.js" as="script"><link rel="preload" href="/assets/js/23.182b3f99.js" as="script"><link rel="prefetch" href="/assets/js/10.7bdf68e6.js"><link rel="prefetch" href="/assets/js/11.4edc918e.js"><link rel="prefetch" href="/assets/js/12.1e32ca21.js"><link rel="prefetch" href="/assets/js/13.72a5c39d.js"><link rel="prefetch" href="/assets/js/14.df9b7535.js"><link rel="prefetch" href="/assets/js/15.10c40130.js"><link rel="prefetch" href="/assets/js/16.843e3084.js"><link rel="prefetch" href="/assets/js/17.7e574cc5.js"><link rel="prefetch" href="/assets/js/18.99e6bfc2.js"><link rel="prefetch" href="/assets/js/19.3df63a97.js"><link rel="prefetch" href="/assets/js/20.6455ee20.js"><link rel="prefetch" href="/assets/js/21.19032784.js"><link rel="prefetch" href="/assets/js/22.570a455a.js"><link rel="prefetch" href="/assets/js/24.745db78e.js"><link rel="prefetch" href="/assets/js/25.e1ff6ba5.js"><link rel="prefetch" href="/assets/js/26.bb06367d.js"><link rel="prefetch" href="/assets/js/27.3d1465cd.js"><link rel="prefetch" href="/assets/js/28.d3d7deae.js"><link rel="prefetch" href="/assets/js/29.c8b5adbf.js"><link rel="prefetch" href="/assets/js/3.c4e49a14.js"><link rel="prefetch" href="/assets/js/30.4bd04cd5.js"><link rel="prefetch" href="/assets/js/31.e2f61de3.js"><link rel="prefetch" href="/assets/js/32.f33e32ca.js"><link rel="prefetch" href="/assets/js/33.fb015ec5.js"><link rel="prefetch" href="/assets/js/34.6412c765.js"><link rel="prefetch" href="/assets/js/35.3ce53f68.js"><link rel="prefetch" href="/assets/js/36.b98cb815.js"><link rel="prefetch" href="/assets/js/37.73287d4c.js"><link rel="prefetch" href="/assets/js/38.f10a4bf0.js"><link rel="prefetch" href="/assets/js/39.afa80b01.js"><link rel="prefetch" href="/assets/js/4.db06a48d.js"><link rel="prefetch" href="/assets/js/40.e2e52641.js"><link rel="prefetch" href="/assets/js/41.a13ae655.js"><link rel="prefetch" href="/assets/js/42.ada5b9e2.js"><link rel="prefetch" href="/assets/js/5.8fe2100d.js"><link rel="prefetch" href="/assets/js/6.14a21915.js"><link rel="prefetch" href="/assets/js/7.af088f0b.js"><link rel="prefetch" href="/assets/js/vendors~docsearch.cc58001a.js">
+    <link rel="stylesheet" href="/assets/css/0.styles.f3e2e2a4.css">
+  </head>
+  <body>
+    <div id="app" data-server-rendered="true"><div class="theme-container"><header class="navbar"><div class="sidebar-button"><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" viewBox="0 0 448 512" class="icon"><path fill="currentColor" d="M436 124H12c-6.627 0-12-5.373-12-12V80c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12z"></path></svg></div> <a href="/" class="home-link router-link-active"><!----> <span class="site-name">Git Manage Service</span></a> <div class="links"><div class="search-box"><input aria-label="Search" autocomplete="off" spellcheck="false" value=""> <!----></div> <nav class="nav-links can-hide"><div class="nav-item"><a href="/" class="nav-link">
+  首页
+</a></div><div class="nav-item"><a href="/usage.html" class="nav-link">
+  使用指南
+</a></div><div class="nav-item"><a href="/deployment.html" aria-current="page" class="nav-link router-link-exact-active router-link-active">
+  部署指南
+</a></div><div class="nav-item"><a href="/product_manual.html" class="nav-link">
+  产品手册
+</a></div><div class="nav-item"><a href="/webhook.html" class="nav-link">
+  Webhook
+</a></div><div class="nav-item"><a href="/dev-notes/" class="nav-link">
+  开发笔记
+</a></div> <!----></nav></div></header> <div class="sidebar-mask"></div> <aside class="sidebar"><nav class="nav-links"><div class="nav-item"><a href="/" class="nav-link">
+  首页
+</a></div><div class="nav-item"><a href="/usage.html" class="nav-link">
+  使用指南
+</a></div><div class="nav-item"><a href="/deployment.html" aria-current="page" class="nav-link router-link-exact-active router-link-active">
+  部署指南
+</a></div><div class="nav-item"><a href="/product_manual.html" class="nav-link">
+  产品手册
+</a></div><div class="nav-item"><a href="/webhook.html" class="nav-link">
+  Webhook
+</a></div><div class="nav-item"><a href="/dev-notes/" class="nav-link">
+  开发笔记
+</a></div> <!----></nav>  <ul class="sidebar-links"><li><a href="/" aria-current="page" class="sidebar-link">/</a></li><li><a href="/usage.html" class="sidebar-link">使用指南</a></li><li><a href="/deployment.html" aria-current="page" class="active sidebar-link">部署指南</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/deployment.html#_1-部署方式" class="sidebar-link">1. 部署方式</a></li><li class="sidebar-sub-header"><a href="/deployment.html#_2-配置说明" class="sidebar-link">2. 配置说明</a></li><li class="sidebar-sub-header"><a href="/deployment.html#_3-启动模式" class="sidebar-link">3. 启动模式</a></li><li class="sidebar-sub-header"><a href="/deployment.html#_4-多平台构建" class="sidebar-link">4. 多平台构建</a></li><li class="sidebar-sub-header"><a href="/deployment.html#_5-高可用部署" class="sidebar-link">5. 高可用部署</a></li><li class="sidebar-sub-header"><a href="/deployment.html#_6-安全配置" class="sidebar-link">6. 安全配置</a></li><li class="sidebar-sub-header"><a href="/deployment.html#_7-监控与日志" class="sidebar-link">7. 监控与日志</a></li><li class="sidebar-sub-header"><a href="/deployment.html#_8-升级指南" class="sidebar-link">8. 升级指南</a></li><li class="sidebar-sub-header"><a href="/deployment.html#_9-故障排查" class="sidebar-link">9. 故障排查</a></li><li class="sidebar-sub-header"><a href="/deployment.html#_10-最佳实践" class="sidebar-link">10. 最佳实践</a></li></ul></li><li><a href="/product_manual.html" class="sidebar-link">Git Manage Service - 产品文档</a></li><li><a href="/webhook.html" class="sidebar-link">Webhook 接口文档</a></li></ul> </aside> <main class="page"> <div class="theme-default-content content__default"><h1 id="部署指南"><a href="#部署指南" class="header-anchor">#</a> 部署指南</h1> <h2 id="_1-部署方式"><a href="#_1-部署方式" class="header-anchor">#</a> 1. 部署方式</h2> <p>Git Manage Service 支持多种部署方式，您可以根据自己的需求选择最合适的方式。</p> <h3 id="_1-1-预编译二进制文件-推荐"><a href="#_1-1-预编译二进制文件-推荐" class="header-anchor">#</a> 1.1 预编译二进制文件（推荐）</h3> <p>从 <a href="https://github.com/yi-nology/git-manage-service/releases" target="_blank" rel="noopener noreferrer">Releases<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a> 页面下载适合你系统的版本：</p> <ul><li><strong>Linux (AMD64)</strong>: <code>git-manage-service-linux-amd64.tar.gz</code></li> <li><strong>Linux (ARM64)</strong>: <code>git-manage-service-linux-arm64.tar.gz</code></li> <li><strong>macOS (Intel)</strong>: <code>git-manage-service-darwin-amd64.tar.gz</code></li> <li><strong>macOS (Apple Silicon)</strong>: <code>git-manage-service-darwin-arm64.tar.gz</code></li> <li><strong>Windows (AMD64)</strong>: <code>git-manage-service-windows-amd64.exe.zip</code></li> <li><strong>Windows (ARM64)</strong>: <code>git-manage-service-windows-arm64.exe.zip</code></li></ul> <h4 id="linux-macos"><a href="#linux-macos" class="header-anchor">#</a> Linux / macOS</h4> <div class="language-bash line-numbers-mode"><pre class="language-bash"><code><span class="token comment"># 解压</span>
+<span class="token function">tar</span> <span class="token parameter variable">-xzf</span> git-manage-service-*.tar.gz
+
+<span class="token comment"># 添加执行权限</span>
+<span class="token function">chmod</span> +x git-manage-service-*
+
+<span class="token comment"># 运行</span>
+./git-manage-service-*
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br></div></div><h4 id="windows"><a href="#windows" class="header-anchor">#</a> Windows</h4> <div class="language-powershell line-numbers-mode"><pre class="language-powershell"><code><span class="token comment"># 解压 zip 文件</span>
+<span class="token comment"># 双击运行或在命令行中执行</span>
+<span class="token punctuation">.</span><span class="token operator">/</span>git-manage-service-windows-amd64<span class="token punctuation">.</span>exe
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br></div></div><h3 id="_1-2-docker-compose-部署"><a href="#_1-2-docker-compose-部署" class="header-anchor">#</a> 1.2 Docker Compose 部署</h3> <p>项目提供三种数据库方案的 Docker Compose 配置：</p> <h4 id="sqlite-方案-默认-最简单"><a href="#sqlite-方案-默认-最简单" class="header-anchor">#</a> SQLite 方案（默认，最简单）</h4> <div class="language-bash line-numbers-mode"><pre class="language-bash"><code><span class="token builtin class-name">cd</span> deploy/docker-compose/sqlite
+<span class="token function">docker-compose</span> up <span class="token parameter variable">-d</span>
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br></div></div><h4 id="mysql-方案-带-redis-minio"><a href="#mysql-方案-带-redis-minio" class="header-anchor">#</a> MySQL 方案（带 Redis + MinIO）</h4> <div class="language-bash line-numbers-mode"><pre class="language-bash"><code><span class="token builtin class-name">cd</span> deploy/docker-compose/mysql
+<span class="token function">docker-compose</span> up <span class="token parameter variable">-d</span>
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br></div></div><h4 id="postgresql-方案-带-redis-minio"><a href="#postgresql-方案-带-redis-minio" class="header-anchor">#</a> PostgreSQL 方案（带 Redis + MinIO）</h4> <div class="language-bash line-numbers-mode"><pre class="language-bash"><code><span class="token builtin class-name">cd</span> deploy/docker-compose/postgres
+<span class="token function">docker-compose</span> up <span class="token parameter variable">-d</span>
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br></div></div><blockquote><p>SQLite 方案适合单机部署，MySQL/PostgreSQL 方案带有 Redis 分布式锁和 MinIO 对象存储，适合高可用场景。</p></blockquote> <h3 id="_1-3-从源码编译"><a href="#_1-3-从源码编译" class="header-anchor">#</a> 1.3 从源码编译</h3> <div class="language-bash line-numbers-mode"><pre class="language-bash"><code><span class="token comment"># 安装依赖</span>
+go mod tidy
+
+<span class="token comment"># 编译前端</span>
+<span class="token builtin class-name">cd</span> frontend <span class="token operator">&amp;&amp;</span> <span class="token function">npm</span> <span class="token function">install</span> <span class="token operator">&amp;&amp;</span> <span class="token function">npm</span> run build <span class="token operator">&amp;&amp;</span> <span class="token builtin class-name">cd</span> <span class="token punctuation">..</span>
+
+<span class="token comment"># 复制前端到 public 目录</span>
+<span class="token function">cp</span> <span class="token parameter variable">-r</span> frontend/dist public
+
+<span class="token comment"># 编译</span>
+go build <span class="token parameter variable">-o</span> git-manage-service main.go
+
+<span class="token comment"># 运行</span>
+./git-manage-service
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br><span class="line-number">11</span><br><span class="line-number">12</span><br><span class="line-number">13</span><br><span class="line-number">14</span><br></div></div><h3 id="_1-4-kubernetes-部署"><a href="#_1-4-kubernetes-部署" class="header-anchor">#</a> 1.4 Kubernetes 部署</h3> <p>项目提供了 Kubernetes 部署配置，位于 <code>deploy/k8s/</code> 目录。</p> <h4 id="准备工作"><a href="#准备工作" class="header-anchor">#</a> 准备工作</h4> <ol><li>确保您已经安装了 Kubernetes 集群</li> <li>确保您已经安装了 <code>kubectl</code> 命令行工具</li> <li>确保您已经配置了 <code>kubectl</code> 连接到您的 Kubernetes 集群</li></ol> <h4 id="部署步骤"><a href="#部署步骤" class="header-anchor">#</a> 部署步骤</h4> <div class="language-bash line-numbers-mode"><pre class="language-bash"><code><span class="token builtin class-name">cd</span> deploy/k8s
+
+<span class="token comment"># 修改配置文件（可选）</span>
+<span class="token comment"># 编辑 configmap.yaml 和 secret.yaml 文件，根据您的环境修改配置</span>
+
+<span class="token comment"># 运行部署脚本</span>
+./deploy.sh
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br></div></div><h2 id="_2-配置说明"><a href="#_2-配置说明" class="header-anchor">#</a> 2. 配置说明</h2> <p>项目支持通过配置文件和环境变量进行配置。默认配置文件路径为 <code>./conf/config.yaml</code>。</p> <h3 id="_2-1-配置文件"><a href="#_2-1-配置文件" class="header-anchor">#</a> 2.1 配置文件</h3> <div class="language-yaml line-numbers-mode"><pre class="language-yaml"><code><span class="token comment"># 服务器配置</span>
+<span class="token key atrule">server</span><span class="token punctuation">:</span>
+  <span class="token key atrule">port</span><span class="token punctuation">:</span> <span class="token number">38080</span>
+
+<span class="token comment"># RPC 服务配置</span>
+<span class="token key atrule">rpc</span><span class="token punctuation">:</span>
+  <span class="token key atrule">port</span><span class="token punctuation">:</span> <span class="token number">8888</span>
+
+<span class="token comment"># 数据库配置</span>
+<span class="token key atrule">database</span><span class="token punctuation">:</span>
+  <span class="token key atrule">type</span><span class="token punctuation">:</span> sqlite  <span class="token comment"># 可选: sqlite, mysql, postgres</span>
+  <span class="token key atrule">path</span><span class="token punctuation">:</span> data.db  <span class="token comment"># SQLite 数据库路径</span>
+  <span class="token comment"># MySQL/PostgreSQL 配置</span>
+  <span class="token key atrule">host</span><span class="token punctuation">:</span> localhost
+  <span class="token key atrule">port</span><span class="token punctuation">:</span> <span class="token number">3306</span>
+  <span class="token key atrule">user</span><span class="token punctuation">:</span> root
+  <span class="token key atrule">password</span><span class="token punctuation">:</span> password
+  <span class="token key atrule">dbname</span><span class="token punctuation">:</span> git_manage_service
+
+<span class="token comment"># Webhook 配置</span>
+<span class="token key atrule">webhook</span><span class="token punctuation">:</span>
+  <span class="token key atrule">secret</span><span class="token punctuation">:</span> my<span class="token punctuation">-</span>secret<span class="token punctuation">-</span>key
+  <span class="token key atrule">rate_limit</span><span class="token punctuation">:</span> <span class="token number">100</span>
+  <span class="token key atrule">ip_whitelist</span><span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+
+<span class="token comment"># 存储配置</span>
+<span class="token key atrule">storage</span><span class="token punctuation">:</span>
+  <span class="token key atrule">type</span><span class="token punctuation">:</span> local  <span class="token comment"># 可选: local, minio</span>
+  <span class="token key atrule">local_path</span><span class="token punctuation">:</span> ./data
+  <span class="token comment"># MinIO 配置</span>
+  <span class="token key atrule">endpoint</span><span class="token punctuation">:</span> localhost<span class="token punctuation">:</span><span class="token number">9000</span>
+  <span class="token key atrule">access_key</span><span class="token punctuation">:</span> minioadmin
+  <span class="token key atrule">secret_key</span><span class="token punctuation">:</span> minioadmin
+  <span class="token key atrule">use_ssl</span><span class="token punctuation">:</span> <span class="token boolean important">false</span>
+  <span class="token key atrule">repo_bucket</span><span class="token punctuation">:</span> git<span class="token punctuation">-</span>repos
+  <span class="token key atrule">ssh_key_bucket</span><span class="token punctuation">:</span> ssh<span class="token punctuation">-</span>keys
+  <span class="token key atrule">audit_log_bucket</span><span class="token punctuation">:</span> audit<span class="token punctuation">-</span>logs
+  <span class="token key atrule">backup_bucket</span><span class="token punctuation">:</span> backups
+
+<span class="token comment"># 分布式锁配置</span>
+<span class="token key atrule">lock</span><span class="token punctuation">:</span>
+  <span class="token key atrule">type</span><span class="token punctuation">:</span> memory  <span class="token comment"># 可选: memory, redis</span>
+  <span class="token comment"># Redis 配置</span>
+  <span class="token key atrule">redis_addr</span><span class="token punctuation">:</span> localhost<span class="token punctuation">:</span><span class="token number">6379</span>
+  <span class="token key atrule">redis_password</span><span class="token punctuation">:</span> <span class="token string">&quot;&quot;</span>
+  <span class="token key atrule">redis_db</span><span class="token punctuation">:</span> <span class="token number">0</span>
+
+<span class="token comment"># 代码质量检查配置</span>
+<span class="token key atrule">lint</span><span class="token punctuation">:</span>
+  <span class="token key atrule">enable_rpmlint</span><span class="token punctuation">:</span> <span class="token boolean important">false</span>
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br><span class="line-number">11</span><br><span class="line-number">12</span><br><span class="line-number">13</span><br><span class="line-number">14</span><br><span class="line-number">15</span><br><span class="line-number">16</span><br><span class="line-number">17</span><br><span class="line-number">18</span><br><span class="line-number">19</span><br><span class="line-number">20</span><br><span class="line-number">21</span><br><span class="line-number">22</span><br><span class="line-number">23</span><br><span class="line-number">24</span><br><span class="line-number">25</span><br><span class="line-number">26</span><br><span class="line-number">27</span><br><span class="line-number">28</span><br><span class="line-number">29</span><br><span class="line-number">30</span><br><span class="line-number">31</span><br><span class="line-number">32</span><br><span class="line-number">33</span><br><span class="line-number">34</span><br><span class="line-number">35</span><br><span class="line-number">36</span><br><span class="line-number">37</span><br><span class="line-number">38</span><br><span class="line-number">39</span><br><span class="line-number">40</span><br><span class="line-number">41</span><br><span class="line-number">42</span><br><span class="line-number">43</span><br><span class="line-number">44</span><br><span class="line-number">45</span><br><span class="line-number">46</span><br><span class="line-number">47</span><br><span class="line-number">48</span><br><span class="line-number">49</span><br><span class="line-number">50</span><br></div></div><h3 id="_2-2-环境变量"><a href="#_2-2-环境变量" class="header-anchor">#</a> 2.2 环境变量</h3> <table><thead><tr><th>环境变量</th> <th>说明</th> <th>默认值</th></tr></thead> <tbody><tr><td>WEBHOOK_SECRET</td> <td>Webhook 密钥</td> <td>my-secret-key</td></tr> <tr><td>DB_PATH</td> <td>SQLite 数据库路径</td> <td>data.db</td></tr> <tr><td>DB_TYPE</td> <td>数据库类型 (sqlite, mysql, postgres)</td> <td>sqlite</td></tr> <tr><td>DB_HOST</td> <td>数据库主机</td> <td>localhost</td></tr> <tr><td>DB_PORT</td> <td>数据库端口</td> <td>3306 (MySQL), 5432 (PostgreSQL)</td></tr> <tr><td>DB_USER</td> <td>数据库用户名</td> <td>root</td></tr> <tr><td>DB_PASSWORD</td> <td>数据库密码</td> <td>password</td></tr> <tr><td>DB_NAME</td> <td>数据库名称</td> <td>git_manage_service</td></tr> <tr><td>SERVER_PORT</td> <td>HTTP 服务端口</td> <td>38080</td></tr> <tr><td>RPC_PORT</td> <td>RPC 服务端口</td> <td>8888</td></tr> <tr><td>STORAGE_TYPE</td> <td>存储类型 (local, minio)</td> <td>local</td></tr> <tr><td>STORAGE_LOCAL_PATH</td> <td>本地存储路径</td> <td>./data</td></tr> <tr><td>LOCK_TYPE</td> <td>锁类型 (memory, redis)</td> <td>memory</td></tr></tbody></table> <h2 id="_3-启动模式"><a href="#_3-启动模式" class="header-anchor">#</a> 3. 启动模式</h2> <p>项目支持三种启动模式：</p> <div class="language-bash line-numbers-mode"><pre class="language-bash"><code><span class="token comment"># 仅启动 HTTP 服务</span>
+./git-manage-service <span class="token parameter variable">--mode</span><span class="token operator">=</span>http
+
+<span class="token comment"># 仅启动 RPC 服务</span>
+./git-manage-service <span class="token parameter variable">--mode</span><span class="token operator">=</span>rpc
+
+<span class="token comment"># 同时启动 HTTP 和 RPC 服务（默认）</span>
+./git-manage-service <span class="token parameter variable">--mode</span><span class="token operator">=</span>all
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br></div></div><h2 id="_4-多平台构建"><a href="#_4-多平台构建" class="header-anchor">#</a> 4. 多平台构建</h2> <h3 id="_4-1-本地构建"><a href="#_4-1-本地构建" class="header-anchor">#</a> 4.1 本地构建</h3> <div class="language-bash line-numbers-mode"><pre class="language-bash"><code><span class="token comment"># Linux AMD64</span>
+<span class="token assign-left variable">GOOS</span><span class="token operator">=</span>linux <span class="token assign-left variable">GOARCH</span><span class="token operator">=</span>amd64 go build <span class="token parameter variable">-o</span> git-manage-service-linux-amd64 main.go
+
+<span class="token comment"># Linux ARM64</span>
+<span class="token assign-left variable">GOOS</span><span class="token operator">=</span>linux <span class="token assign-left variable">GOARCH</span><span class="token operator">=</span>arm64 go build <span class="token parameter variable">-o</span> git-manage-service-linux-arm64 main.go
+
+<span class="token comment"># macOS AMD64</span>
+<span class="token assign-left variable">GOOS</span><span class="token operator">=</span>darwin <span class="token assign-left variable">GOARCH</span><span class="token operator">=</span>amd64 go build <span class="token parameter variable">-o</span> git-manage-service-darwin-amd64 main.go
+
+<span class="token comment"># macOS ARM64</span>
+<span class="token assign-left variable">GOOS</span><span class="token operator">=</span>darwin <span class="token assign-left variable">GOARCH</span><span class="token operator">=</span>arm64 go build <span class="token parameter variable">-o</span> git-manage-service-darwin-arm64 main.go
+
+<span class="token comment"># Windows AMD64</span>
+<span class="token assign-left variable">GOOS</span><span class="token operator">=</span>windows <span class="token assign-left variable">GOARCH</span><span class="token operator">=</span>amd64 go build <span class="token parameter variable">-o</span> git-manage-service-windows-amd64.exe main.go
+
+<span class="token comment"># Windows ARM64</span>
+<span class="token assign-left variable">GOOS</span><span class="token operator">=</span>windows <span class="token assign-left variable">GOARCH</span><span class="token operator">=</span>arm64 go build <span class="token parameter variable">-o</span> git-manage-service-windows-arm64.exe main.go
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br><span class="line-number">11</span><br><span class="line-number">12</span><br><span class="line-number">13</span><br><span class="line-number">14</span><br><span class="line-number">15</span><br><span class="line-number">16</span><br><span class="line-number">17</span><br></div></div><h3 id="_4-2-github-actions-自动构建"><a href="#_4-2-github-actions-自动构建" class="header-anchor">#</a> 4.2 GitHub Actions 自动构建</h3> <p>本项目使用 GitHub Actions 自动构建多平台二进制文件。要创建新的发布版本：</p> <ol><li><strong>创建版本标签</strong></li></ol> <div class="language-bash line-numbers-mode"><pre class="language-bash"><code><span class="token comment"># 创建并推送标签</span>
+<span class="token function">git</span> tag <span class="token parameter variable">-a</span> v1.0.0 <span class="token parameter variable">-m</span> <span class="token string">&quot;Release version 1.0.0&quot;</span>
+<span class="token function">git</span> push origin v1.0.0
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br></div></div><ol start="2"><li><p><strong>自动构建</strong></p> <ul><li>GitHub Actions 会自动检测到标签推送</li> <li>自动构建 6 个平台的二进制文件：
+<ul><li>Linux (AMD64/ARM64)</li> <li>macOS (Intel/Apple Silicon)</li> <li>Windows (AMD64/ARM64)</li></ul></li> <li>自动创建 GitHub Release 并上传构建产物</li></ul></li> <li><p><strong>手动触发</strong>（可选）</p> <ul><li>访问 GitHub Actions 页面</li> <li>选择 &quot;Release Build&quot; 工作流</li> <li>点击 &quot;Run workflow&quot; 按钮手动触发</li></ul></li></ol> <h2 id="_5-高可用部署"><a href="#_5-高可用部署" class="header-anchor">#</a> 5. 高可用部署</h2> <h3 id="_5-1-数据库选择"><a href="#_5-1-数据库选择" class="header-anchor">#</a> 5.1 数据库选择</h3> <p>对于高可用部署，建议使用 MySQL 或 PostgreSQL 数据库，而非 SQLite。</p> <h3 id="_5-2-存储配置"><a href="#_5-2-存储配置" class="header-anchor">#</a> 5.2 存储配置</h3> <p>对于高可用部署，建议使用 MinIO 对象存储，而非本地存储。</p> <h3 id="_5-3-分布式锁"><a href="#_5-3-分布式锁" class="header-anchor">#</a> 5.3 分布式锁</h3> <p>对于高可用部署，建议使用 Redis 分布式锁，而非内存锁。</p> <h3 id="_5-4-负载均衡"><a href="#_5-4-负载均衡" class="header-anchor">#</a> 5.4 负载均衡</h3> <p>对于高可用部署，建议在多个实例前配置负载均衡器，如 Nginx 或 Kubernetes Ingress。</p> <h2 id="_6-安全配置"><a href="#_6-安全配置" class="header-anchor">#</a> 6. 安全配置</h2> <h3 id="_6-1-防火墙设置"><a href="#_6-1-防火墙设置" class="header-anchor">#</a> 6.1 防火墙设置</h3> <p>确保只开放必要的端口：</p> <ul><li>HTTP 服务端口：38080</li> <li>RPC 服务端口：8888（仅当需要 RPC 服务时）</li></ul> <h3 id="_6-2-https-配置"><a href="#_6-2-https-配置" class="header-anchor">#</a> 6.2 HTTPS 配置</h3> <p>对于生产环境，建议配置 HTTPS。您可以使用 Nginx 或其他反向代理来实现 HTTPS。</p> <h3 id="_6-3-认证与授权"><a href="#_6-3-认证与授权" class="header-anchor">#</a> 6.3 认证与授权</h3> <ul><li><strong>Webhook 密钥</strong>：设置强密码作为 Webhook 密钥，避免未授权访问。</li> <li><strong>IP 白名单</strong>：如需限制 Webhook 访问来源，可配置 IP 白名单。</li> <li><strong>SSH 密钥管理</strong>：使用系统提供的 SSH 密钥管理功能，避免在配置文件中明文存储密钥。</li></ul> <h2 id="_7-监控与日志"><a href="#_7-监控与日志" class="header-anchor">#</a> 7. 监控与日志</h2> <h3 id="_7-1-日志配置"><a href="#_7-1-日志配置" class="header-anchor">#</a> 7.1 日志配置</h3> <p>项目使用 Logrus 进行日志记录，默认日志级别为 info。您可以通过环境变量 <code>LOG_LEVEL</code> 来修改日志级别：</p> <div class="language-bash line-numbers-mode"><pre class="language-bash"><code><span class="token comment"># 设置日志级别为 debug</span>
+<span class="token builtin class-name">export</span> <span class="token assign-left variable">LOG_LEVEL</span><span class="token operator">=</span>debug
+./git-manage-service
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br></div></div><h3 id="_7-2-监控集成"><a href="#_7-2-监控集成" class="header-anchor">#</a> 7.2 监控集成</h3> <p>对于生产环境，建议集成监控系统，如 Prometheus 和 Grafana，以监控系统的运行状态。</p> <h2 id="_8-升级指南"><a href="#_8-升级指南" class="header-anchor">#</a> 8. 升级指南</h2> <h3 id="_8-1-二进制文件升级"><a href="#_8-1-二进制文件升级" class="header-anchor">#</a> 8.1 二进制文件升级</h3> <ol><li>下载新版本的二进制文件</li> <li>停止当前运行的服务</li> <li>替换二进制文件</li> <li>启动服务</li></ol> <h3 id="_8-2-docker-compose-升级"><a href="#_8-2-docker-compose-升级" class="header-anchor">#</a> 8.2 Docker Compose 升级</h3> <ol><li>停止当前运行的容器</li></ol> <div class="language-bash line-numbers-mode"><pre class="language-bash"><code><span class="token function">docker-compose</span> down
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br></div></div><ol start="2"><li><p>拉取最新的镜像或更新 Dockerfile</p></li> <li><p>重新启动容器</p></li></ol> <div class="language-bash line-numbers-mode"><pre class="language-bash"><code><span class="token function">docker-compose</span> up <span class="token parameter variable">-d</span>
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br></div></div><h3 id="_8-3-数据库迁移"><a href="#_8-3-数据库迁移" class="header-anchor">#</a> 8.3 数据库迁移</h3> <p>项目会自动处理数据库迁移，升级时无需手动执行迁移命令。</p> <h2 id="_9-故障排查"><a href="#_9-故障排查" class="header-anchor">#</a> 9. 故障排查</h2> <h3 id="_9-1-常见问题"><a href="#_9-1-常见问题" class="header-anchor">#</a> 9.1 常见问题</h3> <h4 id="服务启动失败"><a href="#服务启动失败" class="header-anchor">#</a> 服务启动失败</h4> <ul><li><strong>检查端口占用</strong>：确保系统使用的端口（默认 38080）未被其他进程占用。</li> <li><strong>检查配置文件</strong>：确保配置文件格式正确，且所有必要的配置项都已设置。</li> <li><strong>检查数据库</strong>：确保数据库连接正常，且有足够的权限。</li></ul> <h4 id="同步任务失败"><a href="#同步任务失败" class="header-anchor">#</a> 同步任务失败</h4> <ul><li><strong>检查网络连接</strong>：确保服务器能够访问远程仓库。</li> <li><strong>检查权限</strong>：确保服务器有足够的权限访问和修改仓库。</li> <li><strong>检查 SSH 密钥</strong>：确保 SSH 密钥配置正确，且有权限访问远程仓库。</li> <li><strong>查看日志</strong>：查看同步任务的详细日志，了解失败原因。</li></ul> <h4 id="通知发送失败"><a href="#通知发送失败" class="header-anchor">#</a> 通知发送失败</h4> <ul><li><strong>检查渠道配置</strong>：确保通知渠道的配置信息正确。</li> <li><strong>检查网络连接</strong>：确保服务器能够访问通知服务的 API。</li> <li><strong>查看日志</strong>：查看通知发送的详细日志，了解失败原因。</li></ul> <h3 id="_9-2-日志查看"><a href="#_9-2-日志查看" class="header-anchor">#</a> 9.2 日志查看</h3> <div class="language-bash line-numbers-mode"><pre class="language-bash"><code><span class="token comment"># 查看系统日志</span>
+./git-manage-service <span class="token parameter variable">--mode</span><span class="token operator">=</span>http <span class="token operator">&gt;</span> service.log <span class="token operator"><span class="token file-descriptor important">2</span>&gt;</span><span class="token file-descriptor important">&amp;1</span>
+
+<span class="token comment"># 查看同步任务日志</span>
+<span class="token comment"># 日志文件位于 ./data/logs/ 目录下</span>
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br></div></div><h2 id="_10-最佳实践"><a href="#_10-最佳实践" class="header-anchor">#</a> 10. 最佳实践</h2> <h3 id="_10-1-生产环境配置"><a href="#_10-1-生产环境配置" class="header-anchor">#</a> 10.1 生产环境配置</h3> <ul><li><strong>数据库</strong>：使用 MySQL 或 PostgreSQL 数据库。</li> <li><strong>存储</strong>：使用 MinIO 对象存储。</li> <li><strong>分布式锁</strong>：使用 Redis 分布式锁。</li> <li><strong>HTTPS</strong>：配置 HTTPS。</li> <li><strong>监控</strong>：集成监控系统。</li> <li><strong>备份</strong>：定期备份数据库和存储数据。</li></ul> <h3 id="_10-2-性能优化"><a href="#_10-2-性能优化" class="header-anchor">#</a> 10.2 性能优化</h3> <ul><li><strong>仓库数量</strong>：建议不要注册过多仓库，以免影响系统性能。</li> <li><strong>同步频率</strong>：根据代码变更频率设置合理的同步频率，避免过于频繁的同步。</li> <li><strong>数据库索引</strong>：确保数据库表有适当的索引。</li> <li><strong>内存配置</strong>：根据服务器配置调整 Go 程序的内存使用。</li></ul> <h3 id="_10-3-安全最佳实践"><a href="#_10-3-安全最佳实践" class="header-anchor">#</a> 10.3 安全最佳实践</h3> <ul><li><strong>最小权限原则</strong>：为服务设置最小必要的权限。</li> <li><strong>定期更新</strong>：定期更新服务版本，修复安全漏洞。</li> <li><strong>密钥管理</strong>：使用安全的方式管理密钥和凭证。</li> <li><strong>审计日志</strong>：启用审计日志，记录所有操作。</li></ul></div> <footer class="page-edit"><!----> <!----></footer> <div class="page-nav"><p class="inner"><span class="prev">
+      ←
+      <a href="/usage.html" class="prev">
+        使用指南
+      </a></span> <span class="next"><a href="/product_manual.html">
+        Git Manage Service - 产品文档
+      </a>
+      →
+    </span></p></div> </main></div><div class="global-ui"></div></div>
+    <script src="/assets/js/app.df0f3889.js" defer></script><script src="/assets/js/2.2d1a46ee.js" defer></script><script src="/assets/js/1.1823ac01.js" defer></script><script src="/assets/js/23.182b3f99.js" defer></script>
+  </body>
+</html>

@@ -10,7 +10,7 @@ import (
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
 	"github.com/yi-nology/git-manage-service/biz/dal/db"
 	"github.com/yi-nology/git-manage-service/biz/model/api"
-	auditModel "github.com/yi-nology/git-manage-service/biz/model/biz/audit"
+	auditModel "github.com/yi-nology/git-manage-service/biz/model/audit"
 	"github.com/yi-nology/git-manage-service/pkg/response"
 )
 
