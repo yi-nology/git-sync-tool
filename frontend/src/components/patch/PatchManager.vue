@@ -410,7 +410,8 @@ async function loadPatches() {
   loading.value = true
   try {
     const result = await listPatches(props.repoKey)
-    patches.value = result || []
+    // 确保 result 是数组
+    patches.value = Array.isArray(result) ? result : []
 
     // 计算统计信息
     const applied = patches.value.filter(p => p.is_applied).length
@@ -721,6 +722,11 @@ async function applyAllPending() {
     )
 
     // 依次应用所有待应用的 patch
+    if (!patches.value || !Array.isArray(patches.value)) {
+      ElMessage.error('Patch 列表数据异常')
+      return
+    }
+
     const pendingPatches = patches.value.filter(p => !p.is_applied && p.can_apply)
     for (const patch of pendingPatches) {
       try {
