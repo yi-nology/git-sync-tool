@@ -30,8 +30,13 @@ export function getSSHKeys() {
   return request.get<unknown, string[]>('/system/ssh-keys')
 }
 
-export function testConnection(url: string) {
-  return request.post<unknown, { status: string; error?: string }>('/system/test-connection', { url })
+export function testConnection(url: string, authType?: string, authKey?: string, authSecret?: string) {
+  return request.post<unknown, { status: string; error?: string }>('/system/test-connection', {
+    url,
+    auth_type: authType,
+    auth_key: authKey,
+    auth_secret: authSecret,
+  })
 }
 
 export function getRepoStatus(repoKey: string) {

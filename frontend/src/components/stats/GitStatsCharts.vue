@@ -106,10 +106,13 @@ function getTopFileTypes(author: AuthorStat, count: number) {
 
 function updateCharts() {
   if (!props.statsData?.authors?.length) return
+  // 使用双重 nextTick 确保 DOM 完全准备好
   nextTick(() => {
-    renderAuthorChart()
-    renderTrendChart()
-    renderFileTypeChart()
+    setTimeout(() => {
+      renderAuthorChart()
+      renderTrendChart()
+      renderFileTypeChart()
+    }, 0)
   })
 }
 

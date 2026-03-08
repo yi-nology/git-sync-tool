@@ -52,3 +52,9 @@ rpc:
   # RPC service listening port
   # Default: 8888
   port: 8888
+
+# 6. Lint Configuration
+lint:
+  # Enable rpmlint integration (optional, only works if rpmlint is installed on the system)
+  # rpmlint provides additional linting for RPM spec files
+  enable_rpmlint: true

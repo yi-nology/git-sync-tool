@@ -11,7 +11,12 @@ export const useRepoStore = defineStore('repo', () => {
   async function fetchRepoList() {
     loading.value = true
     try {
-      repoList.value = await getRepoList()
+      const data = await getRepoList()
+      // 确保 repoList 始终是数组
+      repoList.value = Array.isArray(data) ? data : []
+    } catch (error) {
+      console.error('[RepoStore] Failed to fetch repo list:', error)
+      repoList.value = []
     } finally {
       loading.value = false
     }
@@ -21,6 +26,9 @@ export const useRepoStore = defineStore('repo', () => {
     loading.value = true
     try {
       currentRepo.value = await getRepoDetail(key)
+    } catch (error) {
+      console.error('[RepoStore] Failed to fetch repo detail:', error)
+      currentRepo.value = null
     } finally {
       loading.value = false
     }

@@ -68,3 +68,52 @@ export function extractRepoName(url: string): string {
   const match = trimmed.match(/\/([^/]+?)(?:\.git)?$/)
   return match?.[1] || ''
 }
+
+/**
+ * 转换 Git URL 协议
+ * @param url 原始 URL
+ * @param targetMode 目标模式: 'ssh' 或 'https'
+ * @returns 转换后的 URL
+ */
+export function convertGitUrl(url: string, targetMode: 'ssh' | 'https'): string {
+  if (!url) return ''
+
+  const trimmed = url.trim()
+
+  // 提取 host 和 path
+  // SSH SCP: git@github.com:user/repo.git
+  let match = trimmed.match(/^git@([^:]+):(.+)$/)
+  if (match) {
+    const [, host, path] = match
+    if (targetMode === 'https') {
+      return `https://${host}/${path}`
+    }
+    return trimmed
+  }
+
+  // SSH Protocol: ssh://git@github.com/user/repo.git
+  match = trimmed.match(/^ssh:\/\/(?:git@)?([^/]+)\/(.+)$/)
+  if (match) {
+    const [, host, path] = match
+    if (targetMode === 'https') {
+      return `https://${host}/${path}`
+    }
+    if (targetMode === 'ssh') {
+      return `git@${host}:${path}`
+    }
+    return trimmed
+  }
+
+  // HTTPS: https://github.com/user/repo.git
+  match = trimmed.match(/^https?:\/\/([^/]+)\/(.+)$/)
+  if (match) {
+    const [, host, path] = match
+    if (targetMode === 'ssh') {
+      return `git@${host}:${path}`
+    }
+    return trimmed
+  }
+
+  // 无法识别格式，返回原值
+  return trimmed
+}

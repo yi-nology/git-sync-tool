@@ -55,6 +55,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '分支对比' },
       },
       {
+        path: 'repos/:repoKey/patches',
+        name: 'RepoPatches',
+        component: () => import('@/views/repo/PatchPage.vue'),
+        meta: { title: 'Patch 管理' },
+      },
+      {
         path: 'repos/:repoKey/sync',
         name: 'RepoSync',
         component: () => import('@/views/sync/SyncTaskPage.vue'),
@@ -83,6 +89,12 @@ const routes: RouteRecordRaw[] = [
         name: 'Credentials',
         component: () => import('@/views/settings/CredentialPage.vue'),
         meta: { title: '凭证管理' },
+      },
+      {
+        path: 'spec-editor',
+        name: 'SpecEditor',
+        component: () => import('@/views/spec/SpecEditorPage.vue'),
+        meta: { title: 'Spec 编辑器' },
       },
     ],
   },

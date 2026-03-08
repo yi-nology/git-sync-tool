@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -15,6 +16,7 @@ import (
 	"github.com/yi-nology/git-manage-service/biz/model/api"
 	systemModel "github.com/yi-nology/git-manage-service/biz/model/biz/system"
 	"github.com/yi-nology/git-manage-service/biz/service/audit"
+	"github.com/yi-nology/git-manage-service/biz/service/auth"
 	"github.com/yi-nology/git-manage-service/biz/service/git"
 	"github.com/yi-nology/git-manage-service/pkg/appinfo"
 	"github.com/yi-nology/git-manage-service/pkg/configs"
@@ -151,12 +153,56 @@ func TestConnection(ctx context.Context, c *app.RequestContext) {
 	}
 
 	gitSvc := git.NewGitService()
-	if err := gitSvc.TestRemoteConnection(req.Url); err != nil {
+	authSvc := auth.NewAuthService()
+
+	var err error
+
+	// 根据认证类型选择测试方法
+	switch req.AuthType {
+	case "ssh_db", "ssh_database":
+		// 数据库 SSH 密钥 - 需要从 auth_key 获取密钥内容
+		// auth_key 格式: credential:<id> 或直接是私钥内容
+		if strings.HasPrefix(req.AuthKey, "credential:") {
+			credIDStr := strings.TrimPrefix(req.AuthKey, "credential:")
+			credID := parseUint(credIDStr)
+			if credID > 0 {
+				privateKey, passphrase, keyErr := authSvc.GetCredentialKeyContent(credID)
+				if keyErr != nil {
+					response.Success(c, map[string]string{"status": "failed", "error": "failed to load credential: " + keyErr.Error()})
+					return
+				}
+				err = gitSvc.TestRemoteConnectionWithDBKey(req.Url, privateKey, passphrase)
+			} else {
+				err = fmt.Errorf("invalid credential ID")
+			}
+		} else {
+			// 直接使用私钥内容
+			err = gitSvc.TestRemoteConnectionWithDBKey(req.Url, req.AuthKey, req.AuthSecret)
+		}
+	case "ssh_local":
+		// 本地 SSH 密钥文件
+		err = gitSvc.TestRemoteConnectionWithLocalKey(req.Url, req.AuthKey, req.AuthSecret)
+	case "http", "https":
+		// HTTP/HTTPS 认证
+		err = gitSvc.TestRemoteConnectionWithHTTP(req.Url, req.AuthKey, req.AuthSecret)
+	default:
+		// 无认证或自动检测
+		err = gitSvc.TestRemoteConnection(req.Url)
+	}
+
+	if err != nil {
 		response.Success(c, map[string]string{"status": "failed", "error": err.Error()})
 		return
 	}
 
 	response.Success(c, map[string]string{"status": "success"})
+}
+
+// parseUint 解析 uint
+func parseUint(s string) uint {
+	var result uint
+	fmt.Sscanf(s, "%d", &result)
+	return result
 }
 
 // GetRepoStatus .
@@ -281,4 +327,46 @@ func GetAppInfo(ctx context.Context, c *app.RequestContext) {
 		"build_time": appinfo.BuildTime,
 		"git_commit": appinfo.GitCommit,
 	})
+}
+
+// SelectDirectory 打开系统目录选择对话框
+// @router /api/v1/system/select-directory [POST]
+func SelectDirectory(ctx context.Context, c *app.RequestContext) {
+	var req struct {
+		Title string `json:"title"`
+	}
+	_ = c.Bind(&req)
+
+	title := req.Title
+	if title == "" {
+		title = "选择目录"
+	}
+
+	// 使用 osascript 调用 macOS 目录选择对话框
+	cmd := fmt.Sprintf(`tell application "System Events" to activate
+return POSIX path of (choose folder with prompt "%s")`, title)
+
+	result, err := execCommand("osascript", "-e", cmd)
+	if err != nil {
+		response.InternalServerError(c, "Failed to open directory dialog: "+err.Error())
+		return
+	}
+
+	path := strings.TrimSpace(result)
+	if path == "" {
+		response.Success(c, map[string]string{"path": "", "cancelled": "true"})
+		return
+	}
+
+	response.Success(c, map[string]string{"path": path, "cancelled": "false"})
+}
+
+// execCommand 执行系统命令
+func execCommand(name string, args ...string) (string, error) {
+	cmd := exec.Command(name, args...)
+	output, err := cmd.Output()
+	if err != nil {
+		return "", err
+	}
+	return string(output), nil
 }

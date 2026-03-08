@@ -1,5 +1,5 @@
 import request from '../request'
-import type { RepoDTO, RegisterRepoReq, CloneRepoReq, ScanResult } from '@/types/repo'
+import type { RepoDTO, RegisterRepoReq, CloneRepoReq, ScanResult, ScanDirectoryResp, BatchCreateReq, BatchCreateResp } from '@/types/repo'
 
 export function getRepoList() {
   return request.get<unknown, RepoDTO[]>('/repo/list')
@@ -37,4 +37,19 @@ export function getCloneTask(taskId: string) {
   return request.get<unknown, { status: string; progress: string[]; error: string }>('/repo/task', {
     params: { task_id: taskId },
   })
+}
+
+// 新增：选择目录对话框
+export function selectDirectory(title?: string) {
+  return request.post<unknown, { path: string; cancelled: string }>('/system/select-directory', { title })
+}
+
+// 新增：扫描目录下的 Git 仓库
+export function scanDirectory(path: string, depth: number = 2, recursive: boolean = true) {
+  return request.post<unknown, ScanDirectoryResp>('/repo/scan-directory', { path, depth, recursive })
+}
+
+// 新增：批量注册仓库
+export function batchCreateRepos(data: BatchCreateReq) {
+  return request.post<unknown, BatchCreateResp>('/repo/batch-create', data)
 }

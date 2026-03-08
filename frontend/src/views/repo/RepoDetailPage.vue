@@ -13,6 +13,9 @@
         <el-button type="primary" @click="$router.push(`/repos/${repoKey}/compare`)">
           <el-icon><Switch /></el-icon> 分支对比
         </el-button>
+        <el-button @click="$router.push(`/repos/${repoKey}/patches`)">
+          <el-icon><DocumentCopy /></el-icon> Patch 管理
+        </el-button>
         <el-button type="warning" @click="$router.push(`/repos/${repoKey}/sync`)">
           <el-icon><Refresh /></el-icon> 同步任务
         </el-button>
@@ -72,6 +75,11 @@
         </el-card>
       </el-tab-pane>
 
+      <!-- Spec 编辑器 Tab -->
+      <el-tab-pane label="Spec 编辑器" name="spec">
+        <SpecEditor :repo-key="repoKey" />
+      </el-tab-pane>
+      
       <!-- 提交统计 Tab -->
       <el-tab-pane label="Git有效提交度量" name="stats">
         <el-card>
@@ -172,21 +180,23 @@
             选择分支/提交人/时间范围后将使用 git blame 分析代码归属，统计速度会较慢
           </el-alert>
 
-          <div v-if="lineStatsData">
-            <el-row :gutter="16" class="mb-4">
-              <el-col :span="6"><el-statistic title="代码行数" :value="lineStatsData.code_lines" /></el-col>
-              <el-col :span="6"><el-statistic title="注释行数" :value="lineStatsData.comment_lines" /></el-col>
-              <el-col :span="6"><el-statistic title="空白行数" :value="lineStatsData.blank_lines" /></el-col>
-              <el-col :span="6"><el-statistic title="文件总数" :value="lineStatsData.total_files" /></el-col>
-            </el-row>
+          <div v-loading="lineStatsLoading">
+            <div v-if="lineStatsData">
+              <el-row :gutter="16" class="mb-4">
+                <el-col :span="6"><el-statistic title="代码行数" :value="lineStatsData.code_lines" /></el-col>
+                <el-col :span="6"><el-statistic title="注释行数" :value="lineStatsData.comment_lines" /></el-col>
+                <el-col :span="6"><el-statistic title="空白行数" :value="lineStatsData.blank_lines" /></el-col>
+                <el-col :span="6"><el-statistic title="文件总数" :value="lineStatsData.total_files" /></el-col>
+              </el-row>
 
-            <el-alert v-if="lineStatsData.status === 'processing'" title="正在统计中..." type="info" :closable="false" show-icon>
-              {{ lineStatsData.progress }}
-            </el-alert>
+              <el-alert v-if="lineStatsData.status === 'processing'" title="正在统计中..." type="info" :closable="false" show-icon>
+                {{ lineStatsData.progress }}
+              </el-alert>
 
-            <LineStatsCharts :line-stats-data="lineStatsData" />
+              <LineStatsCharts :line-stats-data="lineStatsData" />
+            </div>
+            <el-empty v-else description="点击查询按钮加载数据" />
           </div>
-          <el-empty v-else description="点击查询按钮加载数据" />
         </el-card>
       </el-tab-pane>
 
@@ -268,55 +278,56 @@
       <el-tab-pane label="Submodule" name="submodules">
         <SubmoduleManager :repo-key="repoKey" />
       </el-tab-pane>
+
+      <!-- Patch 管理 Tab -->
+      <el-tab-pane label="Patch 管理" name="patches">
+        <PatchManager :repo-key="repoKey" />
+      </el-tab-pane>
     </el-tabs>
 
     <!-- Edit Repo Dialog -->
     <el-dialog v-model="showEditDialog" title="编辑仓库" width="750px" destroy-on-close>
-      <el-tabs v-model="editActiveTab">
-        <el-tab-pane label="基本信息" name="basic">
-          <el-form :model="editForm" label-width="100px">
-            <el-form-item label="名称" required>
-              <el-input v-model="editForm.name" />
-            </el-form-item>
-            <el-form-item label="本地路径" required>
-              <el-input v-model="editForm.path" />
-            </el-form-item>
-            <el-form-item label="远程 URL">
-              <div class="url-input-group">
-                <el-radio-group v-model="editUrlMode" size="small" class="url-mode-switch">
-                  <el-radio-button value="ssh">SSH</el-radio-button>
-                  <el-radio-button value="https">HTTPS</el-radio-button>
-                </el-radio-group>
-                <el-input
-                  v-model="editForm.remote_url"
-                  :placeholder="editUrlMode === 'ssh' ? 'git@github.com:user/repo.git' : 'https://github.com/user/repo.git'"
-                  @blur="validateEditUrl"
-                  :class="{ 'is-error-input': editUrlError }"
-                />
-              </div>
-              <div v-if="editUrlError" class="field-error">{{ editUrlError }}</div>
-            </el-form-item>
-          </el-form>
-        </el-tab-pane>
+      <el-form :model="editForm" label-width="100px">
+        <!-- 基本信息 -->
+        <el-form-item label="名称" required>
+          <el-input v-model="editForm.name" placeholder="仓库名称" />
+        </el-form-item>
+        <el-form-item label="本地路径" required>
+          <el-input v-model="editForm.path" placeholder="本地仓库路径" />
+        </el-form-item>
+        <el-form-item label="远程 URL">
+          <div class="url-input-group">
+            <el-radio-group v-model="editUrlMode" size="small" class="url-mode-switch">
+              <el-radio-button value="ssh">SSH</el-radio-button>
+              <el-radio-button value="https">HTTPS</el-radio-button>
+            </el-radio-group>
+            <el-input
+              v-model="editForm.remote_url"
+              :placeholder="editUrlMode === 'ssh' ? 'git@github.com:user/repo.git' : 'https://github.com/user/repo.git'"
+              @blur="validateEditUrl"
+              :class="{ 'is-error-input': editUrlError }"
+            />
+          </div>
+          <div v-if="editUrlError" class="field-error">{{ editUrlError }}</div>
+        </el-form-item>
+        <el-form-item label="默认凭证">
+          <CredentialSelector
+            v-model="editDefaultCredentialId"
+            :url="editForm.remote_url"
+            placeholder="选择默认凭证（可选）"
+          />
+        </el-form-item>
 
-        <el-tab-pane label="认证与远程配置" name="remote">
-          <el-form label-width="100px" style="margin-bottom: 16px;">
-            <el-form-item label="默认凭证">
-              <CredentialSelector
-                v-model="editDefaultCredentialId"
-                :url="editForm.remote_url"
-                placeholder="选择默认凭证（可选）"
-              />
-            </el-form-item>
-          </el-form>
+        <el-divider content-position="left">远程仓库配置</el-divider>
 
-          <div style="margin-bottom: 12px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-              <span style="font-weight: 600;">远程仓库 (Remotes)</span>
-              <el-button size="small" type="primary" @click="addEditRemote">+ 新增</el-button>
+        <el-form-item label="">
+          <div class="remotes-section">
+            <div class="remotes-header">
+              <span>配置多个远程仓库及其凭证</span>
+              <el-button size="small" type="primary" @click="addEditRemote">+ 新增远程</el-button>
             </div>
             <div v-for="(remote, index) in editRemotes" :key="index" class="edit-remote-item">
-              <el-card shadow="hover" style="margin-bottom: 8px;">
+              <el-card shadow="hover">
                 <div class="edit-remote-row">
                   <el-input v-model="remote.name" size="small" placeholder="名称 (如 origin)" style="width: 120px;" />
                   <el-radio-group v-model="remoteUrlModes[index]" size="small" class="url-mode-switch-sm">
@@ -341,21 +352,17 @@
             </div>
             <el-empty v-if="editRemotes.length === 0" description="无远程仓库配置" :image-size="60" />
           </div>
+        </el-form-item>
 
-          <!-- Tracking Branches -->
-          <div v-if="editTrackingBranches.length > 0" style="margin-top: 16px;">
-            <span style="font-weight: 600;">分支追踪</span>
-            <div style="margin-top: 8px;">
-              <el-tag v-for="b in editTrackingBranches" :key="b.name" size="small" style="margin: 2px 4px;">
-                {{ b.name }} -> {{ b.upstream_ref }}
-              </el-tag>
-            </div>
+        <!-- Tracking Branches -->
+        <el-form-item v-if="editTrackingBranches.length > 0" label="分支追踪">
+          <div class="tracking-branches">
+            <el-tag v-for="b in editTrackingBranches" :key="b.name" size="small" style="margin: 2px 4px;">
+              {{ b.name }} -> {{ b.upstream_ref }}
+            </el-tag>
           </div>
-          <div v-else style="margin-top: 16px; color: #909399; font-size: 13px;">
-            无追踪分支
-          </div>
-        </el-tab-pane>
-      </el-tabs>
+        </el-form-item>
+      </el-form>
       <template #footer>
         <el-button @click="showEditDialog = false">取消</el-button>
         <el-button type="primary" @click="handleSaveEdit" :loading="editSaving">保存</el-button>
@@ -436,9 +443,10 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ArrowLeft, Share, Switch, Refresh, Edit, Search, Download, Setting, Plus, Top, Delete, CopyDocument, Connection } from '@element-plus/icons-vue'
+import { ArrowLeft, Share, Switch, Refresh, Edit, Search, Download, Setting, Plus, Top, Delete, CopyDocument, Connection, DocumentCopy } from '@element-plus/icons-vue'
 import { getRepoDetail, scanRepo, updateRepo, fetchRepo } from '@/api/modules/repo'
 import { testConnection } from '@/api/modules/system'
+import { testCredential } from '@/api/modules/credential'
 import { getStatsAnalyze, getStatsAuthors, getStatsBranches, getStatsCommits, getLineStats, getLineStatsConfig, saveLineStatsConfig, exportStatsCsv } from '@/api/modules/stats'
 import { getVersionList, getCurrentVersion, getNextVersion } from '@/api/modules/version'
 import type { VersionTag, NextVersionInfo } from '@/api/modules/version'
@@ -452,8 +460,10 @@ import FileBrowser from '@/components/repo/FileBrowser.vue'
 import CommitSearch from '@/components/repo/CommitSearch.vue'
 import StashManager from '@/components/repo/StashManager.vue'
 import SubmoduleManager from '@/components/repo/SubmoduleManager.vue'
+import PatchManager from '@/components/patch/PatchManager.vue'
 import CredentialSelector from '@/components/credential/CredentialSelector.vue'
-import { validateGitRemoteUrl, detectGitProtocol } from '@/utils/git'
+import SpecEditor from '@/components/spec/SpecEditor.vue'
+import { validateGitRemoteUrl, detectGitProtocol, convertGitUrl } from '@/utils/git'
 
 const route = useRoute()
 const repoKey = route.params.repoKey as string
@@ -471,6 +481,7 @@ const statsBranches = ref<string[]>([])
 const statsAuthors = ref<{ name: string; email: string }[]>([])
 const statsData = ref<StatsResponse | null>(null)
 const lineStatsData = ref<LineStatsResponse | null>(null)
+const lineStatsLoading = ref(false)
 const commitHistory = ref<{ hash: string; author: string; date: string; message: string }[]>([])
 
 // Versions
@@ -506,7 +517,6 @@ const pushTagLoading = ref(false)
 // Edit
 const showEditDialog = ref(false)
 const editSaving = ref(false)
-const editActiveTab = ref('basic')
 const editForm = ref({ name: '', path: '', remote_url: '' })
 
 interface EditRemoteRow extends GitRemote {
@@ -559,6 +569,25 @@ watch(activeTab, (val) => {
   }
 })
 
+// 监听主 URL 协议切换，自动转换 URL
+watch(editUrlMode, (newMode, oldMode) => {
+  if (oldMode && newMode !== oldMode && editForm.value.remote_url) {
+    editForm.value.remote_url = convertGitUrl(editForm.value.remote_url, newMode)
+  }
+})
+
+// 监听远程 URL 协议切换，自动转换 URL
+watch(remoteUrlModes, (newModes, oldModes) => {
+  if (!oldModes) return
+  for (const [idxStr, newMode] of Object.entries(newModes)) {
+    const idx = parseInt(idxStr)
+    const oldMode = oldModes[idx]
+    if (oldMode && newMode !== oldMode && editRemotes.value[idx]?.fetch_url) {
+      editRemotes.value[idx]!.fetch_url = convertGitUrl(editRemotes.value[idx]!.fetch_url, newMode)
+    }
+  }
+}, { deep: true })
+
 async function loadStats() {
   try {
     statsData.value = await getStatsAnalyze(repoKey, {
@@ -580,7 +609,7 @@ async function loadStats() {
 
 async function loadLineStats() {
   try {
-    lineStatsData.value = null
+    lineStatsLoading.value = true
     const result = await getLineStats(repoKey, {
       branch: lineStatsFilter.value.branch || undefined,
       author: lineStatsFilter.value.author || undefined,
@@ -590,9 +619,14 @@ async function loadLineStats() {
     lineStatsData.value = result
     // 如果后端异步计算中，自动轮询
     if (result && result.status === 'processing') {
+      lineStatsLoading.value = false
       pollLineStats()
+    } else {
+      lineStatsLoading.value = false
     }
-  } catch { /* ignore */ }
+  } catch {
+    lineStatsLoading.value = false
+  }
 }
 
 function pollLineStats() {
@@ -751,7 +785,6 @@ function openEditDialog() {
     path: repo.value.path,
     remote_url: repo.value.remote_url || '',
   }
-  editActiveTab.value = 'basic'
   editRemotes.value = []
   editTrackingBranches.value = []
   editDefaultCredentialId.value = repo.value.default_credential_id
@@ -797,7 +830,6 @@ async function handleSaveEdit() {
     const err = validateGitRemoteUrl(editForm.value.remote_url)
     if (err) {
       editUrlError.value = err
-      editActiveTab.value = 'basic'
       return
     }
   }
@@ -808,7 +840,6 @@ async function handleSaveEdit() {
       const err = validateGitRemoteUrl(r.fetch_url)
       if (err) {
         remoteUrlErrors.value[i] = err
-        editActiveTab.value = 'remote'
         ElMessage.warning(`远程 "${r.name || 'unnamed'}" 的 URL 格式不正确`)
         return
       }
@@ -918,14 +949,34 @@ async function testEditRemote(index: number) {
   }
   row._testing = true
   try {
-    const result = await testConnection(row.fetch_url)
-    if (result.status === 'success') {
-      ElMessage.success(`${row.name || 'Remote'} 连接成功`)
+    // 优先使用配置的凭证
+    const credentialId = editRemoteCredentials.value[row.name]
+    if (credentialId) {
+      const result = await testCredential(credentialId, row.fetch_url)
+      if (result.success) {
+        ElMessage.success(`${row.name || 'Remote'} 连接成功`)
+      } else {
+        ElMessage.error('连接失败: ' + (result.message || '未知错误'))
+      }
+    } else if (editDefaultCredentialId.value) {
+      // 使用默认凭证
+      const result = await testCredential(editDefaultCredentialId.value, row.fetch_url)
+      if (result.success) {
+        ElMessage.success(`${row.name || 'Remote'} 连接成功`)
+      } else {
+        ElMessage.error('连接失败: ' + (result.message || '未知错误'))
+      }
     } else {
-      ElMessage.error('连接失败: ' + (result.error || '未知错误'))
+      // 无凭证，使用基础测试
+      const result = await testConnection(row.fetch_url)
+      if (result.status === 'success') {
+        ElMessage.success(`${row.name || 'Remote'} 连接成功`)
+      } else {
+        ElMessage.error('连接失败: ' + (result.error || '未知错误'))
+      }
     }
-  } catch {
-    ElMessage.error('连接测试请求失败')
+  } catch (e: any) {
+    ElMessage.error('连接测试请求失败: ' + (e?.message || ''))
   } finally {
     row._testing = false
   }
@@ -1050,6 +1101,22 @@ async function handleSaveExclude() {
   font-size: 13px;
   color: #606266;
   flex-shrink: 0;
+}
+.remotes-section {
+  width: 100%;
+}
+.remotes-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  font-size: 14px;
+  color: #606266;
+}
+.tracking-branches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
 }
 .field-error {
   color: #f56c6c;
