@@ -21,7 +21,7 @@
     </div>
 
     <!-- 搜索和筛选 -->
-    <div class="filter-section" v-if="repoStore.repoList.length > 0">
+    <div class="filter-section" v-if="repoStore.repoList.length > 0 || searchText">
       <el-input
         v-model="searchText"
         placeholder="搜索仓库名称或路径..."
@@ -36,7 +36,7 @@
 
     <!-- 骨架屏 -->
     <TableSkeleton
-      v-if="repoStore.loading && repoStore.repoList.length === 0"
+      v-if="repoStore.loading"
       :rows="5"
       :columns="5"
       :column-widths="['60px', '150px', '250px', '200px', '120px']"
