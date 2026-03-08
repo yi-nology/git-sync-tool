@@ -31,6 +31,11 @@ func _executesyncMw() []app.HandlerFunc {
 	return nil
 }
 
+func _previewsyncMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
 func _historyMw() []app.HandlerFunc {
 	// your code...
 	return nil
@@ -77,6 +82,16 @@ func _updatetaskMw() []app.HandlerFunc {
 }
 
 func _listtasksMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
+func _analyzerepoforsyncMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
+func _batchsyncMw() []app.HandlerFunc {
 	// your code...
 	return nil
 }

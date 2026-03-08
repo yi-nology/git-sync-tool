@@ -1,0 +1,153 @@
+// idl/biz/patch.proto - Patch 相关 API 定义
+syntax = "proto2";
+
+package patch;
+
+import "api.proto";
+import "common.proto";
+
+option go_package = "/patch";
+
+// Patch 服务
+service PatchService {
+    // 生成 Patch
+    rpc GeneratePatch(GeneratePatchRequest) returns (GeneratePatchResponse) {
+        option (api.post) = "/api/v1/patch/generate";
+    }
+    
+    // 保存 Patch
+    rpc SavePatch(SavePatchRequest) returns (common.EmptyResponse) {
+        option (api.post) = "/api/v1/patch/save";
+    }
+    
+    // 列出 Patches
+    rpc ListPatches(common.EmptyRequest) returns (PatchListResponse) {
+        option (api.get) = "/api/v1/patch/list";
+    }
+    
+    // 获取 Patch 内容
+    rpc GetPatchContent(PatchContentRequest) returns (PatchContentResponse) {
+        option (api.get) = "/api/v1/patch/content";
+    }
+    
+    // 下载 Patch
+    rpc DownloadPatch(DownloadPatchRequest) returns (common.EmptyResponse) {
+        option (api.get) = "/api/v1/patch/download";
+    }
+    
+    // 应用 Patch
+    rpc ApplyPatch(ApplyPatchRequest) returns (ApplyPatchResponse) {
+        option (api.post) = "/api/v1/patch/apply";
+    }
+    
+    // 检查 Patch
+    rpc CheckPatch(CheckPatchRequest) returns (CheckPatchResponse) {
+        option (api.post) = "/api/v1/patch/check";
+    }
+    
+    // 删除 Patch
+    rpc DeletePatch(DeletePatchRequest) returns (common.EmptyResponse) {
+        option (api.post) = "/api/v1/patch/delete";
+    }
+}
+
+// 生成 Patch 请求
+message GeneratePatchRequest {
+    optional string repo_key = 1;
+    optional string base_commit = 2;
+    optional string target_commit = 3;
+    optional string output_path = 4;
+    optional string message = 5;
+}
+
+// 生成 Patch 响应
+message GeneratePatchResponse {
+    optional common.BaseResponse base = 1;
+    optional string patch_path = 2;
+    optional string patch_content = 3;
+}
+
+// 保存 Patch 请求
+message SavePatchRequest {
+    optional string repo_key = 1;
+    optional string patch_content = 2;
+    optional string patch_name = 3;
+    optional string description = 4;
+}
+
+// Patch 列表响应
+message PatchListResponse {
+    optional common.BaseResponse base = 1;
+    repeated PatchInfo patches = 2;
+}
+
+// Patch 信息
+message PatchInfo {
+    optional string id = 1;
+    optional string name = 2;
+    optional string description = 3;
+    optional string path = 4;
+    optional int64 size = 5;
+    optional string created_at = 6;
+}
+
+// Patch 内容请求
+message PatchContentRequest {
+    optional string repo_key = 1;
+    optional string patch_id = 2;
+    optional string patch_path = 3;
+}
+
+// Patch 内容响应
+message PatchContentResponse {
+    optional common.BaseResponse base = 1;
+    optional string content = 2;
+    optional string patch_name = 3;
+}
+
+// 下载 Patch 请求
+message DownloadPatchRequest {
+    optional string repo_key = 1;
+    optional string patch_id = 2;
+    optional string patch_path = 3;
+}
+
+// 应用 Patch 请求
+message ApplyPatchRequest {
+    optional string repo_key = 1;
+    optional string patch_id = 2;
+    optional string patch_path = 3;
+    optional string patch_content = 4;
+    optional bool dry_run = 5;
+}
+
+// 应用 Patch 响应
+message ApplyPatchResponse {
+    optional common.BaseResponse base = 1;
+    optional bool success = 2;
+    optional string message = 3;
+    optional string output = 4;
+}
+
+// 检查 Patch 请求
+message CheckPatchRequest {
+    optional string repo_key = 1;
+    optional string patch_id = 2;
+    optional string patch_path = 3;
+    optional string patch_content = 4;
+}
+
+// 检查 Patch 响应
+message CheckPatchResponse {
+    optional common.BaseResponse base = 1;
+    optional bool valid = 2;
+    optional string message = 3;
+    optional string output = 4;
+}
+
+// 删除 Patch 请求
+message DeletePatchRequest {
+    optional string repo_key = 1;
+    optional string patch_id = 2;
+    optional string patch_path = 3;
+}

@@ -11,27 +11,33 @@ import (
 	"github.com/yi-nology/git-manage-service/biz/dal/db"
 	"github.com/yi-nology/git-manage-service/biz/model/domain"
 	"github.com/yi-nology/git-manage-service/biz/model/po"
+	syncModel "github.com/yi-nology/git-manage-service/biz/model/sync"
 	"github.com/yi-nology/git-manage-service/biz/service/auth"
+	"github.com/yi-nology/git-manage-service/biz/service/commit_analyzer"
 	"github.com/yi-nology/git-manage-service/biz/service/git"
 	notificationSvc "github.com/yi-nology/git-manage-service/biz/service/notification"
 	"github.com/yi-nology/git-manage-service/pkg/lock"
 )
 
 type SyncService struct {
-	git         *git.GitService
-	authSvc     *auth.AuthService
-	syncTaskDAO *db.SyncTaskDAO
-	syncRunDAO  *db.SyncRunDAO
-	lockSvc     lock.DistLock
+	git            *git.GitService
+	authSvc        *auth.AuthService
+	syncTaskDAO    *db.SyncTaskDAO
+	syncRunDAO     *db.SyncRunDAO
+	lockSvc        lock.DistLock
+	commitAnalyzer *commit_analyzer.AnalyzerService
 }
 
 func NewSyncService() *SyncService {
-	return &SyncService{
-		git:         git.NewGitService(),
-		authSvc:     auth.NewAuthService(),
-		syncTaskDAO: db.NewSyncTaskDAO(),
-		syncRunDAO:  db.NewSyncRunDAO(),
+	service := &SyncService{
+		git:            git.NewGitService(),
+		authSvc:        auth.NewAuthService(),
+		syncTaskDAO:    db.NewSyncTaskDAO(),
+		syncRunDAO:     db.NewSyncRunDAO(),
+		commitAnalyzer: commit_analyzer.NewAnalyzerService(),
 	}
+
+	return service
 }
 
 // SetLockService 设置锁服务（用于依赖注入）
@@ -57,6 +63,7 @@ func (s *SyncService) ExecuteSync(task *po.SyncTask) error {
 
 func (s *SyncService) ExecuteSyncWithTrigger(task *po.SyncTask, triggerSource string) error {
 	ctx := context.Background()
+	var err error
 
 	// 获取分布式锁保护同步任务
 	if s.lockSvc != nil {
@@ -91,7 +98,6 @@ func (s *SyncService) ExecuteSyncWithTrigger(task *po.SyncTask, triggerSource st
 	}
 
 	var commitRange string
-	var err error
 	if syncMode == "all-branch" {
 		commitRange, err = s.doSyncAllBranches(repoPath, task, logf)
 	} else {
@@ -535,6 +541,109 @@ func (s *SyncService) doSyncAllBranches(path string, task *po.SyncTask, logf fun
 	return commitRange, nil
 }
 
+// PreviewSync previews sync changes without executing them
+func (s *SyncService) PreviewSync(repo po.Repo, sourceRemote, sourceBranch, targetRemote, targetBranch string, gitTags, gitForce, gitPrune, gitNoVerify bool) (*syncModel.PreviewSyncResponse, error) {
+	path := repo.Path
+
+	var opts []string
+	if gitTags {
+		opts = append(opts, "--tags")
+	}
+	if gitForce {
+		opts = append(opts, "--force")
+	}
+	if gitPrune {
+		opts = append(opts, "--prune")
+	}
+	if gitNoVerify {
+		opts = append(opts, "--no-verify")
+	}
+
+	cmdParts := []string{"git push", targetRemote}
+	if sourceRemote == "local" {
+		cmdParts = append(cmdParts, sourceBranch+":refs/heads/"+targetBranch)
+	} else {
+		cmdParts = append(cmdParts, "HEAD:refs/heads/"+targetBranch)
+	}
+	if len(opts) > 0 {
+		cmdParts = append(cmdParts, strings.Join(opts, " "))
+	}
+
+	response := &syncModel.PreviewSyncResponse{
+		Command:     strings.Join(cmdParts, " "),
+		FastForward: true,
+	}
+
+	isLocalSource := (sourceRemote == "local")
+	var sourceHash string
+
+	if !isLocalSource {
+		if err := s.git.Fetch(path, sourceRemote, nil); err != nil {
+			return nil, fmt.Errorf("fetch source failed: %v", err)
+		}
+		h, err := s.git.GetCommitHash(path, sourceRemote, sourceBranch)
+		if err != nil {
+			return nil, fmt.Errorf("get source hash failed: %v", err)
+		}
+		sourceHash = h
+	} else {
+		h, err := s.git.ResolveRevision(path, sourceBranch)
+		if err != nil {
+			return nil, fmt.Errorf("get local source hash failed: %v", err)
+		}
+		sourceHash = h
+	}
+
+	if err := s.git.Fetch(path, targetRemote, nil); err != nil {
+		// Target might not exist yet, continue
+	}
+
+	targetHash, err := s.git.GetCommitHash(path, targetRemote, targetBranch)
+	if err != nil {
+		response.Warning = "Target branch does not exist yet. A new branch will be created."
+	}
+
+	if targetHash != "" && sourceHash == targetHash {
+		response.Warning = "Source and target are already in sync."
+		return response, nil
+	}
+
+	if targetHash != "" {
+		isAncestor, _ := s.git.IsAncestor(path, targetHash, sourceHash)
+		if !isAncestor {
+			response.FastForward = false
+			response.Warning = "Not a fast-forward update. Force push may be required."
+		}
+	}
+
+	commitRange := sourceHash
+	if targetHash != "" {
+		commitRange = targetHash + ".." + sourceHash
+	}
+	commitLog, err := s.git.GetCommits(path, sourceBranch, commitRange, "")
+	if err == nil && commitLog != "" {
+		lines := strings.Split(strings.TrimSpace(commitLog), "\n")
+		validLines := 0
+		for _, line := range lines {
+			if strings.TrimSpace(line) != "" {
+				validLines++
+			}
+		}
+		if validLines > 0 {
+			response.CommitsToPush = int32(validLines)
+		}
+	}
+
+	if gitTags {
+		tags, _ := s.git.GetTags(path)
+		if len(tags) > 0 {
+			response.TagsToPush = tags
+		}
+	}
+
+	return response, nil
+}
+
 // LogWriter implements io.Writer
 type logWriter struct {
 	logf func(string, ...interface{})
@@ -606,4 +715,56 @@ func (s *SyncService) sendNotification(task *po.SyncTask, run *po.SyncRun) {
 		RepoKey:      task.SourceRepoKey,
 		Data:         data,
 	})
+}
+
+// GetSyncRecommendations 获取同步建议
+func (s *SyncService) GetSyncRecommendations(repoKey, taskKey string) (*po.SyncRecommendation, error) {
+	return s.commitAnalyzer.GenerateSyncRecommendations(repoKey, taskKey)
+}
+
+// GetSyncRecommendationsByRepo 获取仓库的所有同步建议
+func (s *SyncService) GetSyncRecommendationsByRepo(repoKey string, limit int) ([]po.SyncRecommendation, error) {
+	return s.commitAnalyzer.GetSyncRecommendations(repoKey, limit)
+}
+
+// ApplySyncRecommendation 应用同步建议
+func (s *SyncService) ApplySyncRecommendation(repoKey, taskKey string) error {
+	recommendation, err := s.commitAnalyzer.GenerateSyncRecommendations(repoKey, taskKey)
+	if err != nil {
+		return err
+	}
+
+	// 获取同步任务
+	task, err := s.syncTaskDAO.FindByKey(taskKey)
+	if err != nil {
+		return err
+	}
+
+	// 根据建议的同步频率更新 cron 表达式
+	cronExpr := task.Cron
+	switch recommendation.SyncFrequency {
+	case "hourly":
+		cronExpr = "0 * * * *" // 每小时
+	case "daily":
+		cronExpr = "0 0 * * *" // 每天午夜
+	case "weekly":
+		cronExpr = "0 0 * * 0" // 每周日午夜
+	}
+
+	// 更新任务的 cron 表达式
+	task.Cron = cronExpr
+	if err := s.syncTaskDAO.Save(task); err != nil {
+		return err
+	}
+
+	// 更新推荐的应用状态
+	recommendation.IsApplied = true
+	s.commitAnalyzer.UpdateSyncRecommendation(recommendation)
+
+	return nil
+}
+
+// AnalyzeRepoForSync 分析仓库以获取同步建议
+func (s *SyncService) AnalyzeRepoForSync(repoPath, repoKey string) error {
+	return s.commitAnalyzer.AnalyzeRepo(repoPath, repoKey)
 }

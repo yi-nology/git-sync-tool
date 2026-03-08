@@ -23,6 +23,7 @@ func Register(r *server.Hertz) {
 			_v1 := _api.Group("/v1", _v1Mw()...)
 			{
 				_repo := _v1.Group("/repo", _repoMw()...)
+				_repo.POST("/batch-create", append(_batchcreateMw(), repo.BatchCreate)...)
 				_repo.POST("/clone", append(_cloneMw(), repo.Clone)...)
 				_repo.POST("/create", append(_createMw(), repo.Create)...)
 				_repo.POST("/delete", append(_deleteMw(), repo.Delete)...)
@@ -30,6 +31,7 @@ func Register(r *server.Hertz) {
 				_repo.POST("/fetch", append(_fetchMw(), repo.Fetch)...)
 				_repo.GET("/list", append(_listMw(), repo.List)...)
 				_repo.POST("/scan", append(_scanMw(), repo.Scan)...)
+				_repo.POST("/scan-directory", append(_scandirectoryMw(), repo.ScanDirectory)...)
 				_repo.GET("/task", append(_getclonetaskMw(), repo.GetCloneTask)...)
 				_repo.POST("/update", append(_updateMw(), repo.Update)...)
 			}

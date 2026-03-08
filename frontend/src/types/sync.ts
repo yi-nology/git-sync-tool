@@ -13,6 +13,10 @@ export interface SyncTaskDTO {
   cron: string
   enabled: boolean
   sync_mode: string
+  git_tags: boolean
+  git_force: boolean
+  git_prune: boolean
+  git_no_verify: boolean
   created_at: string
   updated_at: string
   source_repo?: RepoDTO
@@ -30,6 +34,10 @@ export interface CreateSyncTaskReq {
   cron?: string
   enabled?: boolean
   sync_mode?: string
+  git_tags?: boolean
+  git_force?: boolean
+  git_prune?: boolean
+  git_no_verify?: boolean
 }
 
 export interface UpdateSyncTaskReq extends CreateSyncTaskReq {
@@ -43,6 +51,34 @@ export interface ExecuteSyncReq {
   target_remote: string
   target_branch: string
   push_options?: string
+}
+
+export interface PreviewSyncReq {
+  repo_key: string
+  source_remote: string
+  source_branch: string
+  target_remote: string
+  target_branch: string
+  git_tags?: boolean
+  git_force?: boolean
+  git_prune?: boolean
+  git_no_verify?: boolean
+}
+
+export interface CommitInfo {
+  hash: string
+  message: string
+  author: string
+  date: string
+}
+
+export interface PreviewSyncResponse {
+  command: string
+  commits_to_push: number
+  tags_to_push: string[]
+  commits: CommitInfo[]
+  fast_forward: boolean
+  warning: string
 }
 
 export interface SyncRunDTO {

@@ -12,9 +12,10 @@ import (
 	"github.com/yi-nology/git-manage-service/biz/dal/db"
 	"github.com/yi-nology/git-manage-service/biz/model/api"
 	"github.com/yi-nology/git-manage-service/biz/model/po"
+
 	"github.com/yi-nology/git-manage-service/biz/service/audit"
 	lintSvc "github.com/yi-nology/git-manage-service/biz/service/lint"
-	"github.com/yi-nology/git-manage-service/biz/service/spec"
+	specService "github.com/yi-nology/git-manage-service/biz/service/spec"
 	"github.com/yi-nology/git-manage-service/pkg/response"
 )
 
@@ -207,8 +208,8 @@ func GetSpecContentByPath(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	specSvc := spec.NewSpecService()
-	content, err := specSvc.GetSpecContent(repo.Path, path)
+	svc := specService.NewSpecService()
+	content, err := svc.GetSpecContent(repo.Path, path)
 	if err != nil {
 		response.InternalServerError(c, err.Error())
 		return
@@ -243,9 +244,9 @@ func SaveSpecContentByPath(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	specSvc := spec.NewSpecService()
+	svc := specService.NewSpecService()
 
-	err = specSvc.SaveSpecContent(repo.Path, req.Path, req.Content, req.Message)
+	err = svc.SaveSpecContent(repo.Path, req.Path, req.Content, req.Message)
 	if err != nil {
 		response.InternalServerError(c, err.Error())
 		return
@@ -484,8 +485,8 @@ func CommitSpec(ctx context.Context, c *app.RequestContext) {
 	}
 
 	if req.Content != "" {
-		specSvc := spec.NewSpecService()
-		if err := specSvc.SaveSpecContent(repo.Path, req.Path, req.Content, ""); err != nil {
+		svc := specService.NewSpecService()
+		if err := svc.SaveSpecContent(repo.Path, req.Path, req.Content, ""); err != nil {
 			response.InternalServerError(c, err.Error())
 			return
 		}
@@ -534,8 +535,8 @@ func ListSpecFiles(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	specSvc := spec.NewSpecService()
-	files, err := specSvc.ListSpecFiles(repo.Path)
+	svc := specService.NewSpecService()
+	files, err := svc.ListSpecFiles(repo.Path)
 	if err != nil {
 		response.InternalServerError(c, err.Error())
 		return
@@ -543,7 +544,7 @@ func ListSpecFiles(ctx context.Context, c *app.RequestContext) {
 
 	// 确保返回空数组而不是 null
 	if files == nil {
-		files = []spec.SpecFileInfo{}
+		files = []specService.SpecFileInfo{}
 	}
 
 	// 转换为 API DTO
@@ -577,8 +578,8 @@ func GetSpecContent(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	specSvc := spec.NewSpecService()
-	content, err := specSvc.GetSpecContent(repo.Path, path)
+	svc := specService.NewSpecService()
+	content, err := svc.GetSpecContent(repo.Path, path)
 	if err != nil {
 		response.InternalServerError(c, err.Error())
 		return
@@ -605,10 +606,10 @@ func SaveSpecContent(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	specSvc := spec.NewSpecService()
+	svc := specService.NewSpecService()
 
 	// 先验证
-	validationResult := specSvc.ValidateSpec(req.Content)
+	validationResult := svc.ValidateSpec(req.Content)
 	if !validationResult.Valid && len(validationResult.Issues) > 0 {
 		// 如果有错误级别的 issue，阻止保存
 		for _, issue := range validationResult.Issues {
@@ -620,7 +621,7 @@ func SaveSpecContent(ctx context.Context, c *app.RequestContext) {
 	}
 
 	// 保存文件
-	err = specSvc.SaveSpecContent(repo.Path, req.Path, req.Content, req.CommitMessage)
+	err = svc.SaveSpecContent(repo.Path, req.Path, req.Content, req.CommitMessage)
 	if err != nil {
 		response.InternalServerError(c, err.Error())
 		return
@@ -669,8 +670,8 @@ func ValidateSpec(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	specSvc := spec.NewSpecService()
-	result := specSvc.ValidateSpec(req.Content)
+	svc := specService.NewSpecService()
+	result := svc.ValidateSpec(req.Content)
 
 	response.Success(c, result)
 }
@@ -678,8 +679,8 @@ func ValidateSpec(ctx context.Context, c *app.RequestContext) {
 // GetSpecRules 获取 spec 规则列表
 // @router /api/v1/spec/rules [GET]
 func GetSpecRules(ctx context.Context, c *app.RequestContext) {
-	specSvc := spec.NewSpecService()
-	rules := specSvc.GetBuiltinRules()
+	svc := specService.NewSpecService()
+	rules := svc.GetBuiltinRules()
 
 	response.Success(c, rules)
 }
@@ -699,8 +700,8 @@ func CreateSpecFile(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	specSvc := spec.NewSpecService()
-	path, err := specSvc.CreateSpecFileWithContent(repo.Path, req.Path, req.Name, req.Content)
+	svc := specService.NewSpecService()
+	path, err := svc.CreateSpecFileWithContent(repo.Path, req.Path, req.Name, req.Content)
 	if err != nil {
 		response.InternalServerError(c, err.Error())
 		return
@@ -731,8 +732,8 @@ func DeleteSpecFile(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	specSvc := spec.NewSpecService()
-	err = specSvc.DeleteSpecFile(repo.Path, req.Path)
+	svc := specService.NewSpecService()
+	err = svc.DeleteSpecFile(repo.Path, req.Path)
 	if err != nil {
 		response.InternalServerError(c, err.Error())
 		return

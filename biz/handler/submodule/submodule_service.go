@@ -7,7 +7,8 @@ import (
 
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/yi-nology/git-manage-service/biz/dal/db"
-	submodule "github.com/yi-nology/git-manage-service/biz/model/biz/submodule"
+	common "github.com/yi-nology/git-manage-service/biz/model/common"
+	submodule "github.com/yi-nology/git-manage-service/biz/model/submodule"
 	"github.com/yi-nology/git-manage-service/biz/service/audit"
 	"github.com/yi-nology/git-manage-service/biz/service/git"
 	"github.com/yi-nology/git-manage-service/pkg/response"

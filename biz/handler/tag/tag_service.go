@@ -9,7 +9,8 @@ import (
 
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/yi-nology/git-manage-service/biz/dal/db"
-	tagModel "github.com/yi-nology/git-manage-service/biz/model/biz/tag"
+	common "github.com/yi-nology/git-manage-service/biz/model/common"
+	tagModel "github.com/yi-nology/git-manage-service/biz/model/tag"
 	"github.com/yi-nology/git-manage-service/biz/service/git"
 	"github.com/yi-nology/git-manage-service/pkg/response"
 )

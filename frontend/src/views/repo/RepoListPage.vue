@@ -1,12 +1,10 @@
 <template>
-  <div class="repo-list-page">
-    <div class="page-header">
-      <h2>仓库列表</h2>
+  <AppPage title="仓库列表">
+    <template #actions>
       <el-dropdown @command="handleAddCommand">
-        <el-button type="primary">
-          <el-icon><Plus /></el-icon> 添加仓库
-          <el-icon class="el-icon--right"><ArrowDown /></el-icon>
-        </el-button>
+        <AppButton type="primary" icon="Plus">
+          添加仓库
+        </AppButton>
         <template #dropdown>
           <el-dropdown-menu>
             <el-dropdown-item command="register">
@@ -18,21 +16,19 @@
           </el-dropdown-menu>
         </template>
       </el-dropdown>
-    </div>
+    </template>
 
     <!-- 搜索和筛选 -->
-    <div class="filter-section" v-if="repoStore.repoList.length > 0 || searchText">
-      <el-input
-        v-model="searchText"
-        placeholder="搜索仓库名称或路径..."
-        clearable
-        style="max-width: 400px"
-      >
-        <template #prefix>
-          <el-icon><Search /></el-icon>
-        </template>
-      </el-input>
-    </div>
+    <AppCard v-if="repoStore.repoList.length > 0 || searchText">
+      <div class="filter-section">
+        <AppInput
+          v-model="searchText"
+          placeholder="搜索仓库名称或路径..."
+          prefixIcon="Search"
+          showClear
+        />
+      </div>
+    </AppCard>
 
     <!-- 骨架屏 -->
     <TableSkeleton
@@ -43,67 +39,71 @@
     />
 
     <!-- 表格 -->
-    <el-table
-      v-else
-      :data="paginatedData"
-      stripe
-      @sort-change="handleSortChange"
-      :default-sort="{ prop: 'id', order: 'ascending' }"
-    >
-      <el-table-column prop="id" label="ID" width="60" sortable />
-      <el-table-column prop="name" label="名称" min-width="150" sortable>
-        <template #default="{ row }">
-          <el-text tag="b">{{ row.name }}</el-text>
-        </template>
-      </el-table-column>
-      <el-table-column prop="path" label="路径" min-width="250" show-overflow-tooltip>
-        <template #default="{ row }">
-          <el-text type="info" size="small" class="mono-text">{{ row.path }}</el-text>
-        </template>
-      </el-table-column>
-      <el-table-column prop="remote_url" label="远程地址" min-width="200" show-overflow-tooltip>
-        <template #default="{ row }">
-          <el-text size="small" truncated v-if="row.remote_url">{{ row.remote_url }}</el-text>
-          <el-text size="small" type="info" v-else>无远程仓库</el-text>
-        </template>
-      </el-table-column>
-      <el-table-column label="操作" width="120" fixed="right">
-        <template #default="{ row }">
-          <el-dropdown @command="(cmd: string) => handleCommand(cmd, row)">
-            <el-button size="small">
-              操作 <el-icon class="el-icon--right"><ArrowDown /></el-icon>
-            </el-button>
-            <template #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item command="detail">
-                  <el-icon><View /></el-icon> 查看详情
-                </el-dropdown-item>
-                <el-dropdown-item command="branches">
-                  <el-icon><Share /></el-icon> 分支管理
-                </el-dropdown-item>
-                <el-dropdown-item command="sync">
-                  <el-icon><Refresh /></el-icon> 同步任务
-                </el-dropdown-item>
-                <el-dropdown-item command="delete" divided>
-                  <el-text type="danger">
-                    <el-icon><Delete /></el-icon> 删除仓库
-                  </el-text>
-                </el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
-        </template>
-      </el-table-column>
+    <AppCard v-else>
+      <el-table
+        :data="paginatedData"
+        stripe
+        @sort-change="handleSortChange"
+        :default-sort="{ prop: 'id', order: 'ascending' }"
+      >
+        <el-table-column prop="id" label="ID" width="60" sortable />
+        <el-table-column prop="name" label="名称" min-width="150" sortable>
+          <template #default="{ row }">
+            <el-text tag="b">{{ row.name }}</el-text>
+          </template>
+        </el-table-column>
+        <el-table-column prop="path" label="路径" min-width="250" show-overflow-tooltip>
+          <template #default="{ row }">
+            <el-text type="info" size="small" class="mono-text">{{ row.path }}</el-text>
+          </template>
+        </el-table-column>
+        <el-table-column prop="remote_url" label="远程地址" min-width="200" show-overflow-tooltip>
+          <template #default="{ row }">
+            <el-text size="small" truncated v-if="row.remote_url">{{ row.remote_url }}</el-text>
+            <el-text size="small" type="info" v-else>无远程仓库</el-text>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="120" fixed="right">
+          <template #default="{ row }">
+            <el-dropdown @command="(cmd: string) => handleCommand(cmd, row)">
+              <AppButton type="secondary">
+                操作
+              </AppButton>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item command="detail">
+                    <el-icon><View /></el-icon> 查看详情
+                  </el-dropdown-item>
+                  <el-dropdown-item command="branches">
+                    <el-icon><Share /></el-icon> 分支管理
+                  </el-dropdown-item>
+                  <el-dropdown-item command="sync">
+                    <el-icon><Refresh /></el-icon> 同步任务
+                  </el-dropdown-item>
+                  <el-dropdown-item command="delete" divided>
+                    <el-text type="danger">
+                      <el-icon><Delete /></el-icon> 删除仓库
+                    </el-text>
+                  </el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+          </template>
+        </el-table-column>
 
-      <!-- 空状态 -->
-      <template #empty>
-        <el-empty description="暂无仓库">
-          <el-button type="primary" @click="router.push('/repos/register')">
-            添加第一个仓库
-          </el-button>
-        </el-empty>
-      </template>
-    </el-table>
+        <!-- 空状态 -->
+        <template #empty>
+          <div class="app-empty">
+            <el-icon class="app-empty-icon"><Folder /></el-icon>
+            <h3 class="app-empty-title">暂无仓库</h3>
+            <p class="app-empty-description">添加您的第一个仓库开始管理</p>
+            <AppButton type="primary" @click="router.push('/repos/register')">
+              添加第一个仓库
+            </AppButton>
+          </div>
+        </template>
+      </el-table>
+    </AppCard>
 
     <!-- 分页 -->
     <div class="pagination-section" v-if="filteredRepos.length > 0">
@@ -116,7 +116,7 @@
         background
       />
     </div>
-  </div>
+  </AppPage>
 </template>
 
 <script setup lang="ts">
@@ -133,11 +133,16 @@ import {
   Download,
   ArrowDown,
   Search,
+  Folder,
 } from '@element-plus/icons-vue'
 import { useRepoStore } from '@/stores/useRepoStore'
 import { deleteRepo } from '@/api/modules/repo'
 import { useNotification } from '@/composables/useNotification'
 import TableSkeleton from '@/components/common/TableSkeleton.vue'
+import AppPage from '@/components/layout/AppPage.vue'
+import AppCard from '@/components/common/AppCard.vue'
+import AppButton from '@/components/common/AppButton.vue'
+import AppInput from '@/components/common/AppInput.vue'
 
 const router = useRouter()
 const repoStore = useRepoStore()
@@ -261,32 +266,16 @@ async function handleDelete(key: string, name: string) {
 </script>
 
 <style scoped>
-.repo-list-page {
-  padding: 20px;
-}
-
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.page-header h2 {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 600;
-}
-
 .filter-section {
-  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
 }
 
 .pagination-section {
   display: flex;
   justify-content: flex-end;
-  margin-top: 16px;
-  padding: 16px 0;
+  margin-top: var(--spacing-md);
+  padding: var(--spacing-md) 0;
 }
 
 .mono-text {
@@ -295,14 +284,10 @@ async function handleDelete(key: string, name: string) {
 
 /* 响应式 */
 @media (max-width: 768px) {
-  .repo-list-page {
-    padding: 16px;
-  }
-
-  .page-header {
+  .filter-section {
     flex-direction: column;
     align-items: flex-start;
-    gap: 12px;
+    gap: var(--spacing-sm);
   }
 
   .pagination-section {
@@ -317,6 +302,6 @@ async function handleDelete(key: string, name: string) {
 
 /* 深色模式 */
 :global(.dark) .mono-text {
-  color: var(--el-text-color-regular);
+  color: var(--text-color-regular);
 }
 </style>

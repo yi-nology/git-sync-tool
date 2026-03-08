@@ -10,8 +10,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/yi-nology/git-manage-service/biz/dal/db"
 	"github.com/yi-nology/git-manage-service/biz/model/api"
-	syncModel "github.com/yi-nology/git-manage-service/biz/model/biz/sync"
+	common "github.com/yi-nology/git-manage-service/biz/model/common"
 	"github.com/yi-nology/git-manage-service/biz/model/po"
+	syncModel "github.com/yi-nology/git-manage-service/biz/model/sync"
 	"github.com/yi-nology/git-manage-service/biz/service/audit"
 	syncSvc "github.com/yi-nology/git-manage-service/biz/service/sync"
 	"github.com/yi-nology/git-manage-service/pkg/response"
@@ -91,6 +92,10 @@ func CreateTask(ctx context.Context, c *app.RequestContext) {
 		Cron:          req.Cron,
 		Enabled:       req.Enabled,
 		SyncMode:      normalizeSyncMode(req.SyncMode),
+		GitTags:       req.GitTags,
+		GitForce:      req.GitForce,
+		GitPrune:      req.GitPrune,
+		GitNoVerify:   req.GitNoVerify,
 	}
 
 	if err := db.NewSyncTaskDAO().Create(&task); err != nil {
@@ -129,6 +134,10 @@ func UpdateTask(ctx context.Context, c *app.RequestContext) {
 	task.Cron = req.Cron
 	task.Enabled = req.Enabled
 	task.SyncMode = normalizeSyncMode(req.SyncMode)
+	task.GitTags = req.GitTags
+	task.GitForce = req.GitForce
+	task.GitPrune = req.GitPrune
+	task.GitNoVerify = req.GitNoVerify
 
 	if err := taskDAO.Save(task); err != nil {
 		response.InternalServerError(c, err.Error())
@@ -286,6 +295,31 @@ func DeleteHistory(ctx context.Context, c *app.RequestContext) {
 	response.Success(c, map[string]string{"message": "deleted"})
 }
 
+// PreviewSync .
+// @router /api/v1/sync/preview [POST]
+func PreviewSync(ctx context.Context, c *app.RequestContext) {
+	var req syncModel.PreviewSyncRequest
+	if err := c.BindAndValidate(&req); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	repo, err := db.NewRepoDAO().FindByKey(req.RepoKey)
+	if err != nil {
+		response.NotFound(c, "repo not found")
+		return
+	}
+
+	svc := syncSvc.NewSyncService()
+	preview, err := svc.PreviewSync(*repo, req.SourceRemote, req.SourceBranch, req.TargetRemote, req.TargetBranch, req.GitTags, req.GitForce, req.GitPrune, req.GitNoVerify)
+	if err != nil {
+		response.InternalServerError(c, err.Error())
+		return
+	}
+
+	response.Success(c, preview)
+}
+
 // normalizeSyncMode 校验并规范化 sync_mode 值
 func normalizeSyncMode(mode string) string {
 	switch mode {
@@ -294,4 +328,54 @@ func normalizeSyncMode(mode string) string {
 	default:
 		return "single"
 	}
+}
+
+// AnalyzeRepoForSync .
+// @router /api/v1/sync/analyze-repo [POST]
+func AnalyzeRepoForSync(ctx context.Context, c *app.RequestContext) {
+	var req syncModel.AnalyzeRepoForSyncRequest
+	if err := c.BindAndValidate(&req); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	if req.RepoPath == "" || req.RepoKey == "" {
+		response.BadRequest(c, "repoPath and repoKey are required")
+		return
+	}
+
+	svc := syncSvc.NewSyncService()
+	err := svc.AnalyzeRepoForSync(req.RepoPath, req.RepoKey)
+	if err != nil {
+		response.InternalServerError(c, err.Error())
+		return
+	}
+
+	response.Success(c, map[string]string{"message": "Repository analysis completed"})
+}
+
+// BatchSync .
+// @router /api/v1/sync/batch [POST]
+func BatchSync(ctx context.Context, c *app.RequestContext) {
+	var req syncModel.BatchSyncRequest
+	if err := c.BindAndValidate(&req); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	if len(req.TaskKeys) == 0 {
+		response.BadRequest(c, "task_keys is required")
+		return
+	}
+
+	// 批量执行同步任务
+	go func() {
+		svc := syncSvc.NewSyncService()
+		for _, taskKey := range req.TaskKeys {
+			svc.RunTask(taskKey)
+		}
+	}()
+
+	audit.AuditSvc.Log(c, "SYNC_BATCH", "tasks:"+strconv.Itoa(len(req.TaskKeys)), req.TaskKeys)
+	response.Success(c, map[string]string{"status": "started", "tasks_count": strconv.Itoa(len(req.TaskKeys))})
 }

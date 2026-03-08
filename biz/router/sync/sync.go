@@ -23,10 +23,13 @@ func Register(r *server.Hertz) {
 			_v1 := _api.Group("/v1", _v1Mw()...)
 			{
 				_sync := _v1.Group("/sync", _syncMw()...)
+				_sync.POST("/analyze-repo", append(_analyzerepoforsyncMw(), sync.AnalyzeRepoForSync)...)
+				_sync.POST("/batch", append(_batchsyncMw(), sync.BatchSync)...)
 				_sync.POST("/execute", append(_executesyncMw(), sync.ExecuteSync)...)
 				_sync.GET("/history", append(_listhistoryMw(), sync.ListHistory)...)
 				_history := _sync.Group("/history", _historyMw()...)
 				_history.POST("/delete", append(_deletehistoryMw(), sync.DeleteHistory)...)
+				_sync.POST("/preview", append(_previewsyncMw(), sync.PreviewSync)...)
 				_sync.POST("/run", append(_runtaskMw(), sync.RunTask)...)
 				_sync.GET("/task", append(_gettaskMw(), sync.GetTask)...)
 				_task := _sync.Group("/task", _taskMw()...)

@@ -27,20 +27,17 @@ func Register(r *server.Hertz) {
 				_stats.GET("/authors", append(_listauthorsMw(), stats.ListAuthors)...)
 				_stats.GET("/branches", append(_listbranchesMw(), stats.ListBranches)...)
 				_stats.GET("/commits", append(_listcommitsMw(), stats.ListCommits)...)
+				_stats.GET("/lines", append(_getlinestatsMw(), stats.GetLineStats)...)
+				_lines := _stats.Group("/lines", _linesMw()...)
+				_lines.GET("/config", append(_getlinestatsconfigMw(), stats.GetLineStatsConfig)...)
+				_lines.POST("/config", append(_savelinestatsconfigMw(), stats.SaveLineStatsConfig)...)
 				{
-					_export := _stats.Group("/export", _exportMw()...)
-					_export.GET("/csv", append(_exportcsvMw(), stats.ExportCSV)...)
+					_export := _lines.Group("/export", _exportMw()...)
+					_export.GET("/csv", append(_exportlinestatscsvMw(), stats.ExportLineStatsCSV)...)
 				}
-				// 代码行统计相关路由
 				{
-					_lines := _stats.Group("/lines", _linesMw()...)
-					_lines.GET("", append(_getlinestatsMw(), stats.GetLineStats)...)
-					_lines.GET("/config", append(_getlinestatsconfMw(), stats.GetLineStatsConfig)...)
-					_lines.POST("/config", append(_savelinestatsconfMw(), stats.SaveLineStatsConfig)...)
-					{
-						_linesExport := _lines.Group("/export", _linesExportMw()...)
-						_linesExport.GET("/csv", append(_exportlinestatscsvMw(), stats.ExportLineStatsCSV)...)
-					}
+					_export0 := _stats.Group("/export", _export0Mw()...)
+					_export0.GET("/csv", append(_exportcsvMw(), stats.ExportCSV)...)
 				}
 			}
 		}

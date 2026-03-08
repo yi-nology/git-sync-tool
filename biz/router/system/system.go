@@ -23,9 +23,11 @@ func Register(r *server.Hertz) {
 			_v1 := _api.Group("/v1", _v1Mw()...)
 			{
 				_system := _v1.Group("/system", _systemMw()...)
+				_system.GET("/app-info", append(_getappinfoMw(), system.GetAppInfo)...)
 				_system.GET("/config", append(_getconfigMw(), system.GetConfig)...)
 				_system.POST("/config", append(_updateconfigMw(), system.UpdateConfig)...)
 				_system.GET("/dirs", append(_listdirsMw(), system.ListDirs)...)
+				_system.POST("/select-directory", append(_selectdirectoryMw(), system.SelectDirectory)...)
 				_system.GET("/ssh-keys", append(_listsshkeysMw(), system.ListSSHKeys)...)
 				_system.POST("/test-connection", append(_testconnectionMw(), system.TestConnection)...)
 				{

@@ -3,7 +3,7 @@ syntax = "proto3";
 
 package version;
 
-option go_package = "github.com/yi-nology/git-manage-service/biz/model/biz/version";
+option go_package = "version";
 
 import "api.proto";
 import "common.proto";

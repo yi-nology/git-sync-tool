@@ -3,7 +3,7 @@ syntax = "proto3";
 
 package common;
 
-option go_package = "github.com/yi-nology/git-manage-service/biz/model/common";
+option go_package = "common";
 
 // BaseResponse 统一响应基类
 message BaseResponse {

@@ -37,25 +37,34 @@ const props = withDefaults(defineProps<Props>(), {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
+  z-index: var(--z-index-modal);
+}
+
+:global(.dark) .loading-overlay {
+  background: rgba(0, 0, 0, 0.7);
 }
 
 .loading-content {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg);
+  background: var(--bg-color-page);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--box-shadow-lg);
+  border: 1px solid var(--border-color);
 }
 
 .loading-text {
-  font-size: 14px;
-  color: #606266;
+  font-size: var(--font-size-sm);
+  color: var(--text-color-regular);
   margin: 0;
 }
 
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.3s ease;
+  transition: opacity var(--transition-normal);
 }
 
 .fade-enter-from,

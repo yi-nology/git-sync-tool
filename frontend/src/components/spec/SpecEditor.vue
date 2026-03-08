@@ -175,7 +175,7 @@
 
 <script setup lang="ts">
 import { ref, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
-import { ElMessage, ElNotification, ElMessageBox } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   Search,
   Folder,
@@ -271,23 +271,6 @@ onBeforeUnmount(() => {
   }
 })
 
-// 递归检查树中是否有 .spec 文件
-function hasSpecFiles(nodes: SpecFileNode[]): boolean {
-  for (const node of nodes) {
-    // 如果是文件且以 .spec 结尾
-    if (!node.is_dir && node.name.endsWith('.spec')) {
-      return true
-    }
-    // 如果是目录，递归检查子节点
-    if (node.is_dir && node.children && node.children.length > 0) {
-      if (hasSpecFiles(node.children)) {
-        return true
-      }
-    }
-  }
-  return false
-}
-
 async function loadFileTree() {
   try {
     loading.value = true
@@ -295,17 +278,8 @@ async function loadFileTree() {
     
     // 确保返回的是数组
     fileTree.value = Array.isArray(tree) ? tree : []
-
-    // 递归检查是否有 .spec 文件
-    const hasSpecs = hasSpecFiles(fileTree.value)
-
-    // 如果没有 .spec 文件，延迟一下再弹出引导（避免与组件初始化冲突）
-    if (!hasSpecs) {
-      // 使用 setTimeout 确保在下一个事件循环中执行
-      setTimeout(() => {
-        showInitGuideDialog()
-      }, 300)
-    }
+    
+    // 不再自动弹出引导，只在文件树为空时显示空状态提示
   } catch (error) {
     ElMessage.error('加载文件树失败')
     console.error(error)
@@ -313,21 +287,6 @@ async function loadFileTree() {
   } finally {
     loading.value = false
   }
-}
-
-function showInitGuideDialog() {
-  // 使用 Notification 提示用户
-  ElNotification({
-    title: '欢迎使用 Spec 编辑器',
-    message: '检测到此仓库暂无 .spec 文件，点击右侧按钮立即创建一个',
-    type: 'info',
-    duration: 0, // 不自动关闭
-    position: 'top-right',
-    customClass: 'init-guide-notification',
-  })
-
-  // 同时自动打开初始化表单
-  showInitDialog.value = true
 }
 
 async function loadFile(path: string) {

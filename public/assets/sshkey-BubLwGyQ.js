@@ -1,0 +1,1 @@
+import{s as e}from"./request-vs5w0oyJ.js";function n(){return e.get("/system/db-ssh-keys/")}function y(s){return e.post("/system/db-ssh-keys/",s)}function o(s){return e.delete(`/system/db-ssh-keys/${s}`)}function u(s,t){return e.post(`/system/db-ssh-keys/${s}/test`,t)}export{y as c,o as d,n as l,u as t};

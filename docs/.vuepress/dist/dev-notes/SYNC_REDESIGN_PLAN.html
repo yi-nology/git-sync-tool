@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Git 同步功能重新设计方案 | Git Manage Service</title>
+    <meta name="generator" content="VuePress 1.9.10">
+    
+    <meta name="description" content="Git 管理服务文档">
+    
+    <link rel="preload" href="/assets/css/0.styles.f3e2e2a4.css" as="style"><link rel="preload" href="/assets/js/app.df0f3889.js" as="script"><link rel="preload" href="/assets/js/2.2d1a46ee.js" as="script"><link rel="preload" href="/assets/js/1.1823ac01.js" as="script"><link rel="preload" href="/assets/js/37.73287d4c.js" as="script"><link rel="prefetch" href="/assets/js/10.7bdf68e6.js"><link rel="prefetch" href="/assets/js/11.4edc918e.js"><link rel="prefetch" href="/assets/js/12.1e32ca21.js"><link rel="prefetch" href="/assets/js/13.72a5c39d.js"><link rel="prefetch" href="/assets/js/14.df9b7535.js"><link rel="prefetch" href="/assets/js/15.10c40130.js"><link rel="prefetch" href="/assets/js/16.843e3084.js"><link rel="prefetch" href="/assets/js/17.7e574cc5.js"><link rel="prefetch" href="/assets/js/18.99e6bfc2.js"><link rel="prefetch" href="/assets/js/19.3df63a97.js"><link rel="prefetch" href="/assets/js/20.6455ee20.js"><link rel="prefetch" href="/assets/js/21.19032784.js"><link rel="prefetch" href="/assets/js/22.570a455a.js"><link rel="prefetch" href="/assets/js/23.182b3f99.js"><link rel="prefetch" href="/assets/js/24.745db78e.js"><link rel="prefetch" href="/assets/js/25.e1ff6ba5.js"><link rel="prefetch" href="/assets/js/26.bb06367d.js"><link rel="prefetch" href="/assets/js/27.3d1465cd.js"><link rel="prefetch" href="/assets/js/28.d3d7deae.js"><link rel="prefetch" href="/assets/js/29.c8b5adbf.js"><link rel="prefetch" href="/assets/js/3.c4e49a14.js"><link rel="prefetch" href="/assets/js/30.4bd04cd5.js"><link rel="prefetch" href="/assets/js/31.e2f61de3.js"><link rel="prefetch" href="/assets/js/32.f33e32ca.js"><link rel="prefetch" href="/assets/js/33.fb015ec5.js"><link rel="prefetch" href="/assets/js/34.6412c765.js"><link rel="prefetch" href="/assets/js/35.3ce53f68.js"><link rel="prefetch" href="/assets/js/36.b98cb815.js"><link rel="prefetch" href="/assets/js/38.f10a4bf0.js"><link rel="prefetch" href="/assets/js/39.afa80b01.js"><link rel="prefetch" href="/assets/js/4.db06a48d.js"><link rel="prefetch" href="/assets/js/40.e2e52641.js"><link rel="prefetch" href="/assets/js/41.a13ae655.js"><link rel="prefetch" href="/assets/js/42.ada5b9e2.js"><link rel="prefetch" href="/assets/js/5.8fe2100d.js"><link rel="prefetch" href="/assets/js/6.14a21915.js"><link rel="prefetch" href="/assets/js/7.af088f0b.js"><link rel="prefetch" href="/assets/js/vendors~docsearch.cc58001a.js">
+    <link rel="stylesheet" href="/assets/css/0.styles.f3e2e2a4.css">
+  </head>
+  <body>
+    <div id="app" data-server-rendered="true"><div class="theme-container"><header class="navbar"><div class="sidebar-button"><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" viewBox="0 0 448 512" class="icon"><path fill="currentColor" d="M436 124H12c-6.627 0-12-5.373-12-12V80c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12z"></path></svg></div> <a href="/" class="home-link router-link-active"><!----> <span class="site-name">Git Manage Service</span></a> <div class="links"><div class="search-box"><input aria-label="Search" autocomplete="off" spellcheck="false" value=""> <!----></div> <nav class="nav-links can-hide"><div class="nav-item"><a href="/" class="nav-link">
+  首页
+</a></div><div class="nav-item"><a href="/usage.html" class="nav-link">
+  使用指南
+</a></div><div class="nav-item"><a href="/deployment.html" class="nav-link">
+  部署指南
+</a></div><div class="nav-item"><a href="/product_manual.html" class="nav-link">
+  产品手册
+</a></div><div class="nav-item"><a href="/webhook.html" class="nav-link">
+  Webhook
+</a></div><div class="nav-item"><a href="/dev-notes/" class="nav-link router-link-active">
+  开发笔记
+</a></div> <!----></nav></div></header> <div class="sidebar-mask"></div> <aside class="sidebar"><nav class="nav-links"><div class="nav-item"><a href="/" class="nav-link">
+  首页
+</a></div><div class="nav-item"><a href="/usage.html" class="nav-link">
+  使用指南
+</a></div><div class="nav-item"><a href="/deployment.html" class="nav-link">
+  部署指南
+</a></div><div class="nav-item"><a href="/product_manual.html" class="nav-link">
+  产品手册
+</a></div><div class="nav-item"><a href="/webhook.html" class="nav-link">
+  Webhook
+</a></div><div class="nav-item"><a href="/dev-notes/" class="nav-link router-link-active">
+  开发笔记
+</a></div> <!----></nav>  <ul class="sidebar-links"><li><a href="/" aria-current="page" class="sidebar-link">/</a></li><li><a href="/usage.html" class="sidebar-link">使用指南</a></li><li><a href="/deployment.html" class="sidebar-link">部署指南</a></li><li><a href="/product_manual.html" class="sidebar-link">Git Manage Service - 产品文档</a></li><li><a href="/webhook.html" class="sidebar-link">Webhook 接口文档</a></li></ul> </aside> <main class="page"> <div class="theme-default-content content__default"><h1 id="git-同步功能重新设计方案"><a href="#git-同步功能重新设计方案" class="header-anchor">#</a> Git 同步功能重新设计方案</h1> <h2 id="需求分析"><a href="#需求分析" class="header-anchor">#</a> 需求分析</h2> <h3 id="同步场景"><a href="#同步场景" class="header-anchor">#</a> 同步场景</h3> <ol><li><strong>全仓库同步</strong> - 一键同步所有已配置的同步规则</li> <li><strong>跨仓库同步</strong> - 仓库 A 的某个分支同步到仓库 B</li> <li><strong>本地 ↔ 远端</strong> - 本地推送或远端拉取</li> <li><strong>特殊 Git 命令</strong> - <code>--force</code>, <code>--tags</code>, <code>--prune</code>, <code>--no-verify</code> 等</li></ol> <h3 id="同步方向"><a href="#同步方向" class="header-anchor">#</a> 同步方向</h3> <table><thead><tr><th>模式</th> <th>描述</th></tr></thead> <tbody><tr><td>Push</td> <td>本地 → 远端</td></tr> <tr><td>Pull</td> <td>远端 → 本地</td></tr> <tr><td>Mirror</td> <td>双向镜像同步</td></tr> <tr><td>Cross-Repo</td> <td>跨仓库同步</td></tr></tbody></table> <hr> <h2 id="ui-设计"><a href="#ui-设计" class="header-anchor">#</a> UI 设计</h2> <h3 id="布局结构"><a href="#布局结构" class="header-anchor">#</a> 布局结构</h3> <div class="language- line-numbers-mode"><pre class="language-text"><code>┌─────────────────────────────────────────────────────────────┐
+│  [← 返回]  Git 同步管理                    [一键同步全部]    │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐           │
+│  │ 快速推送 │ │ 快速拉取 │ │ 新建规则 │ │ 同步历史 │           │
+│  └─────────┘ └─────────┘ └─────────┘ └─────────┘           │
+│                                                             │
+├─────────────────────────────────────────────────────────────┤
+│  同步规则                                                    │
+│  ┌─────────────────────────────────────────────────────────┐│
+│  │ 📦 规则卡片                                              ││
+│  │ ┌───────────┐     ┌───────────┐                         ││
+│  │ │   Local   │ ──► │  Origin   │  ✅ 已启用               ││
+│  │ │  main     │     │  main     │  ⏰ 每天 02:00           ││
+│  │ └───────────┘     └───────────┘                         ││
+│  │                          [执行] [历史] [编辑] [删除]      ││
+│  └─────────────────────────────────────────────────────────┘│
+│                                                             │
+│  ┌─────────────────────────────────────────────────────────┐│
+│  │ 📦 跨仓库同步                                            ││
+│  │ ┌───────────┐     ┌───────────┐                         ││
+│  │ │ Repo A    │ ──► │ Repo B    │  ⏸️ 已暂停               ││
+│  │ │ feature/* │     │ develop   │  手动触发               ││
+│  │ └───────────┘     └───────────┘                         ││
+│  └─────────────────────────────────────────────────────────┘│
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br><span class="line-number">11</span><br><span class="line-number">12</span><br><span class="line-number">13</span><br><span class="line-number">14</span><br><span class="line-number">15</span><br><span class="line-number">16</span><br><span class="line-number">17</span><br><span class="line-number">18</span><br><span class="line-number">19</span><br><span class="line-number">20</span><br><span class="line-number">21</span><br><span class="line-number">22</span><br><span class="line-number">23</span><br><span class="line-number">24</span><br><span class="line-number">25</span><br><span class="line-number">26</span><br><span class="line-number">27</span><br><span class="line-number">28</span><br></div></div><h3 id="快速操作面板"><a href="#快速操作面板" class="header-anchor">#</a> 快速操作面板</h3> <div class="language- line-numbers-mode"><pre class="language-text"><code>┌─────────────────────────────────────────────────────────────┐
+│  ⚡ 快速同步                                                  │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  源仓库/分支:  [ Repo A ▼ ] / [ main ▼ ]                    │
+│  目标仓库/分支: [ Origin ▼ ] / [ main ▼ ]                   │
+│                                                             │
+│  同步模式:                                                   │
+│  ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐               │
+│  │  Push  │ │  Pull  │ │ Force  │ │ Mirror │               │
+│  │ 本地→远│ │ 远→本地│ │ 强制推送│ │ 镜像   │               │
+│  └────────┘ └────────┘ └────────┘ └────────┘               │
+│                                                             │
+│  高级选项:  [ ] --tags  [ ] --prune  [ ] --no-verify        │
+│                                                             │
+│                    [ 预览变更 ]  [ 立即执行 ]                 │
+└─────────────────────────────────────────────────────────────┘
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br><span class="line-number">11</span><br><span class="line-number">12</span><br><span class="line-number">13</span><br><span class="line-number">14</span><br><span class="line-number">15</span><br><span class="line-number">16</span><br><span class="line-number">17</span><br></div></div><h3 id="新建规则对话框"><a href="#新建规则对话框" class="header-anchor">#</a> 新建规则对话框</h3> <div class="language- line-numbers-mode"><pre class="language-text"><code>┌─────────────────────────────────────────────────────────────┐
+│  新建同步规则                                           [×] │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  规则类型:                                                   │
+│  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐         │
+│  │   🔄 单向同步  │ │   🔀 跨仓库   │ │   📋 全分支   │         │
+│  │   Push/Pull   │ │   Repo → Repo │ │   --all      │         │
+│  └──────────────┘ └──────────────┘ └──────────────┘         │
+│                                                             │
+│  ─────────────────────────────────────────────────────────  │
+│                                                             │
+│  源:                                                         │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │ 仓库: [ 本地仓库 ▼ ]                                 │    │
+│  │ Remote: [ local ▼ ] 或 [ origin ▼ ]                 │    │
+│  │ 分支: [ main ▼ ] 或 [ * 全部 * ]                     │    │
+│  └─────────────────────────────────────────────────────┘    │
+│                                                             │
+│  目标:                                                       │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │ 仓库: [ 本地仓库 ▼ ] 或 [ 其他仓库 ▼ ]               │    │
+│  │ Remote: [ origin ▼ ]                                │    │
+│  │ 分支: [ main ▼ ] 或 [ 与源相同 ]                     │    │
+│  └─────────────────────────────────────────────────────┘    │
+│                                                             │
+│  ─────────────────────────────────────────────────────────  │
+│                                                             │
+│  Git 选项:                                                   │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │ [x] --tags       推送所有标签                         │    │
+│  │ [ ] --force      强制推送 (危险)                      │    │
+│  │ [ ] --prune      删除远端已不存在的本地分支引用        │    │
+│  │ [ ] --no-verify  跳过 pre-push 钩子                   │    │
+│  │ [ ] --dry-run    仅模拟不执行                         │    │
+│  └─────────────────────────────────────────────────────┘    │
+│                                                             │
+│  定时任务:  [ 0 2 * * * ]  (每天凌晨 2 点)                    │
+│                                                             │
+├─────────────────────────────────────────────────────────────┤
+│                              [ 取消 ]  [ 保存规则 ]          │
+└─────────────────────────────────────────────────────────────┘
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br><span class="line-number">11</span><br><span class="line-number">12</span><br><span class="line-number">13</span><br><span class="line-number">14</span><br><span class="line-number">15</span><br><span class="line-number">16</span><br><span class="line-number">17</span><br><span class="line-number">18</span><br><span class="line-number">19</span><br><span class="line-number">20</span><br><span class="line-number">21</span><br><span class="line-number">22</span><br><span class="line-number">23</span><br><span class="line-number">24</span><br><span class="line-number">25</span><br><span class="line-number">26</span><br><span class="line-number">27</span><br><span class="line-number">28</span><br><span class="line-number">29</span><br><span class="line-number">30</span><br><span class="line-number">31</span><br><span class="line-number">32</span><br><span class="line-number">33</span><br><span class="line-number">34</span><br><span class="line-number">35</span><br><span class="line-number">36</span><br><span class="line-number">37</span><br><span class="line-number">38</span><br><span class="line-number">39</span><br><span class="line-number">40</span><br><span class="line-number">41</span><br><span class="line-number">42</span><br></div></div><h3 id="同步预览"><a href="#同步预览" class="header-anchor">#</a> 同步预览</h3> <div class="language- line-numbers-mode"><pre class="language-text"><code>┌─────────────────────────────────────────────────────────────┐
+│  同步预览                                               [×] │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  将执行: git push origin main --tags                        │
+│                                                             │
+│  预览结果:                                                   │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │ + 3 commits to push                                  │    │
+│  │ + 2 tags to push: v1.0.0, v1.0.1                     │    │
+│  │                                                       │    │
+│  │ Commits:                                              │    │
+│  │ • abc123 feat: add new feature                        │    │
+│  │ • def456 fix: resolve issue                           │    │
+│  │ • ghi789 docs: update readme                          │    │
+│  └─────────────────────────────────────────────────────┘    │
+│                                                             │
+│  ⚠️ 注意: 目标分支 main 将被更新                             │
+│                                                             │
+├─────────────────────────────────────────────────────────────┤
+│                              [ 取消 ]  [ 确认执行 ]          │
+└─────────────────────────────────────────────────────────────┘
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br><span class="line-number">11</span><br><span class="line-number">12</span><br><span class="line-number">13</span><br><span class="line-number">14</span><br><span class="line-number">15</span><br><span class="line-number">16</span><br><span class="line-number">17</span><br><span class="line-number">18</span><br><span class="line-number">19</span><br><span class="line-number">20</span><br><span class="line-number">21</span><br><span class="line-number">22</span><br></div></div><hr> <h2 id="技术实现"><a href="#技术实现" class="header-anchor">#</a> 技术实现</h2> <h3 id="后端扩展"><a href="#后端扩展" class="header-anchor">#</a> 后端扩展</h3> <div class="language-go line-numbers-mode"><pre class="language-go"><code><span class="token comment">// SyncMode 同步模式</span>
+<span class="token keyword">type</span> SyncMode <span class="token builtin">string</span>
+
+<span class="token keyword">const</span> <span class="token punctuation">(</span>
+    SyncModePush      SyncMode <span class="token operator">=</span> <span class="token string">&quot;push&quot;</span>       <span class="token comment">// 本地 → 远端</span>
+    SyncModePull      SyncMode <span class="token operator">=</span> <span class="token string">&quot;pull&quot;</span>       <span class="token comment">// 远端 → 本地</span>
+    SyncModeMirror    SyncMode <span class="token operator">=</span> <span class="token string">&quot;mirror&quot;</span>     <span class="token comment">// 双向镜像</span>
+    SyncModeCrossRepo SyncMode <span class="token operator">=</span> <span class="token string">&quot;cross-repo&quot;</span> <span class="token comment">// 跨仓库</span>
+    SyncModeAllBranch SyncMode <span class="token operator">=</span> <span class="token string">&quot;all-branch&quot;</span> <span class="token comment">// 全分支</span>
+<span class="token punctuation">)</span>
+
+<span class="token comment">// GitOptions Git 选项</span>
+<span class="token keyword">type</span> GitOptions <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+    Tags     <span class="token builtin">bool</span> <span class="token string">`json:&quot;tags&quot;`</span>     <span class="token comment">// --tags</span>
+    Force    <span class="token builtin">bool</span> <span class="token string">`json:&quot;force&quot;`</span>    <span class="token comment">// --force</span>
+    Prune    <span class="token builtin">bool</span> <span class="token string">`json:&quot;prune&quot;`</span>    <span class="token comment">// --prune</span>
+    NoVerify <span class="token builtin">bool</span> <span class="token string">`json:&quot;no_verify&quot;`</span> <span class="token comment">// --no-verify</span>
+    DryRun   <span class="token builtin">bool</span> <span class="token string">`json:&quot;dry_run&quot;`</span>   <span class="token comment">// --dry-run</span>
+<span class="token punctuation">}</span>
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br><span class="line-number">11</span><br><span class="line-number">12</span><br><span class="line-number">13</span><br><span class="line-number">14</span><br><span class="line-number">15</span><br><span class="line-number">16</span><br><span class="line-number">17</span><br><span class="line-number">18</span><br><span class="line-number">19</span><br></div></div><h3 id="api-扩展"><a href="#api-扩展" class="header-anchor">#</a> API 扩展</h3> <div class="language- line-numbers-mode"><pre class="language-text"><code>POST /api/v1/sync/preview    # 预览同步变更
+POST /api/v1/sync/batch      # 批量执行同步
+GET  /api/v1/repos           # 获取仓库列表 (用于跨仓库选择)
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br></div></div><hr> <h2 id="实现阶段"><a href="#实现阶段" class="header-anchor">#</a> 实现阶段</h2> <h3 id="phase-1-ui-重构"><a href="#phase-1-ui-重构" class="header-anchor">#</a> Phase 1: UI 重构</h3> <ul><li>[ ] 新的页面布局</li> <li>[ ] 卡片式规则展示</li> <li>[ ] 可视化同步方向</li></ul> <h3 id="phase-2-功能增强"><a href="#phase-2-功能增强" class="header-anchor">#</a> Phase 2: 功能增强</h3> <ul><li>[ ] 跨仓库同步</li> <li>[ ] Git 选项支持</li> <li>[ ] 同步预览</li></ul> <h3 id="phase-3-批量操作"><a href="#phase-3-批量操作" class="header-anchor">#</a> Phase 3: 批量操作</h3> <ul><li>[ ] 一键同步全部</li> <li>[ ] 批量启用/禁用</li> <li>[ ] 批量删除</li></ul> <h3 id="phase-4-体验优化"><a href="#phase-4-体验优化" class="header-anchor">#</a> Phase 4: 体验优化</h3> <ul><li>[ ] 执行动画</li> <li>[ ] 实时日志</li> <li>[ ] 通知提醒</li></ul> <hr> <h2 id="风险提示"><a href="#风险提示" class="header-anchor">#</a> 风险提示</h2> <ul><li><code>--force</code> 强制推送可能覆盖远端提交</li> <li><code>--prune</code> 可能删除本地分支引用</li> <li>跨仓库同步需要确保目标仓库权限</li></ul></div> <footer class="page-edit"><!----> <!----></footer> <!----> </main></div><div class="global-ui"></div></div>
+    <script src="/assets/js/app.df0f3889.js" defer></script><script src="/assets/js/2.2d1a46ee.js" defer></script><script src="/assets/js/1.1823ac01.js" defer></script><script src="/assets/js/37.73287d4c.js" defer></script>
+  </body>
+</html>

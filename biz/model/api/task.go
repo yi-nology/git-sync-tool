@@ -19,6 +19,10 @@ type SyncTaskDTO struct {
 	Cron          string    `json:"cron"`
 	Enabled       bool      `json:"enabled"`
 	SyncMode      string    `json:"sync_mode"`
+	GitTags       bool      `json:"git_tags"`
+	GitForce      bool      `json:"git_force"`
+	GitPrune      bool      `json:"git_prune"`
+	GitNoVerify   bool      `json:"git_no_verify"`
 	CreatedAt     time.Time `json:"created_at"`
 	UpdatedAt     time.Time `json:"updated_at"`
 
@@ -40,10 +44,13 @@ func NewSyncTaskDTO(t po.SyncTask) SyncTaskDTO {
 		Cron:          t.Cron,
 		Enabled:       t.Enabled,
 		SyncMode:      t.SyncMode,
+		GitTags:       t.GitTags,
+		GitForce:      t.GitForce,
+		GitPrune:      t.GitPrune,
+		GitNoVerify:   t.GitNoVerify,
 		CreatedAt:     t.CreatedAt,
 		UpdatedAt:     t.UpdatedAt,
 	}
-	// Map relations if loaded
 	if t.SourceRepo.ID != 0 {
 		dto.SourceRepo = NewRepoDTO(t.SourceRepo)
 	}

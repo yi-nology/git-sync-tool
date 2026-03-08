@@ -30,14 +30,7 @@ spec:
                 name: git-manage-backend
                 port:
                   number: 8080
-          # Swagger 文档路由到后端
-          - path: /swagger
-            pathType: Prefix
-            backend:
-              service:
-                name: git-manage-backend
-                port:
-                  number: 8080
+
           # 其他所有请求路由到 Nginx（前端）
           - path: /
             pathType: Prefix

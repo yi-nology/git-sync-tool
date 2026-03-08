@@ -340,7 +340,7 @@ func (s *GitService) GetPatchStats(repoPath, patchPath string) (map[string]inter
 	}
 
 	stats := map[string]interface{}{
-		"stat":   string(output),
+		"stat":      string(output),
 		"can_apply": true,
 	}
 
