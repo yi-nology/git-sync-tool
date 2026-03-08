@@ -34,8 +34,8 @@
       </el-row>
     </el-card>
 
-    <el-card>
-      <el-table :data="branches" v-loading="loading" stripe>
+    <el-card v-if="branchType === 'local'">
+      <el-table :data="branches" v-loading="loading" stripe style="width: 100%">
         <el-table-column prop="name" label="分支名称" min-width="180">
           <template #default="{ row }">
             <span :class="{ 'branch-current': row.is_current }">
@@ -61,27 +61,25 @@
             {{ formatRelativeTime(row.date) }}
           </template>
         </el-table-column>
-        <el-table-column label="状态" width="140" v-if="branchType === 'local'">
+        <el-table-column label="上游分支" width="180">
+          <template #default="{ row }">
+            <el-tag v-if="row.upstream" size="small" type="info">{{ row.upstream }}</el-tag>
+            <el-text v-else type="info" size="small">无上游</el-text>
+          </template>
+        </el-table-column>
+        <el-table-column label="状态" width="140">
           <template #default="{ row }">
             <template v-if="row.upstream">
               <el-tag v-if="row.ahead > 0" size="small" type="success">{{ row.ahead }}↑</el-tag>
               <el-tag v-if="row.behind > 0" size="small" type="warning">{{ row.behind }}↓</el-tag>
-              <el-tag v-if="row.ahead === 0 && row.behind === 0" size="small" type="info">已同步</el-tag>
+              <el-tag v-if="row.ahead === 0 && row.behind === 0" size="small" type="success">已同步</el-tag>
             </template>
             <el-text v-else type="info" size="small">无上游</el-text>
           </template>
         </el-table-column>
-        <el-table-column label="关联" width="160" v-if="branchType === 'remote'">
+        <el-table-column label="操作" width="340" fixed="right">
           <template #default="{ row }">
-            <el-tag v-if="getLocalBranch(row.name)" size="small" type="success">
-              已关联: {{ getLocalBranch(row.name) }}
-            </el-tag>
-            <el-text v-else type="info" size="small">无本地关联</el-text>
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" :width="branchType === 'local' ? 340 : 280" fixed="right">
-          <template #default="{ row }">
-            <el-button-group size="small" v-if="branchType === 'local'">
+            <el-button-group size="small">
               <el-button v-if="!row.is_current" @click="handleCheckout(row.name)">
                 <el-icon><Select /></el-icon> 切换
               </el-button>
@@ -104,24 +102,74 @@
                 <el-icon><Delete /></el-icon>
               </el-button>
             </el-button-group>
-            <el-button-group size="small" v-else>
-              <el-button type="primary" @click="handleCheckoutRemote(row.name)" v-if="!getLocalBranch(row.name)">
-                <el-icon><Download /></el-icon> 检出为本地
-              </el-button>
-              <el-button @click="handleFfRemote(row.name)" v-if="getLocalBranch(row.name)">
-                <el-icon><Bottom /></el-icon> 更新本地
-              </el-button>
-              <el-button @click="handlePullRemote(row.name)" v-if="getLocalBranch(row.name)">
-                <el-icon><RefreshRight /></el-icon> 同步本地
-              </el-button>
-            </el-button-group>
           </template>
         </el-table-column>
       </el-table>
       <div class="table-footer">
-        <el-text type="info" size="small">共 {{ total }} 个分支</el-text>
+        <el-text type="info" size="small">共 {{ total }} 个本地分支</el-text>
       </div>
     </el-card>
+
+    <div v-else>
+      <el-collapse v-model="activeRemoteTabs" class="mb-3">
+        <el-collapse-item 
+          v-for="(remoteBranches, remoteName) in groupedRemoteBranches" 
+          :key="remoteName" 
+          :title="`${remoteName} (${remoteBranches.length}个分支)`"
+        >
+          <el-table :data="remoteBranches" v-loading="loading" stripe style="width: 100%">
+            <el-table-column prop="name" label="分支名称" min-width="180">
+              <template #default="{ row }">
+                {{ row.name.replace(`${remoteName}/`, '') }}
+              </template>
+            </el-table-column>
+            <el-table-column prop="hash" label="最新提交" min-width="200">
+              <template #default="{ row }">
+                <el-text class="mono-text" size="small">{{ row.hash ? row.hash.substring(0, 8) : '-' }}</el-text>
+                <el-text v-if="row.message" size="small" type="info" class="commit-msg" truncated> {{ row.message }}</el-text>
+              </template>
+            </el-table-column>
+            <el-table-column prop="author" label="提交人" width="140">
+              <template #default="{ row }">
+                <div>{{ row.author }}</div>
+                <el-text v-if="row.author_email" size="small" type="info">{{ row.author_email }}</el-text>
+              </template>
+            </el-table-column>
+            <el-table-column prop="date" label="提交时间" width="160">
+              <template #default="{ row }">
+                {{ formatRelativeTime(row.date) }}
+              </template>
+            </el-table-column>
+            <el-table-column label="本地关联" width="160">
+              <template #default="{ row }">
+                <el-tag v-if="getLocalBranch(row.name)" size="small" type="success">
+                  {{ getLocalBranch(row.name) }}
+                </el-tag>
+                <el-text v-else type="info" size="small">无关联</el-text>
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="280" fixed="right">
+              <template #default="{ row }">
+                <el-button-group size="small">
+                  <el-button type="primary" @click="handleCheckoutRemote(row.name)" v-if="!getLocalBranch(row.name)">
+                    <el-icon><Download /></el-icon> 检出为本地
+                  </el-button>
+                  <el-button @click="handleFfRemote(row.name)" v-if="getLocalBranch(row.name)">
+                    <el-icon><Bottom /></el-icon> 更新本地
+                  </el-button>
+                  <el-button @click="handlePullRemote(row.name)" v-if="getLocalBranch(row.name)">
+                    <el-icon><RefreshRight /></el-icon> 同步本地
+                  </el-button>
+                </el-button-group>
+              </template>
+            </el-table-column>
+          </el-table>
+        </el-collapse-item>
+      </el-collapse>
+      <div class="table-footer" v-if="total > 0">
+        <el-text type="info" size="small">共 {{ total }} 个远端分支，分布在 {{ Object.keys(groupedRemoteBranches).length }} 个远程源</el-text>
+      </div>
+    </div>
 
     <!-- Create Branch Dialog -->
     <el-dialog v-model="showCreateDialog" title="新建分支" width="480px" destroy-on-close>
@@ -212,7 +260,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowLeft, Plus, Delete, Edit, Select, Top, Bottom, Switch, Download, CircleCheck, PriceTag, View, RefreshRight } from '@element-plus/icons-vue'
@@ -236,6 +284,7 @@ const total = ref(0)
 const branchType = ref('local')
 const searchQuery = ref('')
 const remoteNames = ref<string[]>([])
+const activeRemoteTabs = ref<string[]>([])
 
 const showCreateDialog = ref(false)
 const createForm = ref({ name: '', base_ref: '' })
@@ -250,6 +299,36 @@ const pushRemotes = ref<string[]>([])
 const showTagDialog = ref(false)
 const tagForm = ref({ ref: '', name: '', message: '', push_remote: '', versionType: 'patch' as 'patch' | 'minor' | 'major' | 'custom' })
 const tagNextVersion = ref<NextVersionInfo | null>(null)
+
+// 按远程源分组的远端分支
+const groupedRemoteBranches = computed(() => {
+  if (branchType.value !== 'remote') return {}
+  
+  const grouped: Record<string, BranchInfo[]> = {}
+  branches.value.forEach(branch => {
+    const parts = branch.name.split('/')
+    if (parts.length >= 2) {
+      const remoteName = parts[0]
+      if (remoteName) {
+        if (!grouped[remoteName]) {
+          grouped[remoteName] = []
+        }
+        grouped[remoteName].push(branch)
+      }
+    }
+  })
+  
+  // 默认展开第一个远程源
+  const remoteKeys = Object.keys(grouped)
+  if (remoteKeys.length > 0 && activeRemoteTabs.value.length === 0) {
+    const firstRemote = remoteKeys[0]
+    if (firstRemote) {
+      activeRemoteTabs.value = [firstRemote]
+    }
+  }
+  
+  return grouped
+})
 
 onMounted(async () => {
   await loadBranches()
