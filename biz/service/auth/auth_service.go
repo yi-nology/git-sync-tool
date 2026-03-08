@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"crypto/ed25519"
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
@@ -12,6 +13,7 @@ import (
 
 	"github.com/yi-nology/git-manage-service/biz/dal/db"
 	"github.com/yi-nology/git-manage-service/biz/model/domain"
+	"github.com/yi-nology/git-manage-service/biz/service/git"
 )
 
 // AuthService 统一认证解析服务
@@ -92,7 +94,8 @@ func (s *AuthService) resolveDBSSHKey(sshKeyID uint) (transport.AuthMethod, erro
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse SSH private key: %w", err)
 	}
-	publicKeys.HostKeyCallback = ssh2.InsecureIgnoreHostKey()
+	helper := git.NewSSHKeyHelper()
+	publicKeys.HostKeyCallback = helper.GetHostKeyCallback()
 
 	return publicKeys, nil
 }
@@ -103,7 +106,8 @@ func (s *AuthService) resolveLocalSSHKey(keyPath, passphrase string) (transport.
 	if err != nil {
 		return nil, fmt.Errorf("failed to load SSH key from file %s: %w", keyPath, err)
 	}
-	publicKeys.HostKeyCallback = ssh2.InsecureIgnoreHostKey()
+	helper := git.NewSSHKeyHelper()
+	publicKeys.HostKeyCallback = helper.GetHostKeyCallback()
 
 	return publicKeys, nil
 }
@@ -130,7 +134,8 @@ func (s *AuthService) GetDBSSHKeyContent(sshKeyID uint) (privateKey, passphrase 
 	return decoded, "", nil
 }
 
-// normalizePrivateKey 解析私钥并重新编码为无密码的标准PKCS8 PEM格式
+// normalizePrivateKey 解析私钥并重新编码为无密码的标准格式
+// 对于 RSA/ECDSA 密钥使用 PKCS8 格式，对于 Ed25519 密钥保持原始 OpenSSH 格式
 func normalizePrivateKey(privateKeyPEM, passphrase string) (string, error) {
 	keyBytes := []byte(privateKeyPEM)
 
@@ -144,6 +149,13 @@ func normalizePrivateKey(privateKeyPEM, passphrase string) (string, error) {
 	}
 	if err != nil {
 		return "", fmt.Errorf("parse private key: %w", err)
+	}
+
+	// 检查是否是 Ed25519 密钥
+	if _, ok := rawKey.(*ed25519.PrivateKey); ok {
+		// Ed25519 密钥不支持 PKCS8，直接返回原始格式（无密码时）
+		// 如果原来有密码，此时已经被解密了，直接返回原始 PEM
+		return privateKeyPEM, nil
 	}
 
 	pkcs8Bytes, err := x509.MarshalPKCS8PrivateKey(rawKey)

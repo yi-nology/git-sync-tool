@@ -3,7 +3,7 @@ syntax = "proto3";
 
 package branch;
 
-option go_package = "github.com/yi-nology/git-manage-service/biz/model/biz/branch";
+option go_package = "branch";
 
 import "api.proto";
 import "common.proto";
@@ -93,208 +93,208 @@ service BranchService {
 
 // Branch 分支实体
 message Branch {
-  string name = 1;
-  string commit_hash = 2;
-  string commit_message = 3;
-  string author = 4;
-  string date = 5;
-  bool is_current = 6;
-  string upstream = 7;
-  int32 ahead = 8;
-  int32 behind = 9;
+    string name = 1;
+    string commit_hash = 2;
+    string commit_message = 3;
+    string author = 4;
+    string date = 5;
+    bool is_current = 6;
+    string upstream = 7;
+    int32 ahead = 8;
+    int32 behind = 9;
 }
 
 // ListBranchRequest 列表请求
 message ListBranchRequest {
-  string repo_key = 1 [(api.query) = "repo_key"];
-  int32 page = 2 [(api.query) = "page"];
-  int32 page_size = 3 [(api.query) = "page_size"];
-  string keyword = 4 [(api.query) = "keyword"];
+    string repo_key = 1 [(api.query) = "repo_key"];
+    int32 page = 2 [(api.query) = "page"];
+    int32 page_size = 3 [(api.query) = "page_size"];
+    string keyword = 4 [(api.query) = "keyword"];
 }
 
 // ListBranchResponse 列表响应
 message ListBranchResponse {
-  common.BaseResponse base = 1;
-  repeated Branch branches = 2;
-  int64 total = 3;
+    common.BaseResponse base = 1;
+    repeated Branch branches = 2;
+    int64 total = 3;
 }
 
 // CreateBranchRequest 创建分支请求
 message CreateBranchRequest {
-  string repo_key = 1 [(api.body) = "repo_key"];
-  string name = 2 [(api.body) = "name"];
-  string base_ref = 3 [(api.body) = "base_ref"];
+    string repo_key = 1 [(api.body) = "repo_key"];
+    string name = 2 [(api.body) = "name"];
+    string base_ref = 3 [(api.body) = "base_ref"];
 }
 
 // DeleteBranchRequest 删除分支请求
 message DeleteBranchRequest {
-  string repo_key = 1 [(api.body) = "repo_key"];
-  string name = 2 [(api.body) = "name"];
-  bool force = 3 [(api.body) = "force"];
+    string repo_key = 1 [(api.body) = "repo_key"];
+    string name = 2 [(api.body) = "name"];
+    bool force = 3 [(api.body) = "force"];
 }
 
 // UpdateBranchRequest 更新分支请求
 message UpdateBranchRequest {
-  string repo_key = 1 [(api.body) = "repo_key"];
-  string name = 2 [(api.body) = "name"];
-  string new_name = 3 [(api.body) = "new_name"];
-  string desc = 4 [(api.body) = "desc"];
+    string repo_key = 1 [(api.body) = "repo_key"];
+    string name = 2 [(api.body) = "name"];
+    string new_name = 3 [(api.body) = "new_name"];
+    string desc = 4 [(api.body) = "desc"];
 }
 
 // CheckoutBranchRequest 切换分支请求
 message CheckoutBranchRequest {
-  string repo_key = 1 [(api.body) = "repo_key"];
-  string name = 2 [(api.body) = "name"];
+    string repo_key = 1 [(api.body) = "repo_key"];
+    string name = 2 [(api.body) = "name"];
 }
 
 // PushBranchRequest 推送分支请求
 message PushBranchRequest {
-  string repo_key = 1 [(api.body) = "repo_key"];
-  string name = 2 [(api.body) = "name"];
-  repeated string remotes = 3 [(api.body) = "remotes"];
-  bool force = 4 [(api.body) = "force"];
+    string repo_key = 1 [(api.body) = "repo_key"];
+    string name = 2 [(api.body) = "name"];
+    repeated string remotes = 3 [(api.body) = "remotes"];
+    bool force = 4 [(api.body) = "force"];
 }
 
 // PullBranchRequest 拉取分支请求
 message PullBranchRequest {
-  string repo_key = 1 [(api.body) = "repo_key"];
-  string name = 2 [(api.body) = "name"];
-  string remote = 3 [(api.body) = "remote"];
+    string repo_key = 1 [(api.body) = "repo_key"];
+    string name = 2 [(api.body) = "name"];
+    string remote = 3 [(api.body) = "remote"];
 }
 
 // CompareBranchRequest 比较分支请求
 message CompareBranchRequest {
-  string repo_key = 1 [(api.query) = "repo_key"];
-  string base = 2 [(api.query) = "base"];
-  string target = 3 [(api.query) = "target"];
+    string repo_key = 1 [(api.query) = "repo_key"];
+    string base = 2 [(api.query) = "base"];
+    string target = 3 [(api.query) = "target"];
 }
 
 // CompareBranchResponse 比较分支响应
 message CompareBranchResponse {
-  common.BaseResponse base_resp = 1;
-  int32 ahead = 2;
-  int32 behind = 3;
-  repeated CommitInfo commits = 4;
-  repeated FileDiff files = 5;
+    common.BaseResponse base_resp = 1;
+    int32 ahead = 2;
+    int32 behind = 3;
+    repeated CommitInfo commits = 4;
+    repeated FileDiff files = 5;
 }
 
 // CommitInfo 提交信息
 message CommitInfo {
-  string hash = 1;
-  string short_hash = 2;
-  string message = 3;
-  string author = 4;
-  string date = 5;
+    string hash = 1;
+    string short_hash = 2;
+    string message = 3;
+    string author = 4;
+    string date = 5;
 }
 
 // FileDiff 文件差异
 message FileDiff {
-  string path = 1;
-  string status = 2;
-  int32 additions = 3;
-  int32 deletions = 4;
+    string path = 1;
+    string status = 2;
+    int32 additions = 3;
+    int32 deletions = 4;
 }
 
 // MergeBranchRequest 合并分支请求
 message MergeBranchRequest {
-  string repo_key = 1 [(api.body) = "repo_key"];
-  string source = 2 [(api.body) = "source"];
-  string target = 3 [(api.body) = "target"];
-  string message = 4 [(api.body) = "message"];
-  bool no_ff = 5 [(api.body) = "no_ff"];
-  bool squash = 6 [(api.body) = "squash"];
+    string repo_key = 1 [(api.body) = "repo_key"];
+    string source = 2 [(api.body) = "source"];
+    string target = 3 [(api.body) = "target"];
+    string message = 4 [(api.body) = "message"];
+    bool no_ff = 5 [(api.body) = "no_ff"];
+    bool squash = 6 [(api.body) = "squash"];
 }
 
 // MergeBranchResponse 合并分支响应
 message MergeBranchResponse {
-  common.BaseResponse base = 1;
-  bool success = 2;
-  string merge_commit = 3;
-  repeated string conflicts = 4;
+    common.BaseResponse base = 1;
+    bool success = 2;
+    string merge_commit = 3;
+    repeated string conflicts = 4;
 }
 
 // MergeCheckRequest 合并检查请求
 message MergeCheckRequest {
-  string repo_key = 1 [(api.query) = "repo_key"];
-  string base = 2 [(api.query) = "base"];
-  string target = 3 [(api.query) = "target"];
+    string repo_key = 1 [(api.query) = "repo_key"];
+    string base = 2 [(api.query) = "base"];
+    string target = 3 [(api.query) = "target"];
 }
 
 // MergeCheckResponse 合并检查响应
 message MergeCheckResponse {
-  common.BaseResponse base = 1;
-  bool can_merge = 2;
-  bool has_conflicts = 3;
-  repeated string conflict_files = 4;
-  int32 commits_ahead = 5;
-  int32 files_changed = 6;
+    common.BaseResponse base = 1;
+    bool can_merge = 2;
+    bool has_conflicts = 3;
+    repeated string conflict_files = 4;
+    int32 commits_ahead = 5;
+    int32 files_changed = 6;
 }
 
 // GetDiffRequest 获取差异请求
 message GetDiffRequest {
-  string repo_key = 1 [(api.query) = "repo_key"];
-  string base = 2 [(api.query) = "base"];
-  string target = 3 [(api.query) = "target"];
-  string file = 4 [(api.query) = "file"];
+    string repo_key = 1 [(api.query) = "repo_key"];
+    string base = 2 [(api.query) = "base"];
+    string target = 3 [(api.query) = "target"];
+    string file = 4 [(api.query) = "file"];
 }
 
 // GetDiffResponse 获取差异响应
 message GetDiffResponse {
-  common.BaseResponse base = 1;
-  string diff = 2;
+    common.BaseResponse base = 1;
+    string diff = 2;
 }
 
 // GetPatchRequest 获取补丁请求
 message GetPatchRequest {
-  string repo_key = 1 [(api.query) = "repo_key"];
-  string base = 2 [(api.query) = "base"];
-  string target = 3 [(api.query) = "target"];
+    string repo_key = 1 [(api.query) = "repo_key"];
+    string base = 2 [(api.query) = "base"];
+    string target = 3 [(api.query) = "target"];
 }
 
 // GetPatchResponse 获取补丁响应
 message GetPatchResponse {
-  common.BaseResponse base = 1;
-  string patch = 2;
+    common.BaseResponse base = 1;
+    string patch = 2;
 }
 
 // CherryPickRequest Cherry-pick请求
 message CherryPickRequest {
-  string repo_key = 1 [(api.body) = "repo_key"];
-  string commit_hash = 2 [(api.body) = "commit_hash"];
-  bool no_commit = 3 [(api.body) = "no_commit"];  // 只应用更改，不自动提交
+    string repo_key = 1 [(api.body) = "repo_key"];
+    string commit_hash = 2 [(api.body) = "commit_hash"];
+    bool no_commit = 3 [(api.body) = "no_commit"];  // 只应用更改，不自动提交
 }
 
 // CherryPickResponse Cherry-pick响应
 message CherryPickResponse {
-  common.BaseResponse base = 1;
-  bool success = 2;
-  string new_commit = 3;          // 新产生的commit hash
-  repeated string conflicts = 4;  // 冲突文件列表
+    common.BaseResponse base = 1;
+    bool success = 2;
+    string new_commit = 3;          // 新产生的commit hash
+    repeated string conflicts = 4;  // 冲突文件列表
 }
 
 // RebaseRequest Rebase请求
 message RebaseRequest {
-  string repo_key = 1 [(api.body) = "repo_key"];
-  string upstream = 2 [(api.body) = "upstream"];      // 上游分支，如 origin/main
-  string onto = 3 [(api.body) = "onto"];              // 可选，变基到指定commit
-  bool interactive = 4 [(api.body) = "interactive"];  // 是否交互式（暂不支持）
+    string repo_key = 1 [(api.body) = "repo_key"];
+    string upstream = 2 [(api.body) = "upstream"];      // 上游分支，如 origin/main
+    string onto = 3 [(api.body) = "onto"];              // 可选，变基到指定commit
+    bool interactive = 4 [(api.body) = "interactive"];  // 是否交互式（暂不支持）
 }
 
 // RebaseResponse Rebase响应
 message RebaseResponse {
-  common.BaseResponse base = 1;
-  bool success = 2;
-  bool in_progress = 3;           // 是否有进行中的rebase
-  repeated string conflicts = 4;  // 冲突文件列表
-  string current_commit = 5;      // 当前处理的commit
+    common.BaseResponse base = 1;
+    bool success = 2;
+    bool in_progress = 3;           // 是否有进行中的rebase
+    repeated string conflicts = 4;  // 冲突文件列表
+    string current_commit = 5;      // 当前处理的commit
 }
 
 // RebaseAbortRequest 中止Rebase请求
 message RebaseAbortRequest {
-  string repo_key = 1 [(api.body) = "repo_key"];
+    string repo_key = 1 [(api.body) = "repo_key"];
 }
 
 // RebaseContinueRequest 继续Rebase请求
 message RebaseContinueRequest {
-  string repo_key = 1 [(api.body) = "repo_key"];
+    string repo_key = 1 [(api.body) = "repo_key"];
 }

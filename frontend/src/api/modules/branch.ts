@@ -76,3 +76,36 @@ export function deleteTag(data: { repo_key: string; name: string; delete_remote?
 export function pushTag(data: { repo_key: string; tag_name: string; remote_name: string }) {
   return request.post('/tag/push', data)
 }
+
+// Cherry-pick提交
+export function cherryPick(repoKey: string, commitHash: string, noCommit?: boolean) {
+  return request.post<unknown, { success: boolean; new_commit?: string; conflicts?: string[] }>('/branch/cherry-pick', {
+    repo_key: repoKey,
+    commit_hash: commitHash,
+    no_commit: noCommit
+  })
+}
+
+// Rebase分支
+export function rebaseBranch(repoKey: string, upstream: string, onto?: string, interactive?: boolean) {
+  return request.post<unknown, { success: boolean; in_progress?: boolean; conflicts?: string[]; current_commit?: string }>('/branch/rebase', {
+    repo_key: repoKey,
+    upstream,
+    onto,
+    interactive
+  })
+}
+
+// 中止Rebase
+export function rebaseAbort(repoKey: string) {
+  return request.post('/branch/rebase/abort', {
+    repo_key: repoKey
+  })
+}
+
+// 继续Rebase
+export function rebaseContinue(repoKey: string) {
+  return request.post<unknown, { success: boolean; in_progress?: boolean; conflicts?: string[]; current_commit?: string }>('/branch/rebase/continue', {
+    repo_key: repoKey
+  })
+}

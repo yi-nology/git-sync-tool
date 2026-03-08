@@ -60,3 +60,13 @@ func _testdbsshkeyMw() []app.HandlerFunc {
 	// your code...
 	return nil
 }
+
+func _db_ssh_keysMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
+func _idMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}

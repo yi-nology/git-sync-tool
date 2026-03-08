@@ -1,5 +1,6 @@
 <template>
   <div class="repo-detail-page" v-loading="loading">
+    <!-- 页面标题 -->
     <div class="page-header">
       <div class="header-left">
         <el-button @click="$router.push('/repos')" :icon="ArrowLeft" text>返回</el-button>
@@ -7,283 +8,328 @@
         <el-tag v-if="currentVersion" size="small" type="success">{{ currentVersion }}</el-tag>
       </div>
       <div class="header-actions">
-        <el-button type="success" @click="$router.push(`/repos/${repoKey}/branches`)">
-          <el-icon><Share /></el-icon> 分支管理
-        </el-button>
-        <el-button type="primary" @click="$router.push(`/repos/${repoKey}/compare`)">
-          <el-icon><Switch /></el-icon> 分支对比
-        </el-button>
-        <el-button @click="$router.push(`/repos/${repoKey}/patches`)">
-          <el-icon><DocumentCopy /></el-icon> Patch 管理
-        </el-button>
-        <el-button type="warning" @click="$router.push(`/repos/${repoKey}/sync`)">
-          <el-icon><Refresh /></el-icon> 同步任务
-        </el-button>
+        <el-button type="success" @click="$router.push(`/repos/${repoKey}/branches`)" :icon="Share">分支管理</el-button>
+        <el-button type="primary" @click="$router.push(`/repos/${repoKey}/compare`)" :icon="Switch">分支对比</el-button>
+        <el-button type="warning" @click="$router.push(`/repos/${repoKey}/sync`)" :icon="Refresh">同步任务</el-button>
       </div>
     </div>
 
-    <el-tabs v-model="activeTab">
-      <!-- 基本信息 Tab -->
-      <el-tab-pane label="基本信息" name="info">
-        <el-card v-if="repo">
-          <template #header>
-            <div class="card-header-row">
-              <span>基本信息</span>
-              <el-button type="primary" size="small" @click="openEditDialog">
-                <el-icon><Edit /></el-icon> 编辑仓库
-              </el-button>
-            </div>
-          </template>
-          <el-descriptions :column="2" border>
-            <el-descriptions-item label="名称">{{ repo.name }}</el-descriptions-item>
-            <el-descriptions-item label="当前版本">
-              <el-tag v-if="currentVersion" type="success" size="small">{{ currentVersion }}</el-tag>
-              <span v-else>-</span>
-            </el-descriptions-item>
-            <el-descriptions-item label="本地路径" :span="2">
-              <el-text class="mono-text">{{ repo.path }}</el-text>
-            </el-descriptions-item>
-            <el-descriptions-item label="Repo Key">
-              <el-text class="mono-text">{{ repo.key }}</el-text>
-              <el-button size="small" link @click="copyKey">复制</el-button>
-            </el-descriptions-item>
-            <el-descriptions-item label="远程 URL" :span="2">{{ repo.remote_url || '-' }}</el-descriptions-item>
-            <el-descriptions-item label="创建时间">{{ formatDate(repo.created_at) }}</el-descriptions-item>
-            <el-descriptions-item label="更新时间">{{ formatDate(repo.updated_at) }}</el-descriptions-item>
-          </el-descriptions>
-        </el-card>
+    <!-- 双栏布局 -->
+    <div class="layout-container">
+      <!-- 左侧导航栏 -->
+      <div class="left-nav">
+        <el-menu
+          :default-active="activeTab"
+          class="repo-sidebar"
+          @select="handleNavSelect"
+        >
+          <el-menu-item index="info">
+            <el-icon><InfoFilled /></el-icon>
+            <span>基本信息</span>
+          </el-menu-item>
+          <el-menu-item index="spec">
+            <el-icon><Document /></el-icon>
+            <span>Spec 编辑器</span>
+          </el-menu-item>
+          <el-menu-item index="stats">
+            <el-icon><DataAnalysis /></el-icon>
+            <span>Git有效提交度量</span>
+          </el-menu-item>
+          <el-menu-item index="lines">
+            <el-icon><Files /></el-icon>
+            <span>真实工程代码度量</span>
+          </el-menu-item>
+          <el-menu-item index="versions">
+            <el-icon><Timer /></el-icon>
+            <span>版本历史</span>
+          </el-menu-item>
+          <el-menu-item index="files">
+            <el-icon><Folder /></el-icon>
+            <span>文件浏览</span>
+          </el-menu-item>
+          <el-menu-item index="commits">
+            <el-icon><Search /></el-icon>
+            <span>Commit 搜索</span>
+          </el-menu-item>
+          <el-menu-item index="stash">
+            <el-icon><Box /></el-icon>
+            <span>Stash 管理</span>
+          </el-menu-item>
+          <el-menu-item index="submodules">
+            <el-icon><Link /></el-icon>
+            <span>Submodule</span>
+          </el-menu-item>
+          <el-menu-item index="patches">
+            <el-icon><DocumentCopy /></el-icon>
+            <span>Patch 管理</span>
+          </el-menu-item>
+        </el-menu>
+      </div>
 
-        <!-- Scan Info -->
-        <el-card v-if="scanData" class="mt-4" header="远程配置 (来自 .git/config)">
-          <el-table :data="scanData.remotes" size="small" border>
-            <el-table-column prop="name" label="Remote Name" width="120" />
-            <el-table-column prop="fetch_url" label="Fetch URL" />
-            <el-table-column prop="push_url" label="Push URL" />
-            <el-table-column label="Mirror" width="80">
-              <template #default="{ row }">
-                <el-tag v-if="row.is_mirror" size="small" type="warning">Yes</el-tag>
-                <span v-else>-</span>
-              </template>
-            </el-table-column>
-          </el-table>
-          <div class="mt-3" v-if="scanData.branches?.length">
-            <strong>分支追踪:</strong>
-            <el-tag v-for="b in scanData.branches" :key="b.name" size="small" class="ml-1 mt-1">
-              {{ b.name }} -> {{ b.upstream_ref }}
-            </el-tag>
-          </div>
-        </el-card>
-      </el-tab-pane>
-
-      <!-- Spec 编辑器 Tab -->
-      <el-tab-pane label="Spec 编辑器" name="spec">
-        <SpecEditor :repo-key="repoKey" />
-      </el-tab-pane>
-      
-      <!-- 提交统计 Tab -->
-      <el-tab-pane label="Git有效提交度量" name="stats">
-        <el-card>
-          <el-form inline class="filter-form">
-            <el-form-item label="分支">
-              <el-select v-model="statsFilter.branch" placeholder="全部" clearable @change="loadStats" style="width: 220px">
-                <el-option v-for="b in statsBranches" :key="b" :label="b" :value="b" />
-              </el-select>
-            </el-form-item>
-            <el-form-item label="提交人">
-              <el-select v-model="statsFilter.author" placeholder="全部" clearable filterable @change="loadStats" style="width: 220px">
-                <el-option v-for="a in statsAuthors" :key="a.email" :label="`${a.name}(${a.email})`" :value="a.name" />
-              </el-select>
-            </el-form-item>
-            <el-form-item label="开始日期">
-              <el-date-picker v-model="statsFilter.since" type="date" placeholder="选择日期" value-format="YYYY-MM-DD" />
-            </el-form-item>
-            <el-form-item label="结束日期">
-              <el-date-picker v-model="statsFilter.until" type="date" placeholder="选择日期" value-format="YYYY-MM-DD" />
-            </el-form-item>
-            <el-form-item>
-              <el-button type="primary" @click="loadStats">
-                <el-icon><Search /></el-icon> 查询
-              </el-button>
-              <el-button @click="handleExportCsv('stats')">
-                <el-icon><Download /></el-icon> 导出 CSV
-              </el-button>
-            </el-form-item>
-          </el-form>
-
-          <div v-if="statsData">
-            <el-row :gutter="16" class="mb-4">
-              <el-col :span="12">
-                <el-statistic title="总有效行数" :value="statsData.total_lines" />
-              </el-col>
-              <el-col :span="12">
-                <el-statistic title="活跃贡献者" :value="statsData.authors?.length || 0" />
-              </el-col>
-            </el-row>
-
-            <GitStatsCharts :stats-data="statsData" />
-
-            <!-- Commit history table -->
-            <el-card shadow="never" class="mt-4">
-              <template #header><span style="font-weight:600;font-size:14px">提交历史（最近100条）</span></template>
-              <el-table :data="commitHistory" border size="small" max-height="400">
-                <el-table-column prop="hash" label="Hash" width="100">
-                  <template #default="{ row }">
-                    <el-text class="mono-text" size="small">{{ row.hash?.substring(0, 8) }}</el-text>
-                  </template>
-                </el-table-column>
-                <el-table-column prop="author" label="作者" width="120" />
-                <el-table-column prop="date" label="时间" width="160">
-                  <template #default="{ row }">{{ formatRelativeTime(row.date) }}</template>
-                </el-table-column>
-                <el-table-column prop="message" label="信息" />
-              </el-table>
-            </el-card>
-          </div>
-          <el-empty v-else description="点击查询按钮加载数据" />
-        </el-card>
-      </el-tab-pane>
-
-      <!-- 代码行统计 Tab -->
-      <el-tab-pane label="真实工程代码度量" name="lines">
-        <el-card>
-          <el-form inline class="filter-form">
-            <el-form-item label="分支">
-              <el-select v-model="lineStatsFilter.branch" placeholder="当前工作区" clearable @change="loadLineStats" style="width: 220px">
-                <el-option v-for="b in statsBranches" :key="b" :label="b" :value="b" />
-              </el-select>
-            </el-form-item>
-            <el-form-item label="提交人">
-              <el-select v-model="lineStatsFilter.author" placeholder="全部" clearable filterable style="width: 220px">
-                <el-option v-for="a in statsAuthors" :key="a.email" :label="`${a.name}(${a.email})`" :value="a.name" />
-              </el-select>
-            </el-form-item>
-            <el-form-item label="开始日期">
-              <el-date-picker v-model="lineStatsFilter.since" type="date" placeholder="选择日期" value-format="YYYY-MM-DD" />
-            </el-form-item>
-            <el-form-item label="结束日期">
-              <el-date-picker v-model="lineStatsFilter.until" type="date" placeholder="选择日期" value-format="YYYY-MM-DD" />
-            </el-form-item>
-            <el-form-item>
-              <el-button type="primary" @click="loadLineStats">
-                <el-icon><Search /></el-icon> 查询
-              </el-button>
-              <el-button @click="openExcludeConfig">
-                <el-icon><Setting /></el-icon> 排除配置
-              </el-button>
-              <el-button @click="handleExportCsv('lines')">
-                <el-icon><Download /></el-icon> 导出 CSV
-              </el-button>
-            </el-form-item>
-          </el-form>
-
-          <el-alert type="info" :closable="false" show-icon class="mb-4">
-            选择分支/提交人/时间范围后将使用 git blame 分析代码归属，统计速度会较慢
-          </el-alert>
-
-          <div v-loading="lineStatsLoading">
-            <div v-if="lineStatsData">
-              <el-row :gutter="16" class="mb-4">
-                <el-col :span="6"><el-statistic title="代码行数" :value="lineStatsData.code_lines" /></el-col>
-                <el-col :span="6"><el-statistic title="注释行数" :value="lineStatsData.comment_lines" /></el-col>
-                <el-col :span="6"><el-statistic title="空白行数" :value="lineStatsData.blank_lines" /></el-col>
-                <el-col :span="6"><el-statistic title="文件总数" :value="lineStatsData.total_files" /></el-col>
-              </el-row>
-
-              <el-alert v-if="lineStatsData.status === 'processing'" title="正在统计中..." type="info" :closable="false" show-icon>
-                {{ lineStatsData.progress }}
-              </el-alert>
-
-              <LineStatsCharts :line-stats-data="lineStatsData" />
-            </div>
-            <el-empty v-else description="点击查询按钮加载数据" />
-          </div>
-        </el-card>
-      </el-tab-pane>
-
-      <!-- 版本历史 Tab -->
-      <el-tab-pane label="版本历史" name="versions">
-        <el-card>
-          <template #header>
-            <div class="card-header-row">
-              <span>版本标签管理</span>
-              <div class="header-actions">
-                <el-button size="small" @click="handleFetchTags" :loading="fetchTagsLoading">
-                  <el-icon><Download /></el-icon> 拉取远端 Tags
-                </el-button>
-                <el-button size="small" type="primary" @click="openCreateTagDialog">
-                  <el-icon><Plus /></el-icon> 创建 Tag
-                </el-button>
-                <el-button size="small" @click="loadVersions">
-                  <el-icon><Refresh /></el-icon>
+      <!-- 右侧内容区域 -->
+      <div class="content-area">
+        <!-- 基本信息 -->
+        <div v-if="activeTab === 'info'">
+          <el-card v-if="repo">
+            <template #header>
+              <div class="card-header-row">
+                <span>基本信息</span>
+                <el-button type="primary" size="small" @click="openEditDialog">
+                  <el-icon><Edit /></el-icon> 编辑仓库
                 </el-button>
               </div>
+            </template>
+            <el-descriptions :column="2" border>
+              <el-descriptions-item label="名称">{{ repo.name }}</el-descriptions-item>
+              <el-descriptions-item label="当前版本">
+                <el-tag v-if="currentVersion" type="success" size="small">{{ currentVersion }}</el-tag>
+                <span v-else>-</span>
+              </el-descriptions-item>
+              <el-descriptions-item label="本地路径" :span="2">
+                <el-text class="mono-text">{{ repo.path }}</el-text>
+              </el-descriptions-item>
+              <el-descriptions-item label="Repo Key">
+                <el-text class="mono-text">{{ repo.key }}</el-text>
+                <el-button size="small" link @click="copyKey">复制</el-button>
+              </el-descriptions-item>
+              <el-descriptions-item label="远程 URL" :span="2">{{ repo.remote_url || '-' }}</el-descriptions-item>
+              <el-descriptions-item label="创建时间">{{ formatDate(repo.created_at) }}</el-descriptions-item>
+              <el-descriptions-item label="更新时间">{{ formatDate(repo.updated_at) }}</el-descriptions-item>
+            </el-descriptions>
+          </el-card>
+
+          <!-- Scan Info -->
+          <el-card v-if="scanData" class="mt-4" header="远程配置 (来自 .git/config)">
+            <el-table :data="scanData.remotes" size="small" border>
+              <el-table-column prop="name" label="Remote Name" width="120" />
+              <el-table-column prop="fetch_url" label="Fetch URL" />
+              <el-table-column prop="push_url" label="Push URL" />
+              <el-table-column label="Mirror" width="80">
+                <template #default="{ row }">
+                  <el-tag v-if="row.is_mirror" size="small" type="warning">Yes</el-tag>
+                  <span v-else>-</span>
+                </template>
+              </el-table-column>
+            </el-table>
+            <div class="mt-3" v-if="scanData.branches?.length">
+              <strong>分支追踪:</strong>
+              <el-tag v-for="b in scanData.branches" :key="b.name" size="small" class="ml-1 mt-1">
+                {{ b.name }} -> {{ b.upstream_ref }}
+              </el-tag>
             </div>
-          </template>
-          <div v-if="versionList.length === 0 && !versionsLoading">
-            <el-empty description="暂无版本标签">
-              <el-button type="primary" @click="openCreateTagDialog">创建第一个 Tag</el-button>
-            </el-empty>
-          </div>
-          <el-table v-else :data="versionList" v-loading="versionsLoading" stripe border size="small">
-            <el-table-column prop="name" label="标签名称" width="160">
-              <template #default="{ row }">
-                <el-tag type="success" size="small">{{ row.name }}</el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column prop="hash" label="Commit" width="120">
-              <template #default="{ row }">
-                <el-text class="mono-text" size="small">{{ row.hash?.substring(0, 8) }}</el-text>
-              </template>
-            </el-table-column>
-            <el-table-column prop="tagger" label="作者" width="120" />
-            <el-table-column prop="date" label="日期" width="160">
-              <template #default="{ row }">{{ formatDate(row.date) }}</template>
-            </el-table-column>
-            <el-table-column prop="message" label="说明" min-width="200" show-overflow-tooltip />
-            <el-table-column label="操作" width="200" fixed="right">
-              <template #default="{ row }">
-                <el-button-group size="small">
-                  <el-button @click="handlePushTag(row.name)">
-                    <el-icon><Top /></el-icon> 推送
+          </el-card>
+        </div>
+
+        <!-- Spec 编辑器 -->
+        <div v-if="activeTab === 'spec'">
+          <SpecEditor :repo-key="repoKey" />
+        </div>
+        
+        <!-- Git有效提交度量 -->
+        <div v-if="activeTab === 'stats'">
+          <el-card>
+            <el-form inline class="filter-form">
+              <el-form-item label="分支">
+                <el-select v-model="statsFilter.branch" placeholder="全部" clearable @change="loadStats" style="width: 220px">
+                  <el-option v-for="b in statsBranches" :key="b" :label="b" :value="b" />
+                </el-select>
+              </el-form-item>
+              <el-form-item label="提交人">
+                <el-select v-model="statsFilter.author" placeholder="全部" clearable filterable @change="loadStats" style="width: 220px">
+                  <el-option v-for="a in statsAuthors" :key="a.email" :label="`${a.name}(${a.email})`" :value="a.name" />
+                </el-select>
+              </el-form-item>
+              <el-form-item label="开始日期">
+                <el-date-picker v-model="statsFilter.since" type="date" placeholder="选择日期" value-format="YYYY-MM-DD" />
+              </el-form-item>
+              <el-form-item label="结束日期">
+                <el-date-picker v-model="statsFilter.until" type="date" placeholder="选择日期" value-format="YYYY-MM-DD" />
+              </el-form-item>
+              <el-form-item>
+                <el-button type="primary" @click="loadStats">
+                  <el-icon><Search /></el-icon> 查询
+                </el-button>
+                <el-button @click="handleExportCsv('stats')">
+                  <el-icon><Download /></el-icon> 导出 CSV
+                </el-button>
+              </el-form-item>
+            </el-form>
+
+            <div v-if="statsData">
+              <el-row :gutter="16" class="mb-4">
+                <el-col :span="12">
+                  <el-statistic title="总有效行数" :value="statsData.total_lines" />
+                </el-col>
+                <el-col :span="12">
+                  <el-statistic title="活跃贡献者" :value="statsData.authors?.length || 0" />
+                </el-col>
+              </el-row>
+
+              <GitStatsCharts :stats-data="statsData" />
+
+              <!-- Commit history table -->
+              <el-card shadow="never" class="mt-4">
+                <template #header><span style="font-weight:600;font-size:14px">提交历史（最近100条）</span></template>
+                <el-table :data="commitHistory" border size="small" max-height="400">
+                  <el-table-column prop="hash" label="Hash" width="100">
+                    <template #default="{ row }">
+                      <el-text class="mono-text" size="small">{{ row.hash?.substring(0, 8) }}</el-text>
+                    </template>
+                  </el-table-column>
+                  <el-table-column prop="author" label="作者" width="120" />
+                  <el-table-column prop="date" label="时间" width="160">
+                    <template #default="{ row }">{{ formatRelativeTime(row.date) }}</template>
+                  </el-table-column>
+                  <el-table-column prop="message" label="信息" />
+                </el-table>
+              </el-card>
+            </div>
+            <el-empty v-else description="点击查询按钮加载数据" />
+          </el-card>
+        </div>
+
+        <!-- 真实工程代码度量 -->
+        <div v-if="activeTab === 'lines'">
+          <el-card>
+            <el-form inline class="filter-form">
+              <el-form-item label="分支">
+                <el-select v-model="lineStatsFilter.branch" placeholder="当前工作区" clearable @change="loadLineStats" style="width: 220px">
+                  <el-option v-for="b in statsBranches" :key="b" :label="b" :value="b" />
+                </el-select>
+              </el-form-item>
+              <el-form-item label="提交人">
+                <el-select v-model="lineStatsFilter.author" placeholder="全部" clearable filterable style="width: 220px">
+                  <el-option v-for="a in statsAuthors" :key="a.email" :label="`${a.name}(${a.email})`" :value="a.name" />
+                </el-select>
+              </el-form-item>
+              <el-form-item label="开始日期">
+                <el-date-picker v-model="lineStatsFilter.since" type="date" placeholder="选择日期" value-format="YYYY-MM-DD" />
+              </el-form-item>
+              <el-form-item label="结束日期">
+                <el-date-picker v-model="lineStatsFilter.until" type="date" placeholder="选择日期" value-format="YYYY-MM-DD" />
+              </el-form-item>
+              <el-form-item>
+                <el-button type="primary" @click="loadLineStats">
+                  <el-icon><Search /></el-icon> 查询
+                </el-button>
+                <el-button @click="openExcludeConfig">
+                  <el-icon><Setting /></el-icon> 排除配置
+                </el-button>
+                <el-button @click="handleExportCsv('lines')">
+                  <el-icon><Download /></el-icon> 导出 CSV
+                </el-button>
+              </el-form-item>
+            </el-form>
+
+            <el-alert type="info" :closable="false" show-icon class="mb-4">
+              选择分支/提交人/时间范围后将使用 git blame 分析代码归属，统计速度会较慢
+            </el-alert>
+
+            <div v-loading="lineStatsLoading">
+              <div v-if="lineStatsData">
+                <el-row :gutter="16" class="mb-4">
+                  <el-col :span="6"><el-statistic title="代码行数" :value="lineStatsData.code_lines" /></el-col>
+                  <el-col :span="6"><el-statistic title="注释行数" :value="lineStatsData.comment_lines" /></el-col>
+                  <el-col :span="6"><el-statistic title="空白行数" :value="lineStatsData.blank_lines" /></el-col>
+                  <el-col :span="6"><el-statistic title="文件总数" :value="lineStatsData.total_files" /></el-col>
+                </el-row>
+
+                <el-alert v-if="lineStatsData.status === 'processing'" title="正在统计中..." type="info" :closable="false" show-icon>
+                  {{ lineStatsData.progress }}
+                </el-alert>
+
+                <LineStatsCharts :line-stats-data="lineStatsData" />
+              </div>
+              <el-empty v-else description="点击查询按钮加载数据" />
+            </div>
+          </el-card>
+        </div>
+
+        <!-- 版本历史 -->
+        <div v-if="activeTab === 'versions'">
+          <el-card>
+            <template #header>
+              <div class="card-header-row">
+                <span>版本标签管理</span>
+                <div class="header-actions">
+                  <el-button size="small" @click="handleFetchTags" :loading="fetchTagsLoading">
+                    <el-icon><Download /></el-icon> 拉取远端 Tags
                   </el-button>
-                  <el-button @click="handleCopyHash(row.hash)">
-                    <el-icon><CopyDocument /></el-icon>
+                  <el-button size="small" type="primary" @click="openCreateTagDialog">
+                    <el-icon><Plus /></el-icon> 创建 Tag
                   </el-button>
-                  <el-button type="danger" @click="handleDeleteTag(row.name)">
-                    <el-icon><Delete /></el-icon>
+                  <el-button size="small" @click="loadVersions">
+                    <el-icon><Refresh /></el-icon>
                   </el-button>
-                </el-button-group>
-              </template>
-            </el-table-column>
-          </el-table>
-        </el-card>
-      </el-tab-pane>
+                </div>
+              </div>
+            </template>
+            <div v-if="versionList.length === 0 && !versionsLoading">
+              <el-empty description="暂无版本标签">
+                <el-button type="primary" @click="openCreateTagDialog">创建第一个 Tag</el-button>
+              </el-empty>
+            </div>
+            <el-table v-else :data="versionList" v-loading="versionsLoading" stripe border size="small">
+              <el-table-column prop="name" label="标签名称" width="160">
+                <template #default="{ row }">
+                  <el-tag type="success" size="small">{{ row.name }}</el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column prop="hash" label="Commit" width="120">
+                <template #default="{ row }">
+                  <el-text class="mono-text" size="small">{{ row.hash?.substring(0, 8) }}</el-text>
+                </template>
+              </el-table-column>
+              <el-table-column prop="tagger" label="作者" width="120" />
+              <el-table-column prop="date" label="日期" width="160">
+                <template #default="{ row }">{{ formatDate(row.date) }}</template>
+              </el-table-column>
+              <el-table-column prop="message" label="说明" min-width="200" show-overflow-tooltip />
+              <el-table-column label="操作" width="200" fixed="right">
+                <template #default="{ row }">
+                  <el-button-group size="small">
+                    <el-button @click="handlePushTag(row.name)">
+                      <el-icon><Top /></el-icon> 推送
+                    </el-button>
+                    <el-button @click="handleCopyHash(row.hash)">
+                      <el-icon><CopyDocument /></el-icon>
+                    </el-button>
+                    <el-button type="danger" @click="handleDeleteTag(row.name)">
+                      <el-icon><Delete /></el-icon>
+                    </el-button>
+                  </el-button-group>
+                </template>
+              </el-table-column>
+            </el-table>
+          </el-card>
+        </div>
 
-      <!-- 文件浏览 Tab -->
-      <el-tab-pane label="文件浏览" name="files">
-        <FileBrowser :repo-key="repoKey" :branches="allRefs" />
-      </el-tab-pane>
+        <!-- 文件浏览 -->
+        <div v-if="activeTab === 'files'">
+          <FileBrowser :repo-key="repoKey" :branches="allRefs" />
+        </div>
 
-      <!-- Commit 搜索 Tab -->
-      <el-tab-pane label="Commit 搜索" name="commits">
-        <CommitSearch :repo-key="repoKey" :branches="allRefs" :authors="statsAuthors" />
-      </el-tab-pane>
+        <!-- Commit 搜索 -->
+        <div v-if="activeTab === 'commits'">
+          <CommitSearch :repo-key="repoKey" :branches="allRefs" :authors="statsAuthors" />
+        </div>
 
-      <!-- Stash 管理 Tab -->
-      <el-tab-pane label="Stash 管理" name="stash">
-        <StashManager :repo-key="repoKey" />
-      </el-tab-pane>
+        <!-- Stash 管理 -->
+        <div v-if="activeTab === 'stash'">
+          <StashManager :repo-key="repoKey" />
+        </div>
 
-      <!-- Submodule 管理 Tab -->
-      <el-tab-pane label="Submodule" name="submodules">
-        <SubmoduleManager :repo-key="repoKey" />
-      </el-tab-pane>
+        <!-- Submodule -->
+        <div v-if="activeTab === 'submodules'">
+          <SubmoduleManager :repo-key="repoKey" />
+        </div>
 
-      <!-- Patch 管理 Tab -->
-      <el-tab-pane label="Patch 管理" name="patches">
-        <PatchManager :repo-key="repoKey" />
-      </el-tab-pane>
-    </el-tabs>
+        <!-- Patch 管理 -->
+        <div v-if="activeTab === 'patches'">
+          <PatchManager :repo-key="repoKey" />
+        </div>
+      </div>
+    </div>
 
     <!-- Edit Repo Dialog -->
     <el-dialog v-model="showEditDialog" title="编辑仓库" width="750px" destroy-on-close>
@@ -436,14 +482,14 @@
         <el-button type="primary" @click="handleSubmitPushTag" :loading="pushTagLoading">确认推送</el-button>
       </template>
     </el-dialog>
-  </div>
+    </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ArrowLeft, Share, Switch, Refresh, Edit, Search, Download, Setting, Plus, Top, Delete, CopyDocument, Connection, DocumentCopy } from '@element-plus/icons-vue'
+import { ArrowLeft, Share, Switch, Refresh, Edit, Search, Download, Setting, Plus, Top, Delete, CopyDocument, Connection, DocumentCopy, InfoFilled, Document, DataAnalysis, Files, Timer, Folder, Box, Link } from '@element-plus/icons-vue'
 import { getRepoDetail, scanRepo, updateRepo, fetchRepo } from '@/api/modules/repo'
 import { testConnection } from '@/api/modules/system'
 import { testCredential } from '@/api/modules/credential'
@@ -463,6 +509,7 @@ import SubmoduleManager from '@/components/repo/SubmoduleManager.vue'
 import PatchManager from '@/components/patch/PatchManager.vue'
 import CredentialSelector from '@/components/credential/CredentialSelector.vue'
 import SpecEditor from '@/components/spec/SpecEditor.vue'
+
 import { validateGitRemoteUrl, detectGitProtocol, convertGitUrl } from '@/utils/git'
 
 const route = useRoute()
@@ -1022,89 +1069,139 @@ async function handleSaveExclude() {
     showExcludeDialog.value = false
   } catch { /* handled */ }
 }
+
+function handleNavSelect(key: string) {
+  activeTab.value = key
+}
 </script>
 
 <style scoped>
+/* 页面标题 */
 .page-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
-  flex-wrap: wrap;
-  gap: 12px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e4e7ed;
 }
+
 .header-left {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
 }
+
 .header-left h2 {
   margin: 0;
   font-size: 20px;
 }
+
 .header-actions {
   display: flex;
   gap: 8px;
 }
+
+/* 双栏布局 */
+.layout-container {
+  display: flex;
+  gap: 20px;
+}
+
+/* 左侧导航栏 */
+.left-nav {
+  width: 240px;
+  flex-shrink: 0;
+}
+
+.repo-sidebar {
+  height: calc(100vh - 180px);
+  border-radius: 8px;
+  overflow-y: auto;
+}
+
+/* 右侧内容区域 */
+.content-area {
+  flex: 1;
+  min-height: calc(100vh - 180px);
+}
+
+/* 原有样式 */
 .card-header-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
+
 .filter-form {
   margin-bottom: 16px;
 }
+
 .mono-text {
   font-family: monospace;
 }
+
 .mt-3 {
   margin-top: 12px;
 }
+
 .mt-4 {
   margin-top: 16px;
 }
+
 .mb-4 {
   margin-bottom: 16px;
 }
+
 .ml-1 {
   margin-left: 4px;
 }
+
 .mt-1 {
   margin-top: 4px;
 }
+
 .version-timeline {
   padding: 16px 0;
 }
+
 .version-card {
   max-width: 500px;
 }
+
 .version-header {
   margin-bottom: 8px;
 }
+
 .version-info {
   font-size: 14px;
   line-height: 1.8;
   color: #606266;
 }
+
 .edit-remote-row {
   display: flex;
   align-items: center;
   gap: 8px;
   margin-bottom: 8px;
 }
+
 .edit-remote-cred {
   display: flex;
   align-items: center;
   gap: 8px;
 }
+
 .edit-remote-cred .cred-label {
   font-size: 13px;
   color: #606266;
   flex-shrink: 0;
 }
+
 .remotes-section {
   width: 100%;
 }
+
 .remotes-header {
   display: flex;
   justify-content: space-between;
@@ -1113,31 +1210,64 @@ async function handleSaveExclude() {
   font-size: 14px;
   color: #606266;
 }
+
 .tracking-branches {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
 }
+
 .field-error {
   color: #f56c6c;
   font-size: 12px;
   margin-top: 4px;
 }
+
 .is-error-input :deep(.el-input__wrapper) {
   box-shadow: 0 0 0 1px #f56c6c inset;
 }
+
 .url-input-group {
   display: flex;
   gap: 8px;
   width: 100%;
 }
+
 .url-mode-switch {
   flex-shrink: 0;
 }
+
 .url-mode-switch-sm {
   flex-shrink: 0;
 }
+
 .url-input-group .el-input {
   flex: 1;
+}
+
+/* 响应式布局 */
+@media (max-width: 1024px) {
+  .left-nav {
+    width: 200px;
+  }
+}
+
+@media (max-width: 768px) {
+  .layout-container {
+    flex-direction: column;
+  }
+  
+  .left-nav {
+    width: 100%;
+  }
+  
+  .repo-sidebar {
+    height: auto;
+    max-height: 300px;
+  }
+  
+  .content-area {
+    min-height: auto;
+  }
 }
 </style>

@@ -3,7 +3,7 @@ syntax = "proto3";
 
 package repo;
 
-option go_package = "github.com/yi-nology/git-manage-service/biz/model/biz/repo";
+option go_package = "repo";
 
 import "api.proto";
 import "common.proto";
@@ -54,6 +54,39 @@ service RepoService {
   rpc GetCloneTask(GetCloneTaskRequest) returns (CloneTaskResponse) {
     option (api.get) = "/api/v1/repo/task";
   }
+  
+  // ScanDirectory 扫描目录
+  rpc ScanDirectory(ScanDirectoryRequest) returns (ScanDirectoryResponse) {
+    option (api.post) = "/api/v1/repo/scan-directory";
+  }
+  
+  // BatchCreate 批量创建仓库
+  rpc BatchCreate(BatchCreateRequest) returns (BatchCreateResponse) {
+    option (api.post) = "/api/v1/repo/batch-create";
+  }
+}
+
+// ScanDirectoryRequest 扫描目录请求
+message ScanDirectoryRequest {
+  string path = 1 [(api.body) = "path"];
+}
+
+// ScanDirectoryResponse 扫描目录响应
+message ScanDirectoryResponse {
+  common.BaseResponse base = 1;
+  repeated Repo repos = 2;
+}
+
+// BatchCreateRequest 批量创建仓库请求
+message BatchCreateRequest {
+  repeated CreateRepoRequest repos = 1 [(api.body) = "repos"];
+}
+
+// BatchCreateResponse 批量创建仓库响应
+message BatchCreateResponse {
+  common.BaseResponse base = 1;
+  int32 success_count = 2;
+  int32 failure_count = 3;
 }
 
 // Repo 仓库实体

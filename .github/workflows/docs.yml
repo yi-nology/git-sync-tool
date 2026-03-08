@@ -1,0 +1,48 @@
+name: VuePress Docs Build and Deploy
+
+on:
+  push:
+    branches:
+      - main  # 当推送到 main 分支时触发
+    paths:
+      - 'docs/**'  # 当文档相关文件变化时触发
+      - 'docs-site/**'  # 当 VuePress 配置变化时触发
+  workflow_dispatch:  # 允许手动触发
+
+permissions:
+  contents: write  # 需要写权限来部署文档
+
+jobs:
+  build-and-deploy:
+    name: Build and Deploy VuePress Docs
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 确保获取完整的 git 历史
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: docs-site/package-lock.json
+
+      - name: Install dependencies
+        working-directory: docs-site
+        run: npm ci
+
+      - name: Build VuePress docs
+        working-directory: docs-site
+        run: npm run build
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: docs-site/docs/.vuepress/dist
+          publish_branch: gh-pages  # 部署到 gh-pages 分支
+          force_orphan: true  # 强制创建孤儿分支
+          commit_message: 'docs: build and deploy VuePress docs'

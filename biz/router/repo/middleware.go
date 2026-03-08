@@ -70,3 +70,13 @@ func _updateMw() []app.HandlerFunc {
 	// your code...
 	return nil
 }
+
+func _batchcreateMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
+func _scandirectoryMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}

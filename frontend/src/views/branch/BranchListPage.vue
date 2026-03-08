@@ -18,9 +18,9 @@
       </div>
     </div>
 
-    <el-tabs v-model="branchType" @tab-change="loadBranches">
+    <el-tabs v-model="activeTab" @tab-change="handleTabChange">
       <el-tab-pane label="Local (本地分支)" name="local" />
-      <el-tab-pane label="Remote (远端分支)" name="remote" />
+      <el-tab-pane v-for="remoteName in remoteNames" :key="remoteName" :label="`Remote (远端分支)-${remoteName}`" :name="`remote-${remoteName}`" />
     </el-tabs>
 
     <el-card class="mb-3">
@@ -35,13 +35,18 @@
     </el-card>
 
     <el-card>
-      <el-table :data="branches" v-loading="loading" stripe>
+      <el-table :data="branches" v-loading="loading" stripe style="width: 100%">
         <el-table-column prop="name" label="分支名称" min-width="180">
           <template #default="{ row }">
-            <span :class="{ 'branch-current': row.is_current }">
-              <el-icon v-if="row.is_current" color="#67c23a"><CircleCheck /></el-icon>
-              {{ row.name }}
-            </span>
+            <template v-if="activeTab === 'local'">
+              <span :class="{ 'branch-current': row.is_current }">
+                <el-icon v-if="row.is_current" color="#67c23a"><CircleCheck /></el-icon>
+                {{ row.name }}
+              </span>
+            </template>
+            <template v-else>
+              {{ row.name.replace(`${activeTab.replace('remote-', '')}/`, '') }}
+            </template>
           </template>
         </el-table-column>
         <el-table-column prop="hash" label="最新提交" min-width="200">
@@ -61,65 +66,91 @@
             {{ formatRelativeTime(row.date) }}
           </template>
         </el-table-column>
-        <el-table-column label="状态" width="140" v-if="branchType === 'local'">
+        <el-table-column v-if="activeTab === 'local'" label="上游分支" width="180">
+          <template #default="{ row }">
+            <el-tag v-if="row.upstream" size="small" type="info">{{ row.upstream }}</el-tag>
+            <el-text v-else type="info" size="small">无上游</el-text>
+          </template>
+        </el-table-column>
+        <el-table-column v-if="activeTab === 'local'" label="状态" width="140">
           <template #default="{ row }">
             <template v-if="row.upstream">
               <el-tag v-if="row.ahead > 0" size="small" type="success">{{ row.ahead }}↑</el-tag>
               <el-tag v-if="row.behind > 0" size="small" type="warning">{{ row.behind }}↓</el-tag>
-              <el-tag v-if="row.ahead === 0 && row.behind === 0" size="small" type="info">已同步</el-tag>
+              <el-tag v-if="row.ahead === 0 && row.behind === 0" size="small" type="success">已同步</el-tag>
             </template>
             <el-text v-else type="info" size="small">无上游</el-text>
           </template>
         </el-table-column>
-        <el-table-column label="关联" width="160" v-if="branchType === 'remote'">
+        <el-table-column v-else label="本地关联" width="160">
           <template #default="{ row }">
             <el-tag v-if="getLocalBranch(row.name)" size="small" type="success">
-              已关联: {{ getLocalBranch(row.name) }}
+              {{ getLocalBranch(row.name) }}
             </el-tag>
-            <el-text v-else type="info" size="small">无本地关联</el-text>
+            <el-text v-else type="info" size="small">无关联</el-text>
           </template>
         </el-table-column>
-        <el-table-column label="操作" :width="branchType === 'local' ? 340 : 280" fixed="right">
+        <el-table-column label="操作" width="280" fixed="right">
           <template #default="{ row }">
-            <el-button-group size="small" v-if="branchType === 'local'">
-              <el-button v-if="!row.is_current" @click="handleCheckout(row.name)">
-                <el-icon><Select /></el-icon> 切换
-              </el-button>
-              <el-button @click="handlePush(row.name)">
-                <el-icon><Top /></el-icon> 推送
-              </el-button>
-              <el-button @click="handlePull(row.name)">
-                <el-icon><Bottom /></el-icon> 拉取
-              </el-button>
-              <el-button @click="openTagDialog(row.name)" type="warning">
-                <el-icon><PriceTag /></el-icon>
-              </el-button>
-              <el-button type="primary" @click="goDetail(row.name)">
-                <el-icon><View /></el-icon> 详情
-              </el-button>
-              <el-button @click="openRenameDialog(row)">
-                <el-icon><Edit /></el-icon>
-              </el-button>
-              <el-button v-if="!row.is_current" type="danger" @click="handleDeleteBranch(row.name)">
-                <el-icon><Delete /></el-icon>
-              </el-button>
-            </el-button-group>
-            <el-button-group size="small" v-else>
-              <el-button type="primary" @click="handleCheckoutRemote(row.name)" v-if="!getLocalBranch(row.name)">
-                <el-icon><Download /></el-icon> 检出为本地
-              </el-button>
-              <el-button @click="handleFfRemote(row.name)" v-if="getLocalBranch(row.name)">
-                <el-icon><Bottom /></el-icon> 更新本地
-              </el-button>
-              <el-button @click="handlePullRemote(row.name)" v-if="getLocalBranch(row.name)">
-                <el-icon><RefreshRight /></el-icon> 同步本地
-              </el-button>
-            </el-button-group>
+            <template v-if="activeTab === 'local'">
+              <el-dropdown @command="(cmd: string) => handleBranchCommand(cmd, row)">
+                <el-button size="small" type="primary">
+                  操作 <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+                </el-button>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item v-if="!row.is_current" command="checkout">
+                      <el-icon><Select /></el-icon> 切换
+                    </el-dropdown-item>
+                    <el-dropdown-item command="push">
+                      <el-icon><Top /></el-icon> 推送
+                    </el-dropdown-item>
+                    <el-dropdown-item command="pull">
+                      <el-icon><Bottom /></el-icon> 拉取
+                    </el-dropdown-item>
+                    <el-dropdown-item command="tag" type="warning">
+                      <el-icon><PriceTag /></el-icon> 打标签
+                    </el-dropdown-item>
+                    <el-dropdown-item command="detail" type="primary">
+                      <el-icon><View /></el-icon> 详情
+                    </el-dropdown-item>
+                    <el-dropdown-item command="rename">
+                      <el-icon><Edit /></el-icon> 重命名
+                    </el-dropdown-item>
+                    <el-dropdown-item v-if="!row.is_current" command="delete" divided type="danger">
+                      <el-icon><Delete /></el-icon> 删除
+                    </el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+            </template>
+            <template v-else>
+              <el-dropdown @command="(cmd: string) => handleRemoteBranchCommand(cmd, row)">
+                <el-button size="small" type="primary">
+                  操作 <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+                </el-button>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item v-if="!getLocalBranch(row.name)" command="checkout">
+                      <el-icon><Download /></el-icon> 检出为本地
+                    </el-dropdown-item>
+                    <el-dropdown-item v-if="getLocalBranch(row.name)" command="update">
+                      <el-icon><Bottom /></el-icon> 更新本地
+                    </el-dropdown-item>
+                    <el-dropdown-item v-if="getLocalBranch(row.name)" command="sync">
+                      <el-icon><RefreshRight /></el-icon> 同步本地
+                    </el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+            </template>
           </template>
         </el-table-column>
       </el-table>
       <div class="table-footer">
-        <el-text type="info" size="small">共 {{ total }} 个分支</el-text>
+        <el-text type="info" size="small">
+          {{ activeTab === 'local' ? `共 ${total} 个本地分支` : `共 ${total} 个远端分支 (${activeTab.replace('remote-', '')})` }}
+        </el-text>
       </div>
     </el-card>
 
@@ -212,7 +243,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowLeft, Plus, Delete, Edit, Select, Top, Bottom, Switch, Download, CircleCheck, PriceTag, View, RefreshRight } from '@element-plus/icons-vue'
@@ -233,9 +264,10 @@ const fetchLoading = ref(false)
 const branches = ref<BranchInfo[]>([])
 const localBranches = ref<BranchInfo[]>([])
 const total = ref(0)
-const branchType = ref('local')
+const activeTab = ref('local')
 const searchQuery = ref('')
 const remoteNames = ref<string[]>([])
+const activeRemoteTabs = ref<string[]>([])
 
 const showCreateDialog = ref(false)
 const createForm = ref({ name: '', base_ref: '' })
@@ -251,13 +283,35 @@ const showTagDialog = ref(false)
 const tagForm = ref({ ref: '', name: '', message: '', push_remote: '', versionType: 'patch' as 'patch' | 'minor' | 'major' | 'custom' })
 const tagNextVersion = ref<NextVersionInfo | null>(null)
 
+// 按远程源分组的远端分支
+const groupedRemoteBranches = computed(() => {
+  if (branchType.value !== 'remote') return {}
+  
+  const grouped: Record<string, BranchInfo[]> = {}
+  branches.value.forEach(branch => {
+    const parts = branch.name.split('/')
+    if (parts.length >= 2) {
+      const remoteName = parts[0]
+      if (remoteName) {
+        if (!grouped[remoteName]) {
+          grouped[remoteName] = []
+        }
+        grouped[remoteName].push(branch)
+      }
+    }
+  })
+  
+  // 默认展开所有远程源
+  const remoteKeys = Object.keys(grouped)
+  if (remoteKeys.length > 0) {
+    activeRemoteTabs.value = remoteKeys
+  }
+  
+  return grouped
+})
+
 onMounted(async () => {
-  await loadBranches()
-  // Also load local branches for remote association
-  try {
-    const res = await getBranchList(repoKey, { type: 'local', page_size: 500 })
-    localBranches.value = res.list || []
-  } catch { /* ignore */ }
+  // 先获取远程源列表
   try {
     const repo = await getRepoDetail(repoKey)
     if (repo?.path) {
@@ -265,18 +319,48 @@ onMounted(async () => {
       remoteNames.value = (scan.remotes || []).map((r: { name: string }) => r.name)
     }
   } catch { /* ignore */ }
+  
+  // 加载本地分支用于远程关联
+  try {
+    const res = await getBranchList(repoKey, { type: 'local', page_size: 500 })
+    localBranches.value = res.list || []
+  } catch { /* ignore */ }
+  
+  // 加载当前标签页的数据
+  await loadBranches()
 })
+
+// 标签页切换处理
+function handleTabChange(tab: string) {
+  activeTab.value = tab
+  loadBranches()
+}
 
 async function loadBranches() {
   loading.value = true
   try {
+    let branchType = 'local'
+    let remoteName = ''
+    
+    if (activeTab.value.startsWith('remote-')) {
+      branchType = 'remote'
+      remoteName = activeTab.value.replace('remote-', '')
+    }
+    
     const res = await getBranchList(repoKey, {
-      type: branchType.value,
+      type: branchType,
       keyword: searchQuery.value || undefined,
       page_size: 500,
     })
-    branches.value = res.list || []
-    total.value = res.total || 0
+    
+    let filteredBranches = res.list || []
+    // 如果是特定远程源的标签页，过滤出对应远程源的分支
+    if (remoteName) {
+      filteredBranches = filteredBranches.filter(branch => branch.name.startsWith(`${remoteName}/`))
+    }
+    
+    branches.value = filteredBranches
+    total.value = filteredBranches.length
   } finally {
     loading.value = false
   }
@@ -466,6 +550,48 @@ async function handleCreateTag() {
     ElMessage.success('标签创建成功')
     showTagDialog.value = false
   } catch { /* handled */ }
+}
+
+// 分支操作命令处理
+function handleBranchCommand(command: string, row: BranchInfo) {
+  switch (command) {
+    case 'checkout':
+      handleCheckout(row.name)
+      break
+    case 'push':
+      handlePush(row.name)
+      break
+    case 'pull':
+      handlePull(row.name)
+      break
+    case 'tag':
+      openTagDialog(row.name)
+      break
+    case 'detail':
+      goDetail(row.name)
+      break
+    case 'rename':
+      openRenameDialog(row)
+      break
+    case 'delete':
+      handleDeleteBranch(row.name)
+      break
+  }
+}
+
+// 远端分支操作命令处理
+function handleRemoteBranchCommand(command: string, row: BranchInfo) {
+  switch (command) {
+    case 'checkout':
+      handleCheckoutRemote(row.name)
+      break
+    case 'update':
+      handleFfRemote(row.name)
+      break
+    case 'sync':
+      handlePullRemote(row.name)
+      break
+  }
 }
 </script>
 

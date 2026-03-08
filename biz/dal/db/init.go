@@ -53,6 +53,7 @@ func Init() {
 	}
 
 	migrator := DB.Migrator()
+	// 检查所有必需的表是否存在，包括代码质量相关的表
 	if migrator.HasTable(&po.Repo{}) &&
 		migrator.HasTable(&po.SyncTask{}) &&
 		migrator.HasTable(&po.SyncRun{}) &&
@@ -64,12 +65,15 @@ func Init() {
 		migrator.HasTable(&po.SSHKey{}) &&
 		migrator.HasTable(&po.BackupRecord{}) &&
 		migrator.HasTable(&po.Credential{}) &&
-		migrator.HasTable(&po.LintRule{}) {
+		migrator.HasTable(&po.LintRule{}) &&
+		migrator.HasTable(&po.CommitAnalysis{}) &&
+		migrator.HasTable(&po.CommitPattern{}) &&
+		migrator.HasTable(&po.SyncRecommendation{}) {
 		log.Println("Database tables exist, skipping schema migration.")
 		return
 	}
 
-	err = DB.AutoMigrate(&po.Repo{}, &po.SyncTask{}, &po.SyncRun{}, &po.AuditLog{}, &po.SystemConfig{}, &po.CommitStat{}, &po.NotificationChannel{}, &po.NotificationEventTemplate{}, &po.SSHKey{}, &po.BackupRecord{}, &po.Credential{}, &po.LintRule{})
+	err = DB.AutoMigrate(&po.Repo{}, &po.SyncTask{}, &po.SyncRun{}, &po.AuditLog{}, &po.SystemConfig{}, &po.CommitStat{}, &po.NotificationChannel{}, &po.NotificationEventTemplate{}, &po.SSHKey{}, &po.BackupRecord{}, &po.Credential{}, &po.LintRule{}, &po.CommitAnalysis{}, &po.CommitPattern{}, &po.SyncRecommendation{})
 	if err != nil {
 		log.Fatal("failed to migrate database: ", err)
 	}

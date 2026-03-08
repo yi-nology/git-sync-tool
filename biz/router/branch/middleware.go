@@ -90,3 +90,28 @@ func _updateMw() []app.HandlerFunc {
 	// your code...
 	return nil
 }
+
+func _cherrypickMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
+func _rebaseMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
+func _rebase0Mw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
+func _rebaseabortMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
+func _rebasecontinueMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}

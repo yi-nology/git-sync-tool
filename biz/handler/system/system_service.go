@@ -8,13 +8,14 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strings"
 
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/yi-nology/git-manage-service/biz/dal/db"
 	"github.com/yi-nology/git-manage-service/biz/model/api"
-	systemModel "github.com/yi-nology/git-manage-service/biz/model/biz/system"
+	systemModel "github.com/yi-nology/git-manage-service/biz/model/system"
 	"github.com/yi-nology/git-manage-service/biz/service/audit"
 	"github.com/yi-nology/git-manage-service/biz/service/auth"
 	"github.com/yi-nology/git-manage-service/biz/service/git"
@@ -342,13 +343,31 @@ func SelectDirectory(ctx context.Context, c *app.RequestContext) {
 		title = "选择目录"
 	}
 
-	// 使用 osascript 调用 macOS 目录选择对话框
-	cmd := fmt.Sprintf(`tell application "System Events" to activate
-return POSIX path of (choose folder with prompt "%s")`, title)
+	// 尝试根据操作系统打开目录选择对话框
+	var result string
+	var err error
 
-	result, err := execCommand("osascript", "-e", cmd)
+	switch runtime.GOOS {
+	case "darwin":
+		// macOS: 使用 osascript
+		cmd := fmt.Sprintf(`tell application "System Events" to activate
+return POSIX path of (choose folder with prompt "%s")`, title)
+		result, err = execCommand("osascript", "-e", cmd)
+	case "windows":
+		// Windows: 使用 powershell
+		cmd := fmt.Sprintf(`Add-Type -AssemblyName System.Windows.Forms; $f = New-Object System.Windows.Forms.FolderBrowserDialog; $f.Description = '%s'; $f.ShowDialog() | Out-Null; if ($f.SelectedPath) { Write-Output $f.SelectedPath }`, title)
+		result, err = execCommand("powershell", "-Command", cmd)
+	default:
+		// Linux 或其他系统: 返回错误，建议使用目录浏览功能
+		errorMsg := "Directory dialog not supported on this platform. Please use the directory browser instead."
+		response.InternalServerError(c, errorMsg)
+		return
+	}
+
 	if err != nil {
-		response.InternalServerError(c, "Failed to open directory dialog: "+err.Error())
+		// 提供备选方案：使用目录浏览功能
+		errorMsg := "Failed to open directory dialog: " + err.Error() + ". Please use the directory browser instead."
+		response.InternalServerError(c, errorMsg)
 		return
 	}
 

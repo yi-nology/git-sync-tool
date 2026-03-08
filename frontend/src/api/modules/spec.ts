@@ -65,4 +65,20 @@ export function createSpecFile(data: CreateSpecFileRequest) {
   return request.post<unknown, { message: string; path: string }>('/spec/create', data)
 }
 
+// 删除spec文件
+export function deleteSpecFile(repoKey: string, path: string, commitMessage?: string) {
+  return request.post<unknown, { message: string }>('/spec/delete', {
+    repo_key: repoKey,
+    path,
+    commit_message: commitMessage
+  })
+}
+
+// 验证spec文件
+export function validateSpec(content: string) {
+  return request.post<unknown, { valid: boolean; issues: any[]; warnings: any[] }>('/spec/validate', {
+    content
+  })
+}
+
 

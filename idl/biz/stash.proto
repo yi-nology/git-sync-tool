@@ -3,7 +3,7 @@ syntax = "proto3";
 
 package stash;
 
-option go_package = "github.com/yi-nology/git-manage-service/biz/model/biz/stash";
+option go_package = "stash";
 
 import "api.proto";
 import "common.proto";

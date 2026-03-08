@@ -14,7 +14,7 @@ import (
 	"github.com/yi-nology/git-manage-service/biz/handler/helper"
 	"github.com/yi-nology/git-manage-service/biz/model/api"
 	"github.com/yi-nology/git-manage-service/biz/service/git"
-	"github.com/yi-nology/git-manage-service/biz/service/stats"
+	statsSvc "github.com/yi-nology/git-manage-service/biz/service/stats"
 	"github.com/yi-nology/git-manage-service/pkg/response"
 )
 
@@ -69,7 +69,7 @@ func ListCommits(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	commits := stats.StatsSvc.ParseCommits(raw)
+	commits := statsSvc.StatsSvc.ParseCommits(raw)
 	response.Success(c, commits)
 }
 
@@ -92,9 +92,9 @@ func GetStats(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	statsData, status, err, progress := stats.StatsSvc.GetStats(repo.Path, branch, since, until)
+	statsData, status, err, progress := statsSvc.StatsSvc.GetStats(repo.Path, branch, since, until)
 
-	if status == stats.StatusProcessing {
+	if status == statsSvc.StatusProcessing {
 		response.Accepted(c, "Statistics are being calculated in the background. Please try again later.", map[string]string{
 			"status":   "processing",
 			"progress": progress,
@@ -146,8 +146,8 @@ func ExportCSV(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	statsData, status, err, _ := stats.StatsSvc.GetStats(repo.Path, branch, since, until)
-	if status == stats.StatusProcessing {
+	statsData, status, err, _ := statsSvc.StatsSvc.GetStats(repo.Path, branch, since, until)
+	if status == statsSvc.StatusProcessing {
 		response.Accepted(c, "Stats are being calculated, please try again later", nil)
 		return
 	}
@@ -200,9 +200,9 @@ func GetLineStats(ctx context.Context, c *app.RequestContext) {
 	since := c.Query("since")
 	until := c.Query("until")
 
-	config := stats.CountConfig{
-		ExcludeDirs:     stats.DefaultExcludeDirs,
-		ExcludePatterns: stats.DefaultExcludePatterns,
+	config := statsSvc.CountConfig{
+		ExcludeDirs:     statsSvc.DefaultExcludeDirs,
+		ExcludePatterns: statsSvc.DefaultExcludePatterns,
 		ExcludeHidden:   true,
 		Branch:          branch,
 		Author:          author,
@@ -217,7 +217,7 @@ func GetLineStats(ctx context.Context, c *app.RequestContext) {
 		config.ExcludePatterns = append(config.ExcludePatterns, strings.Split(excludePatterns, ",")...)
 	}
 
-	lineCounter := stats.GetLineCounter()
+	lineCounter := statsSvc.GetLineCounter()
 	result := lineCounter.GetLineStats(repo.Path, config)
 
 	if result.Status == "processing" {
@@ -236,8 +236,8 @@ func GetLineStats(ctx context.Context, c *app.RequestContext) {
 func GetLineStatsConfig(ctx context.Context, c *app.RequestContext) {
 	// 返回默认配置
 	response.Success(c, api.LineStatsConfig{
-		ExcludeDirs:     stats.DefaultExcludeDirs,
-		ExcludePatterns: stats.DefaultExcludePatterns,
+		ExcludeDirs:     statsSvc.DefaultExcludeDirs,
+		ExcludePatterns: statsSvc.DefaultExcludePatterns,
 	})
 }
 
@@ -262,7 +262,7 @@ func SaveLineStatsConfig(ctx context.Context, c *app.RequestContext) {
 	}
 
 	// 清除该仓库的缓存，以便下次统计使用新配置
-	lineCounter := stats.GetLineCounter()
+	lineCounter := statsSvc.GetLineCounter()
 	lineCounter.ClearCache(repo.Path)
 
 	response.Success(c, map[string]string{
@@ -295,9 +295,9 @@ func ExportLineStatsCSV(ctx context.Context, c *app.RequestContext) {
 	since := c.Query("since")
 	until := c.Query("until")
 
-	config := stats.CountConfig{
-		ExcludeDirs:     stats.DefaultExcludeDirs,
-		ExcludePatterns: stats.DefaultExcludePatterns,
+	config := statsSvc.CountConfig{
+		ExcludeDirs:     statsSvc.DefaultExcludeDirs,
+		ExcludePatterns: statsSvc.DefaultExcludePatterns,
 		ExcludeHidden:   true,
 		Branch:          branch,
 		Author:          author,
@@ -312,7 +312,7 @@ func ExportLineStatsCSV(ctx context.Context, c *app.RequestContext) {
 		config.ExcludePatterns = append(config.ExcludePatterns, strings.Split(excludePatterns, ",")...)
 	}
 
-	lineCounter := stats.GetLineCounter()
+	lineCounter := statsSvc.GetLineCounter()
 	result := lineCounter.GetLineStats(repo.Path, config)
 
 	if result.Status == "processing" {

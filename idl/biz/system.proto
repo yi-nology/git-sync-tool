@@ -3,7 +3,7 @@ syntax = "proto3";
 
 package system;
 
-option go_package = "github.com/yi-nology/git-manage-service/biz/model/biz/system";
+option go_package = "system";
 
 import "api.proto";
 import "common.proto";
@@ -49,6 +49,43 @@ service SystemService {
   rpc SubmitChanges(SubmitChangesRequest) returns (common.EmptyResponse) {
     option (api.post) = "/api/v1/system/repo/submit";
   }
+  
+  // GetAppInfo 获取应用信息
+  rpc GetAppInfo(common.EmptyRequest) returns (AppInfoResponse) {
+    option (api.get) = "/api/v1/system/app-info";
+  }
+  
+  // SelectDirectory 选择目录
+  rpc SelectDirectory(SelectDirectoryRequest) returns (SelectDirectoryResponse) {
+    option (api.post) = "/api/v1/system/select-directory";
+  }
+}
+
+// SelectDirectoryRequest 选择目录请求
+message SelectDirectoryRequest {
+  string path = 1 [(api.body) = "path"];
+}
+
+// SelectDirectoryResponse 选择目录响应
+message SelectDirectoryResponse {
+  common.BaseResponse base = 1;
+  bool success = 2;
+  string message = 3;
+  string selected_path = 4;
+}
+
+// AppInfo 应用信息
+message AppInfo {
+  string app_name = 1;
+  string version = 2;
+  string build_time = 3;
+  string git_commit = 4;
+}
+
+// AppInfoResponse 应用信息响应
+message AppInfoResponse {
+  common.BaseResponse base = 1;
+  AppInfo app_info = 2;
 }
 
 // SystemConfig 系统配置

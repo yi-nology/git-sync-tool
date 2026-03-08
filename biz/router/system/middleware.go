@@ -70,3 +70,13 @@ func _submitchangesMw() []app.HandlerFunc {
 	// your code...
 	return nil
 }
+
+func _getappinfoMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
+func _selectdirectoryMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
