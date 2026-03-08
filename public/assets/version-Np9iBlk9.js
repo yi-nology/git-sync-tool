@@ -1,1 +1,0 @@
-import{s as r}from"./request-vs5w0oyJ.js";function n(e){return r.get("/version/list",{params:{repo_key:e}})}function s(e){return r.get("/version/current",{params:{repo_key:e}})}function o(e){return r.get("/version/next",{params:{repo_key:e}})}export{n as a,o as b,s as g};
