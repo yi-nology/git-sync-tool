@@ -5,15 +5,21 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
+	"sort"
 	"strings"
 )
 
 // PatchInfo patch 文件信息
 type PatchInfo struct {
-	Name    string `json:"name"`
-	Path    string `json:"path"`
-	Size    int64  `json:"size"`
-	ModTime string `json:"mod_time"`
+	Name        string `json:"name"`
+	Path        string `json:"path"`
+	Size        int64  `json:"size"`
+	ModTime     string `json:"mod_time"`
+	Sequence    int    `json:"sequence"`
+	IsApplied   bool   `json:"is_applied"`
+	CanApply    bool   `json:"can_apply"`
+	HasConflict bool   `json:"has_conflict"`
 }
 
 // GeneratePatch 生成 patch 内容
@@ -114,7 +120,7 @@ func (s *GitService) SavePatch(repoPath, patchContent, patchName, customPath str
 	return savePath, nil
 }
 
-// ListPatches 列出仓库中的所有 patch 文件
+// ListPatches 列出仓库中的所有 patch 文件（按序号排序）
 func (s *GitService) ListPatches(path string) ([]PatchInfo, error) {
 	patchesDir := filepath.Join(path, "patches")
 
@@ -146,15 +152,99 @@ func (s *GitService) ListPatches(path string) ([]PatchInfo, error) {
 			continue
 		}
 
+		// 解析序号（从文件名）
+		sequence := s.parsePatchSequence(entry.Name())
+
 		patches = append(patches, PatchInfo{
-			Name:    entry.Name(),
-			Path:    filepath.Join(patchesDir, entry.Name()),
-			Size:    info.Size(),
-			ModTime: info.ModTime().Format("2006-01-02 15:04:05"),
+			Name:     entry.Name(),
+			Path:     filepath.Join(patchesDir, entry.Name()),
+			Size:     info.Size(),
+			ModTime:  info.ModTime().Format("2006-01-02 15:04:05"),
+			Sequence: sequence,
 		})
 	}
 
+	// 按序号排序
+	sort.Slice(patches, func(i, j int) bool {
+		return patches[i].Sequence < patches[j].Sequence
+	})
+
+	// 标记已应用的 patch
+	appliedPatches := s.getAppliedPatches(path)
+	for i := range patches {
+		patches[i].IsApplied = s.isPatchApplied(patches[i].Name, appliedPatches)
+	}
+
+	// 标记可以应用的 patch（考虑顺序）
+	for i := range patches {
+		if patches[i].IsApplied {
+			patches[i].CanApply = false // 已应用的不需要再应用
+		} else {
+			// 检查是否是下一个待应用的
+			patches[i].CanApply = s.canApplyPatch(patches, i)
+		}
+	}
+
 	return patches, nil
+}
+
+// parsePatchSequence 从文件名解析序号
+func (s *GitService) parsePatchSequence(filename string) int {
+	// 尝试从文件名开头解析数字，如 001-feature.patch -> 1
+	re := regexp.MustCompile(`^(\d+)`)
+	matches := re.FindStringSubmatch(filename)
+	if len(matches) > 1 {
+		var seq int
+		fmt.Sscanf(matches[1], "%d", &seq)
+		return seq
+	}
+
+	// 没有序号，返回 9999（排在最后）
+	return 9999
+}
+
+// getAppliedPatches 获取已应用的 patch 列表（从 git log）
+func (s *GitService) getAppliedPatches(repoPath string) map[string]bool {
+	cmd := exec.Command("git", "log", "--oneline", "--grep=patch", "--format=%s")
+	cmd.Dir = repoPath
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return make(map[string]bool)
+	}
+
+	applied := make(map[string]bool)
+	lines := strings.Split(string(output), "\n")
+	for _, line := range lines {
+		// 从 commit message 中提取 patch 名称
+		// 格式通常是: "feat: apply patch 001-feature.patch"
+		if strings.Contains(line, "patch") {
+			parts := strings.Fields(line)
+			for _, part := range parts {
+				if strings.HasSuffix(part, ".patch") {
+					applied[part] = true
+					break
+				}
+			}
+		}
+	}
+
+	return applied
+}
+
+// isPatchApplied 检查 patch 是否已应用
+func (s *GitService) isPatchApplied(patchName string, appliedPatches map[string]bool) bool {
+	return appliedPatches[patchName]
+}
+
+// canApplyPatch 检查是否可以应用指定位置的 patch（考虑顺序）
+func (s *GitService) canApplyPatch(patches []PatchInfo, index int) bool {
+	// 如果前面的 patch 都已应用，则可以应用当前 patch
+	for i := 0; i < index; i++ {
+		if !patches[i].IsApplied {
+			return false
+		}
+	}
+	return true
 }
 
 // GetPatchContent 读取 patch 文件内容
