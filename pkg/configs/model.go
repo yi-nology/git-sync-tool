@@ -7,6 +7,7 @@ type Config struct {
 	Rpc      RpcConfig      `mapstructure:"rpc"`
 	Storage  StorageConfig  `mapstructure:"storage"`
 	Lock     LockConfig     `mapstructure:"lock"`
+	Lint     LintConfig     `mapstructure:"lint"`
 }
 
 type ServerConfig struct {
@@ -54,4 +55,8 @@ type LockConfig struct {
 	RedisAddr     string `mapstructure:"redis_addr"`     // Redis 地址
 	RedisPassword string `mapstructure:"redis_password"` // Redis 密码
 	RedisDB       int    `mapstructure:"redis_db"`       // Redis 数据库号
+}
+
+type LintConfig struct {
+	EnableRpmlint bool `mapstructure:"enable_rpmlint"` // 是否启用 rpmlint（仅当系统安装时生效）
 }

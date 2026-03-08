@@ -82,6 +82,11 @@ func (s *SpecService) SaveSpecContent(repoPath, specPath, content, commitMessage
 
 // CreateSpecFile 创建新的 spec 文件
 func (s *SpecService) CreateSpecFile(repoPath, dirPath, fileName string) (string, error) {
+	return s.CreateSpecFileWithContent(repoPath, dirPath, fileName, "")
+}
+
+// CreateSpecFileWithContent 创建新的 spec 文件（支持自定义内容）
+func (s *SpecService) CreateSpecFileWithContent(repoPath, dirPath, fileName, content string) (string, error) {
 	fullDir := filepath.Join(repoPath, dirPath)
 	if err := os.MkdirAll(fullDir, 0755); err != nil {
 		return "", fmt.Errorf("failed to create directory: %v", err)
@@ -92,9 +97,13 @@ func (s *SpecService) CreateSpecFile(repoPath, dirPath, fileName string) (string
 		return "", fmt.Errorf("file already exists: %s", fileName)
 	}
 
-	// 写入模板内容
-	template := s.GetSpecTemplate()
-	if err := os.WriteFile(fullPath, []byte(template), 0644); err != nil {
+	// 如果没有提供内容，使用模板
+	if content == "" {
+		content = s.GetSpecTemplate()
+	}
+
+	// 写入内容
+	if err := os.WriteFile(fullPath, []byte(content), 0644); err != nil {
 		return "", fmt.Errorf("failed to create spec file: %v", err)
 	}
 

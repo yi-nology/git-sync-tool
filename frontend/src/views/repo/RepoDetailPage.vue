@@ -75,6 +75,11 @@
         </el-card>
       </el-tab-pane>
 
+      <!-- Spec 编辑器 Tab -->
+      <el-tab-pane label="Spec 编辑器" name="spec">
+        <SpecEditor :repo-key="repoKey" />
+      </el-tab-pane>
+      
       <!-- 提交统计 Tab -->
       <el-tab-pane label="Git有效提交度量" name="stats">
         <el-card>
@@ -457,6 +462,7 @@ import StashManager from '@/components/repo/StashManager.vue'
 import SubmoduleManager from '@/components/repo/SubmoduleManager.vue'
 import PatchManager from '@/components/patch/PatchManager.vue'
 import CredentialSelector from '@/components/credential/CredentialSelector.vue'
+import SpecEditor from '@/components/spec/SpecEditor.vue'
 import { validateGitRemoteUrl, detectGitProtocol, convertGitUrl } from '@/utils/git'
 
 const route = useRoute()
