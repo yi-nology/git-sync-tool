@@ -212,9 +212,11 @@
 
         <template v-if="savePatch">
           <el-form-item label="文件名" required>
-            <el-input v-model="patchName" placeholder="如: feature-xxx">
+            <el-input v-model="patchName" placeholder="输入描述，如: feature-login、fix-bug">
+              <template #prepend>{{ getNextPatchPrefix() }}</template>
               <template #append>.patch</template>
             </el-input>
+            <div class="hint">系统自动生成序号，你只需输入描述部分</div>
           </el-form-item>
           <el-form-item label="保存路径">
             <el-cascader
@@ -510,7 +512,7 @@ async function handleGenerate() {
   }
 
   if (savePatch.value && !patchName.value.trim()) {
-    ElMessage.warning('请填写文件名')
+    ElMessage.warning('请填写文件名描述')
     return
   }
 
@@ -534,9 +536,12 @@ async function handleGenerate() {
 
     if (savePatch.value) {
       // 保存到项目
+      const prefix = getNextPatchPrefix()
+      const fullName = prefix + (patchName.value.endsWith('.patch') ? patchName.value : patchName.value + '.patch')
+
       await savePatchApi({
         repo_key: props.repoKey,
-        patch_name: patchName.value.endsWith('.patch') ? patchName.value : patchName.value + '.patch',
+        patch_name: fullName,
         patch_content: content,
         custom_path: selectedPath.value || undefined,
         commit_message: autoCommit.value ? commitMessage.value : undefined,
@@ -646,6 +651,27 @@ function getNextPatchName(): string {
   if (!seriesStats.value || seriesStats.value.next_patch_index < 0) return ''
   const patch = patches.value[seriesStats.value.next_patch_index]
   return patch ? patch.name : ''
+}
+
+function getNextPatchPrefix(): string {
+  // 自动生成下一个 patch 的序号前缀
+  // 例如：如果已有 001-base.patch, 002-feature.patch
+  // 则下一个前缀为 003-
+  if (patches.value.length === 0) {
+    return '001-'
+  }
+
+  // 找到最大的序号
+  let maxSeq = 0
+  patches.value.forEach(p => {
+    if (p.sequence > maxSeq) {
+      maxSeq = p.sequence
+    }
+  })
+
+  // 下一个序号
+  const nextSeq = maxSeq + 1
+  return String(nextSeq).padStart(3, '0') + '-'
 }
 
 async function applyNextPatch() {
