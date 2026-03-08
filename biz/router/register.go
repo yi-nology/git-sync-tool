@@ -65,8 +65,16 @@ func GeneratedRegister(h *server.Hertz) {
 	stats.Register(h)
 
 	// 前端 SPA - 从嵌入的 FS 读取
+	// 注意：这个路由应该在所有 API 路由之后注册，并且只匹配非 API 路径
 	h.GET("/*filepath", func(ctx context.Context, c *app.RequestContext) {
 		fp := c.Param("filepath")
+
+		// 跳过 API 路径，让 API 路由处理
+		if strings.HasPrefix(fp, "api/") {
+			c.Next(ctx)
+			return
+		}
+
 		if fp == "" {
 			fp = "index.html"
 		}
@@ -82,6 +90,13 @@ func GeneratedRegister(h *server.Hertz) {
 
 	h.HEAD("/*filepath", func(ctx context.Context, c *app.RequestContext) {
 		fp := c.Param("filepath")
+
+		// 跳过 API 路径，让 API 路由处理
+		if strings.HasPrefix(fp, "api/") {
+			c.Next(ctx)
+			return
+		}
+
 		if fp == "" {
 			fp = "index.html"
 		}
