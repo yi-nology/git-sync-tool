@@ -31,7 +31,17 @@ export function useEcharts(domRef: Ref<HTMLElement | null>) {
   }
 
   function setOption(option: EChartsOption) {
-    if (!instance.value) init()
+    if (!instance.value) {
+      init()
+      // 如果 DOM 还没准备好，稍后重试
+      if (!instance.value) {
+        setTimeout(() => {
+          init()
+          instance.value?.setOption(option, true)
+        }, 50)
+        return
+      }
+    }
     instance.value?.setOption(option, true)
   }
 

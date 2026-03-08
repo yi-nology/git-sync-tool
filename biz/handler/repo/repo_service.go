@@ -12,6 +12,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/yi-nology/git-manage-service/biz/dal/db"
 	"github.com/yi-nology/git-manage-service/biz/model/api"
+	"github.com/yi-nology/git-manage-service/biz/model/domain"
 	"github.com/yi-nology/git-manage-service/biz/model/po"
 	"github.com/yi-nology/git-manage-service/biz/service/audit"
 	"github.com/yi-nology/git-manage-service/biz/service/auth"
@@ -467,4 +468,209 @@ func repoNameFromURL(remoteURL string) string {
 	name = strings.TrimSuffix(name, ".git")
 	name = strings.TrimSpace(name)
 	return name
+}
+
+// ScanDirectory 扫描目录下的所有 Git 仓库
+// @router /api/v1/repo/scan-directory [POST]
+func ScanDirectory(ctx context.Context, c *app.RequestContext) {
+	var req api.ScanDirectoryReq
+	if err := c.BindAndValidate(&req); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	if req.Path == "" {
+		response.BadRequest(c, "path is required")
+		return
+	}
+
+	// 检查路径是否存在
+	if _, err := os.Stat(req.Path); os.IsNotExist(err) {
+		response.BadRequest(c, "path does not exist")
+		return
+	}
+
+	// 默认扫描深度
+	depth := req.Depth
+	if depth <= 0 {
+		depth = 2
+	}
+
+	gitSvc := git.NewGitService()
+	var repos []api.ScannedRepo
+
+	// 扫描函数
+	var scan func(path string, currentDepth int)
+	scan = func(path string, currentDepth int) {
+		if currentDepth > depth {
+			return
+		}
+
+		entries, err := os.ReadDir(path)
+		if err != nil {
+			return
+		}
+
+		for _, entry := range entries {
+			if !entry.IsDir() {
+				continue
+			}
+
+			name := entry.Name()
+			// 跳过隐藏目录和常见的非仓库目录
+			if strings.HasPrefix(name, ".") || name == "node_modules" || name == "vendor" {
+				continue
+			}
+
+			subPath := filepath.Join(path, name)
+
+			// 检查是否是 Git 仓库
+			if gitSvc.IsGitRepo(subPath) {
+				repo := api.ScannedRepo{
+					Name:    name,
+					Path:    subPath,
+					Remotes: []domain.GitRemote{},
+				}
+
+				// 获取远程配置
+				config, err := gitSvc.GetRepoConfig(subPath)
+				if err == nil {
+					repo.Remotes = config.Remotes
+				}
+
+				// 获取当前分支
+				branch, _ := gitSvc.GetHeadBranch(subPath)
+				repo.CurrentBranch = branch
+
+				// 获取最后一次提交的短哈希
+				if branch != "" {
+					if hash, err := gitSvc.GetCommitHash(subPath, "", branch); err == nil {
+						if len(hash) > 7 {
+							repo.LastCommit = hash[:7]
+						} else {
+							repo.LastCommit = hash
+						}
+					}
+				}
+
+				// 检查是否有未提交的更改
+				status, _ := gitSvc.GetStatus(subPath)
+				repo.HasChanges = status != ""
+
+				repos = append(repos, repo)
+			} else if req.Recursive || currentDepth < depth {
+				// 递归扫描子目录
+				scan(subPath, currentDepth+1)
+			}
+		}
+	}
+
+	scan(req.Path, 1)
+
+	response.Success(c, api.ScanDirectoryResp{
+		Repos: repos,
+		Total: len(repos),
+	})
+}
+
+// BatchCreate 批量注册仓库
+// @router /api/v1/repo/batch-create [POST]
+func BatchCreate(ctx context.Context, c *app.RequestContext) {
+	var req api.BatchCreateRepoReq
+	if err := c.BindAndValidate(&req); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	if len(req.Repos) == 0 {
+		response.BadRequest(c, "repos is required")
+		return
+	}
+
+	gitSvc := git.NewGitService()
+	repoDAO := db.NewRepoDAO()
+
+	success := make([]api.RepoDTO, 0)
+	failed := make([]api.BatchFailedItem, 0)
+
+	for _, item := range req.Repos {
+		// 验证路径
+		if !gitSvc.IsGitRepo(item.Path) {
+			failed = append(failed, api.BatchFailedItem{
+				Name:   item.Name,
+				Path:   item.Path,
+				Reason: "not a valid git repository",
+			})
+			continue
+		}
+
+		// 检查是否已注册
+		existing, err := repoDAO.FindByPath(item.Path)
+		if err == nil && existing != nil && existing.ID > 0 {
+			failed = append(failed, api.BatchFailedItem{
+				Name:   item.Name,
+				Path:   item.Path,
+				Reason: "repository already registered",
+			})
+			continue
+		}
+
+		// 获取远程 URL
+		config, err := gitSvc.GetRepoConfig(item.Path)
+		remoteURL := ""
+		if err == nil && len(config.Remotes) > 0 {
+			origin := findRemote(config.Remotes, "origin")
+			if origin != nil {
+				remoteURL = origin.FetchURL
+			} else {
+				remoteURL = config.Remotes[0].FetchURL
+			}
+		}
+
+		// 创建仓库记录
+		repo := po.Repo{
+			Key:                 uuid.New().String(),
+			Name:                item.Name,
+			Path:                item.Path,
+			RemoteURL:           remoteURL,
+			DefaultCredentialID: item.DefaultCredentialID,
+		}
+
+		if err := repoDAO.Create(&repo); err != nil {
+			failed = append(failed, api.BatchFailedItem{
+				Name:   item.Name,
+				Path:   item.Path,
+				Reason: "failed to create: " + err.Error(),
+			})
+			continue
+		}
+
+		// 记录审计日志
+		audit.AuditSvc.Log(c, "CREATE", "repo:"+repo.Key, map[string]string{"name": repo.Name, "batch": "true"})
+
+		// 异步同步统计信息
+		go func(r po.Repo) {
+			head, err := gitSvc.GetHeadBranch(r.Path)
+			if err == nil && head != "" {
+				stats.StatsSvc.SyncRepoStats(r.ID, r.Path, head)
+			}
+		}(repo)
+
+		success = append(success, api.NewRepoDTO(repo))
+	}
+
+	response.Success(c, api.BatchCreateRepoResp{
+		Success: success,
+		Failed:  failed,
+	})
+}
+
+// findRemote 在远程列表中查找指定名称的远程
+func findRemote(remotes []domain.GitRemote, name string) *domain.GitRemote {
+	for i := range remotes {
+		if remotes[i].Name == name {
+			return &remotes[i]
+		}
+	}
+	return nil
 }

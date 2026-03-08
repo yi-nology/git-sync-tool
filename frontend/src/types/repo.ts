@@ -66,3 +66,44 @@ export interface TrackingBranch {
   name: string
   upstream_ref: string
 }
+
+// 新增：扫描到的仓库信息
+export interface ScannedRepo {
+  name: string
+  path: string
+  remotes: GitRemote[]
+  current_branch: string
+  last_commit: string
+  has_changes: boolean
+}
+
+// 新增：扫描目录响应
+export interface ScanDirectoryResp {
+  repos: ScannedRepo[]
+  total: number
+}
+
+// 新增：批量注册请求项
+export interface BatchRepoItem {
+  name: string
+  path: string
+  default_credential_id?: number
+}
+
+// 新增：批量注册请求
+export interface BatchCreateReq {
+  repos: BatchRepoItem[]
+}
+
+// 新增：批量注册失败项
+export interface BatchFailedItem {
+  name: string
+  path: string
+  reason: string
+}
+
+// 新增：批量注册响应
+export interface BatchCreateResp {
+  success: RepoDTO[]
+  failed: BatchFailedItem[]
+}
