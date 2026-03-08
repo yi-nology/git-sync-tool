@@ -20,6 +20,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/transport"
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
 	"github.com/go-git/go-git/v5/plumbing/transport/ssh"
+	"github.com/go-git/go-git/v5/storage/memory"
 	ssh2 "golang.org/x/crypto/ssh"
 
 	"github.com/yi-nology/git-manage-service/biz/model/domain"
@@ -109,16 +110,16 @@ func (s *GitService) GetAuthFromDBKey(privateKey, passphrase string) (transport.
 
 // TestRemoteConnectionWithDBKey 使用数据库密钥测试远程连接
 func (s *GitService) TestRemoteConnectionWithDBKey(url, privateKey, passphrase string) error {
-	// 方案1: 先尝试使用原生 git 命令（更可靠）
+	// 优先使用原生 git 命令（更可靠）
 	err := s.testConnectionWithGitCommand(url, privateKey, passphrase)
 	if err == nil {
 		return nil
 	}
 
-	// 方案2: 回退到 go-git（作为备选）
+	// 原生命令失败，尝试使用 go-git
 	auth, err := s.GetAuthFromDBKey(privateKey, passphrase)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to prepare auth: %v", err)
 	}
 
 	ep, err := transport.NewEndpoint(url)
@@ -126,7 +127,9 @@ func (s *GitService) TestRemoteConnectionWithDBKey(url, privateKey, passphrase s
 		return fmt.Errorf("invalid URL: %v", err)
 	}
 
-	r, err := git.Init(nil, nil)
+	// 使用 memory storage 初始化
+	storer := memory.NewStorage()
+	r, err := git.Init(storer, nil)
 	if err != nil {
 		return fmt.Errorf("failed to init memory repo: %v", err)
 	}
@@ -143,7 +146,7 @@ func (s *GitService) TestRemoteConnectionWithDBKey(url, privateKey, passphrase s
 		Auth: auth,
 	})
 	if err != nil {
-		return fmt.Errorf("connection failed: %v", err)
+		return fmt.Errorf("connection failed: %v (git command also failed: %v)", err, err)
 	}
 
 	return nil
@@ -164,7 +167,7 @@ func (s *GitService) testConnectionWithGitCommand(url, privateKey, passphrase st
 		keyContent += "\n"
 	}
 
-	// 如果有 passphrase，需要解密私钥
+	// 如果有 passphrase，需要解密私钥并重新编码
 	if passphrase != "" {
 		// 解析加密的私钥
 		rawKey, err := ssh2.ParseRawPrivateKeyWithPassphrase([]byte(keyContent), []byte(passphrase))
@@ -172,15 +175,10 @@ func (s *GitService) testConnectionWithGitCommand(url, privateKey, passphrase st
 			return fmt.Errorf("failed to parse encrypted private key: %v", err)
 		}
 
-		// 重新编码为无密码的 PEM 格式
-		pemBytes, err := x509.MarshalPKCS8PrivateKey(rawKey)
+		// 使用 ssh.MarshalPrivateKey 序列化（支持所有密钥类型）
+		pemBlock, err := ssh2.MarshalPrivateKey(rawKey, "")
 		if err != nil {
 			return fmt.Errorf("failed to marshal private key: %v", err)
-		}
-
-		pemBlock := &pem.Block{
-			Type:  "PRIVATE KEY",
-			Bytes: pemBytes,
 		}
 		keyContent = string(pem.EncodeToMemory(pemBlock))
 	}

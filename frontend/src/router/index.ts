@@ -55,6 +55,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '分支对比' },
       },
       {
+        path: 'repos/:repoKey/patches',
+        name: 'RepoPatches',
+        component: () => import('@/views/repo/PatchPage.vue'),
+        meta: { title: 'Patch 管理' },
+      },
+      {
         path: 'repos/:repoKey/sync',
         name: 'RepoSync',
         component: () => import('@/views/sync/SyncTaskPage.vue'),
