@@ -410,7 +410,7 @@ async function loadPatches() {
   loading.value = true
   try {
     const result = await listPatches(props.repoKey)
-    patches.value = result
+    patches.value = result || []
 
     // 计算统计信息
     const applied = patches.value.filter(p => p.is_applied).length
@@ -430,6 +430,8 @@ async function loadPatches() {
     }
   } catch (e: any) {
     showError('加载失败', e)
+    patches.value = []
+    seriesStats.value = null
   } finally {
     loading.value = false
   }
@@ -672,7 +674,7 @@ function getNextPatchPrefix(): string {
   // 自动生成下一个 patch 的序号前缀
   // 例如：如果已有 001-base.patch, 002-feature.patch
   // 则下一个前缀为 003-
-  if (patches.value.length === 0) {
+  if (!patches.value || patches.value.length === 0) {
     return '001-'
   }
 
