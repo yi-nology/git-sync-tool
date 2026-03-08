@@ -47,3 +47,13 @@ app.log
 
 # Frontend
 frontend/.vite/
+
+# Node.js (root level - for testing only)
+node_modules/
+package.json
+package-lock.json
+
+# Test artifacts
+test-*.js
+test-results/
+check-*.js

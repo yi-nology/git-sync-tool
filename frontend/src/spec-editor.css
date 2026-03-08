@@ -1,0 +1,112 @@
+.spec-editor-container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.spec-editor-container .el-button {
+  border-color: #333;
+  background: #252526;
+  color: #d4d4d4;
+}
+
+.spec-editor-container .el-button:hover {
+  background: #2a2d2e;
+  border-color: #007fd4;
+}
+
+.spec-editor-container .el-button--primary {
+  background: #0e639c;
+  border-color: #0e639c;
+}
+
+.spec-editor-container .el-button--primary:hover {
+  background: #1177bb;
+  border-color: #1177bb;
+}
+
+.spec-editor-container .el-input__wrapper {
+  background: #3c3c3c;
+  border-color: #3c3c3c;
+  box-shadow: none;
+}
+
+.spec-editor-container .el-input__wrapper:hover {
+  border-color: #007fd4;
+}
+
+.spec-editor-container .el-input__inner {
+  color: #d4d4d4;
+}
+
+.spec-editor-container .el-input__inner::placeholder {
+  color: #858585;
+}
+
+.spec-editor-container .el-tag {
+  background: #2d2d2d;
+  border-color: #3c3c3c;
+  color: #d4d4d4;
+}
+
+.spec-editor-container .el-tag--warning {
+  background: #3c3c3c;
+  border-color: #cca700;
+  color: #cca700;
+}
+
+.spec-editor-container .el-dialog {
+  background: #252526;
+  border: 1px solid #333;
+}
+
+.spec-editor-container .el-dialog__header {
+  border-bottom: 1px solid #333;
+}
+
+.spec-editor-container .el-dialog__title {
+  color: #d4d4d4;
+}
+
+.spec-editor-container .el-dialog__body {
+  color: #d4d4d4;
+}
+
+.spec-editor-container .el-table {
+  background: transparent;
+  color: #d4d4d4;
+}
+
+.spec-editor-container .el-table th.el-table__cell {
+  background: #2d2d2d;
+  border-bottom: 1px solid #333;
+}
+
+.spec-editor-container .el-table td.el-table__cell {
+  border-bottom: 1px solid #2d2d2d;
+}
+
+.spec-editor-container .el-table--enable-row-hover .el-table__body tr:hover > td.el-table__cell {
+  background: #2a2d2e;
+}
+
+.spec-editor-container .el-empty__description p {
+  color: #858585;
+}
+
+.spec-editor-container .el-select-dropdown {
+  background: #252526;
+  border-color: #333;
+}
+
+.spec-editor-container .el-select-dropdown__item {
+  color: #d4d4d4;
+}
+
+.spec-editor-container .el-select-dropdown__item:hover {
+  background: #2a2d2e;
+}
+
+.spec-editor-container .el-select-dropdown__item.selected {
+  color: #3794ff;
+}

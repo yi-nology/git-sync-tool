@@ -90,6 +90,12 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/settings/CredentialPage.vue'),
         meta: { title: '凭证管理' },
       },
+      {
+        path: 'spec-editor',
+        name: 'SpecEditor',
+        component: () => import('@/views/spec/SpecEditorPage.vue'),
+        meta: { title: 'Spec 编辑器' },
+      },
     ],
   },
 ]
