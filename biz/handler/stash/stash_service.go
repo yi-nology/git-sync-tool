@@ -7,7 +7,6 @@ import (
 
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/yi-nology/git-manage-service/biz/dal/db"
-	common "github.com/yi-nology/git-manage-service/biz/model/common"
 	stash "github.com/yi-nology/git-manage-service/biz/model/stash"
 	"github.com/yi-nology/git-manage-service/biz/service/audit"
 	"github.com/yi-nology/git-manage-service/biz/service/git"

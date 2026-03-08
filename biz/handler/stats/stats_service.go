@@ -13,8 +13,6 @@ import (
 	"github.com/yi-nology/git-manage-service/biz/dal/db"
 	"github.com/yi-nology/git-manage-service/biz/handler/helper"
 	"github.com/yi-nology/git-manage-service/biz/model/api"
-	common "github.com/yi-nology/git-manage-service/biz/model/common"
-	stats "github.com/yi-nology/git-manage-service/biz/model/stats"
 	"github.com/yi-nology/git-manage-service/biz/service/git"
 	statsSvc "github.com/yi-nology/git-manage-service/biz/service/stats"
 	"github.com/yi-nology/git-manage-service/pkg/response"
