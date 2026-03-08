@@ -219,16 +219,25 @@
             <div class="hint">系统自动生成序号，你只需输入描述部分</div>
           </el-form-item>
           <el-form-item label="保存路径">
-            <el-cascader
+            <el-select
               v-model="selectedPath"
-              :options="pathOptions"
-              :props="{ checkStrictly: true, emitPath: false, label: 'name', value: 'path' }"
               filterable
-              clearable
-              placeholder="选择保存目录（默认: patches/）"
+              allow-create
+              placeholder="选择或输入保存路径（默认: patches/）"
               style="width: 100%"
-            />
-            <div class="path-hint">留空则保存到仓库的 patches 目录</div>
+            >
+              <el-option label="patches/ (默认)" value="patches" />
+              <el-option
+                v-for="dir in repoDirs"
+                :key="dir.path"
+                :label="dir.path + '/'"
+                :value="dir.path"
+              />
+            </el-select>
+            <div class="path-hint">
+              💡 建议使用默认的 <code>patches/</code> 目录
+              <el-button size="small" link @click="selectedPath = 'patches'">重置为默认</el-button>
+            </div>
           </el-form-item>
           <el-form-item>
             <el-checkbox v-model="autoCommit">立即提交到 Git</el-checkbox>
@@ -376,7 +385,7 @@ const generating = ref(false)
 const branches = ref<BranchInfo[]>([])
 const tags = ref<string[]>([])
 const recentCommits = ref<CommitDetail[]>([])
-const pathOptions = ref<any[]>([])
+const repoDirs = ref<any[]>([])
 
 // 查看
 const showViewDialog = ref(false)
@@ -450,38 +459,44 @@ async function loadDialogData() {
     console.error('Failed to load commits:', e)
   }
 
-  // 加载文件树（用于选择保存路径）
+  // 加载仓库目录（用于选择保存路径）
   try {
     const res = await getFileTree(props.repoKey, { recursive: true })
-    pathOptions.value = buildPathTree(res.entries)
+    repoDirs.value = buildPathTree(res.entries)
+    // 默认选中 patches 目录
+    if (!selectedPath.value) {
+      selectedPath.value = 'patches'
+    }
   } catch (e) {
     console.error('Failed to load file tree:', e)
   }
 }
 
 function buildPathTree(entries: any[]): any[] {
-  const tree: any[] = [{ name: '根目录', path: '' }]
+  // 只提取目录，构建简洁的目录列表
+  const dirs: any[] = []
 
-  const dirs = new Set<string>()
   entries.forEach((e: any) => {
     if (e.type === 'dir') {
-      const parts = e.path.split('/')
-      let path = ''
-      parts.forEach((part: string) => {
-        path = path ? `${path}/${part}` : part
-        dirs.add(path)
-      })
+      // 排除隐藏目录和常见不需要的目录
+      const path = e.path
+      if (!path.startsWith('.') &&
+          !path.includes('node_modules') &&
+          !path.includes('vendor') &&
+          !path.includes('dist') &&
+          !path.includes('build')) {
+        dirs.push({
+          path: path,
+          name: path.split('/').pop() || path,
+        })
+      }
     }
   })
 
-  dirs.forEach(path => {
-    tree.push({
-      name: path,
-      path: path,
-    })
-  })
+  // 按路径排序
+  dirs.sort((a, b) => a.path.localeCompare(b.path))
 
-  return tree
+  return dirs
 }
 
 function openGenerateDialog() {
@@ -754,6 +769,13 @@ function formatSize(bytes: number): string {
   font-size: 12px;
   color: #909399;
   margin-top: 4px;
+}
+
+.path-hint code {
+  padding: 2px 6px;
+  background: #f0f0f0;
+  border-radius: 3px;
+  font-family: 'Monaco', 'Menlo', monospace;
 }
 
 .hint {
