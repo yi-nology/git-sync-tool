@@ -79,6 +79,11 @@ import AppCard from '@/components/common/AppCard.vue'
 import AppButton from '@/components/common/AppButton.vue'
 import AppInput from '@/components/common/AppInput.vue'
 
+// 图标被模板中的 icon prop 引用
+void Key
+void Lock
+void Bell
+
 const loading = ref(false)
 const saving = ref(false)
 const config = ref<SystemConfig>({
