@@ -13,26 +13,32 @@ module.exports = {
         link: '/usage.md'
       },
       {
-        text: '部署指南',
-        link: '/deployment.md'
+        text: 'Spec 编辑器',
+        link: '/spec-editor.md'
       },
       {
-        text: '产品手册',
-        link: '/product_manual.md'
+        text: 'Patch 管理',
+        link: '/patch-manager.md'
+      },
+      {
+        text: '部署指南',
+        link: '/deployment.md'
       },
       {
         text: 'Webhook',
         link: '/webhook.md'
       },
       {
-        text: '开发笔记',
-        link: '/dev-notes/'
+        text: 'GitHub',
+        link: 'https://github.com/yi-nology/git-manage-service'
       }
     ],
     sidebar: {
       '/': [
         '',
         'usage',
+        'spec-editor',
+        'patch-manager',
         'deployment',
         'product_manual',
         'webhook'
