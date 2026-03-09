@@ -1,4 +1,4 @@
-.PHONY: build build-http build-rpc build-all build-full build-frontend build-frontend-integrate run run-http run-rpc run-frontend preview-frontend clean clean-frontend gen kitex-gen hz-gen test lint fmt help
+.PHONY: build build-http build-rpc build-all build-full build-frontend build-frontend-integrate run run-http run-rpc run-frontend preview-frontend clean clean-frontend gen kitex-gen hz-gen test lint fmt help desktop desktop-darwin desktop-windows desktop-linux desktop-all
 
 # 版本信息
 VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
@@ -214,6 +214,13 @@ help:
 	@echo "  make clean        - Clean backend build artifacts"
 	@echo "  make clean-frontend - Clean frontend build artifacts"
 	@echo ""
+	@echo "Desktop Application (Wails):"
+	@echo "  make desktop      - 🖥️  Build desktop app for current platform"
+	@echo "  make desktop-darwin  - Build macOS app (universal)"
+	@echo "  make desktop-windows - Build Windows exe + installer"
+	@echo "  make desktop-linux   - Build Linux deb/rpm/AppImage"
+	@echo "  make desktop-all     - Build for all platforms"
+	@echo ""
 	@echo "Other:"
 	@echo "  make help         - Show this help"
 	@echo ""
@@ -221,3 +228,81 @@ help:
 	@echo "  VERSION=$(VERSION)"
 	@echo "  BUILD_TIME=$(BUILD_TIME)"
 	@echo "  GIT_COMMIT=$(GIT_COMMIT)"
+
+# ========================================
+# Desktop Application Build (Wails)
+# ========================================
+
+desktop:
+	@echo "========================================"
+	@echo "Building Desktop Application..."
+	@echo "========================================"
+	@echo "Version: $(VERSION)"
+	@echo "Build Time: $(BUILD_TIME)"
+	@echo "Git Commit: $(GIT_COMMIT)"
+	@echo ""
+	@echo "Checking Wails installation..."
+	@if ! command -v wails &> /dev/null; then \
+		echo "❌ Wails not found. Please run:"; \
+		echo "   make setup-desktop"; \
+		exit 1; \
+	fi
+	@echo "✓ Wails installed"
+	@echo ""
+	@echo "Building desktop application..."
+	@wails build -clean
+	@echo ""
+	@echo "========================================"
+	@echo "✓ Desktop Build Complete!"
+	@echo "========================================"
+	@echo ""
+	@echo "Check the build/bin directory for output"
+	@ls -lh build/bin/ 2>/dev/null || echo "Build output not found"
+
+setup-desktop:
+	@echo "Setting up desktop build environment..."
+	@./script/setup-desktop.sh
+
+desktop-darwin:
+	@echo "Building macOS application..."
+	@if ! command -v wails &> /dev/null; then \
+		go install github.com/wailsapp/wails/v2/cmd/wails@latest; \
+	fi
+	@wails build -platform darwin/universal -clean
+	@echo "✓ macOS build complete: build/bin/"
+
+desktop-windows:
+	@echo "Building Windows application..."
+	@if ! command -v wails &> /dev/null; then \
+		go install github.com/wailsapp/wails/v2/cmd/wails@latest; \
+	fi
+	@wails build -platform windows/amd64 -clean -nsis
+	@echo "✓ Windows build complete: build/bin/"
+
+desktop-linux:
+	@echo "Building Linux applications..."
+	@if ! command -v wails &> /dev/null; then \
+		go install github.com/wailsapp/wails/v2/cmd/wails@latest; \
+	fi
+	@echo "Building DEB package..."
+	@wails build -platform linux/amd64 -clean -deb
+	@echo "Building RPM package..."
+	@wails build -platform linux/amd64 -clean -rpm
+	@echo "Building AppImage..."
+	@wails build -platform linux/amd64 -clean -appimage
+	@echo "✓ Linux builds complete: build/bin/"
+
+desktop-all:
+	@echo "========================================"
+	@echo "Building All Desktop Platforms..."
+	@echo "========================================"
+	@$(MAKE) desktop-darwin
+	@$(MAKE) desktop-windows
+	@$(MAKE) desktop-linux
+	@echo ""
+	@echo "========================================"
+	@echo "✓ All Desktop Builds Complete!"
+	@echo "========================================"
+	@echo ""
+	@echo "Available builds:"
+	@ls -lh build/bin/
