@@ -4,7 +4,7 @@
 
 ## 功能概览
 
-![通知渠道配置](/images/notification-channel.png)
+![通知渠道配置](/git-manage-service/images/notification-channel.png)
 
 - **多渠道支持**: 钉钉、企业微信、飞书、蓝信、邮件、自定义 Webhook
 - **灵活触发**: 支持 8 种触发事件

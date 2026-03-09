@@ -29,7 +29,7 @@ footer: MIT Licensed | Copyright © 2024-present
 
 ## 📸 文档预览
 
-![文档首页](/images/docs/docs-home.png)
+![文档首页](/git-manage-service/images/docs/docs-home.png)
 
 ## 🚀 5 分钟上手
 
@@ -57,15 +57,15 @@ open http://localhost:38080
 
 | 仓库管理 | 分支操作 |
 |:---:|:---:|
-| ![仓库列表](/images/repo-list-with-data.png) | ![分支管理](/images/branch-management.png) |
+| ![仓库列表](/git-manage-service/images/repo-list-with-data.png) | ![分支管理](/git-manage-service/images/branch-management.png) |
 
 | 同步任务 | 代码度量 |
 |:---:|:---:|
-| ![同步任务](/images/sync-tasks.png) | ![Git 度量](/images/git-metrics.png) |
+| ![同步任务](/git-manage-service/images/sync-tasks.png) | ![Git 度量](/git-manage-service/images/git-metrics.png) |
 
 | 审计日志 | 通知配置 |
 |:---:|:---:|
-| ![审计日志](/images/audit-log.png) | ![通知渠道](/images/notification-channel.png) |
+| ![审计日志](/git-manage-service/images/audit-log.png) | ![通知渠道](/git-manage-service/images/notification-channel.png) |
 
 </div>
 

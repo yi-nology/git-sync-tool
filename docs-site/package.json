@@ -10,11 +10,18 @@
     "dev": "vuepress dev ../docs",
     "build": "vuepress build ../docs"
   },
-  "keywords": ["git", "service", "documentation"],
+  "keywords": [
+    "git",
+    "service",
+    "documentation"
+  ],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
     "vuepress": "^1.9.10"
+  },
+  "devDependencies": {
+    "puppeteer": "^24.38.0"
   }
 }

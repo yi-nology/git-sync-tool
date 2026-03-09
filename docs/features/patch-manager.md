@@ -1,6 +1,6 @@
 # Patch 管理
 
-![文档截图](/images/docs/docs-patch-manager.png)
+![文档截图](/git-manage-service/images/docs/docs-patch-manager.png)
 
 ## 概述
 

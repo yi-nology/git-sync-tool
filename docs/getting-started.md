@@ -2,7 +2,7 @@
 
 本指南将帮助你在 5 分钟内完成 Git Manage Service 的安装和基本配置。
 
-![文档截图](/images/docs/docs-getting-started.png)
+![文档截图](/git-manage-service/images/docs/docs-getting-started.png)
 
 ## 1. 下载安装
 
@@ -70,7 +70,7 @@ docker run -d \
 
 浏览器打开: [http://localhost:38080](http://localhost:38080)
 
-![首页](/images/homepage.png)
+![首页](/git-manage-service/images/homepage.png)
 
 ## 4. 基本配置
 
@@ -81,7 +81,7 @@ docker run -d \
 3. 输入仓库 **名称** 和 **本地路径**
 4. 点击保存
 
-![注册仓库](/images/repo-register.png)
+![注册仓库](/git-manage-service/images/repo-register.png)
 
 ### 4.2 配置 SSH 密钥（如需访问私有仓库）
 
@@ -91,7 +91,7 @@ docker run -d \
 4. 粘贴你的 SSH 私钥内容
 5. 保存后，在仓库配置中选择该密钥
 
-![SSH 密钥管理](/images/ssh-keys.png)
+![SSH 密钥管理](/git-manage-service/images/ssh-keys.png)
 
 ### 4.3 创建同步任务
 
@@ -104,7 +104,7 @@ docker run -d \
    - **Cron 表达式**: 如 `0 */2 * * *`（每 2 小时同步）
 4. 保存并启用
 
-![新建同步任务](/images/sync-task-create.png)
+![新建同步任务](/git-manage-service/images/sync-task-create.png)
 
 ### 4.4 配置通知（可选）
 
@@ -113,7 +113,7 @@ docker run -d \
 3. 添加通知渠道（钉钉/企微/飞书等）
 4. 配置触发事件和消息模板
 
-![通知渠道配置](/images/notification-channel.png)
+![通知渠道配置](/git-manage-service/images/notification-channel.png)
 
 ## 5. 验证功能
 
@@ -127,7 +127,7 @@ docker run -d \
 2. 筛选操作类型为 **"sync"**
 3. 查看详细的执行记录
 
-![审计日志](/images/audit-log.png)
+![审计日志](/git-manage-service/images/audit-log.png)
 
 ## 下一步
 
