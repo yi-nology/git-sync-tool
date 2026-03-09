@@ -152,6 +152,9 @@ func startHTTPServer() *hserver.Hertz {
 	addr := fmt.Sprintf(":%d", configs.GlobalConfig.Server.Port)
 	h := hserver.Default(hserver.WithHostPorts(addr))
 
+	// 初始化嵌入的静态文件系统
+	router.SetEmbedFS(GetPublicFS(), GetDocsFS())
+
 	// 注册路由
 	router.GeneratedRegister(h)
 
