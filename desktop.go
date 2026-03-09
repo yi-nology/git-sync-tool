@@ -11,7 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
-	"strings"
+	"time"
 
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
@@ -50,8 +50,10 @@ func NewApp(version, buildTime, gitCommit string) *App {
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 	
-	// 在后台启动后端服务
-	go a.startBackend()
+	// 在后台异步启动后端服务（延迟 1 秒以确保 Wails 完成初始化）
+	time.AfterFunc(1*time.Second, func() {
+		go a.startBackend()
+	})
 }
 
 // shutdown 应用关闭时调用
@@ -71,18 +73,6 @@ func isPortInUse(port int) bool {
 
 // startBackend 启动后端服务
 func (a *App) startBackend() {
-	// 检查是否在 Wails 构建时（生成绑定阶段）
-	// Wails 在生成绑定时会运行应用，但此时不应初始化后端
-	// 检测方法：检查环境变量或是否在临时构建目录中
-	isBuildTime := os.Getenv("WAILS_BUILD") != "" || 
-		strings.Contains(os.Getenv("PWD"), "wails") ||
-		strings.Contains(os.Args[0], "wails")
-	
-	if isBuildTime {
-		log.Println("Skipping backend initialization during build/bindings generation")
-		return
-	}
-	
 	log.Println("Initializing backend services...")
 	
 	// 设置桌面应用的数据目录
@@ -105,6 +95,9 @@ func (a *App) startBackend() {
 	sync.InitCronService()
 	stats.InitStatsService()
 	audit.InitAuditService()
+	
+	// 设置嵌入的文件系统（供 API 路由使用）
+	router.SetEmbedFS(GetPublicFS(), GetDocsFS())
 	
 	// 检测端口是否被占用
 	port := 38080
