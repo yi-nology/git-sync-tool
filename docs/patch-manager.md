@@ -6,13 +6,9 @@ Patch 管理功能帮助开发者生成、管理和应用 Git Patch 文件，支
 
 > **GitHub 仓库**: [yi-nology/git-manage-service](https://github.com/yi-nology/git-manage-service)
 
-![Patch 管理界面](./images/patch-manager.png)
-
 ## 功能特性
 
 ### 1. Patch 列表管理
-
-![Patch 列表](./images/patch-list.png)
 
 - **状态可视化**：清晰显示已应用、待应用、冲突状态
 - **进度追踪**：显示应用进度条
@@ -24,19 +20,13 @@ Patch 管理功能帮助开发者生成、管理和应用 Git Patch 文件，支
 
 #### 方式一：分支/Tag/Commit 范围
 
-![范围生成](./images/patch-generate-range.png)
-
 选择基准（起点）和目标（终点），自动生成差异 Patch。
 
 #### 方式二：选择 Commits
 
-![选择 Commits](./images/patch-generate-commits.png)
-
 从提交历史中选择特定 Commits，支持多选。
 
 ### 3. Patch 应用
-
-![应用 Patch](./images/patch-apply.png)
 
 - **自动检测**：应用前自动检查是否可以应用
 - **冲突提示**：如有冲突显示详细信息

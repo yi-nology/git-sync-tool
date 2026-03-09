@@ -6,13 +6,9 @@ Spec 编辑器是 Git Manage Service 提供的专业 RPM Spec 文件编辑工具
 
 > **GitHub 仓库**: [yi-nology/git-manage-service](https://github.com/yi-nology/git-manage-service)
 
-![Spec 编辑器界面](./images/spec-editor.png)
-
 ## 功能特性
 
 ### 1. 文件树管理
-
-![Spec 文件树](./images/spec-file-tree.png)
 
 - **自动扫描**：自动扫描仓库中的 `.spec` 文件
 - **搜索过滤**：支持文件名搜索和过滤
@@ -27,8 +23,6 @@ Spec 编辑器是 Git Manage Service 提供的专业 RPM Spec 文件编辑工具
 
 ### 3. 实时语法检查
 
-![语法检查](./images/spec-lint.png)
-
 - **实时 Linting**：编辑时自动检查语法错误
 - **问题面板**：显示所有错误、警告和信息
 - **快速定位**：点击问题自动跳转到对应行
@@ -38,15 +32,9 @@ Spec 编辑器是 Git Manage Service 提供的专业 RPM Spec 文件编辑工具
 
 ### 自动引导
 
-当进入一个没有 `.spec` 文件的仓库时，系统会自动显示空状态提示：
-
-![空状态](./images/spec-empty.png)
-
-点击 **"初始化 Spec 文件"** 按钮开始创建。
+当进入一个没有 `.spec` 文件的仓库时，系统会自动显示空状态提示，点击 **"初始化 Spec 文件"** 按钮开始创建。
 
 ### 填写表单
-
-![初始化表单](./images/spec-init-form.png)
 
 | 字段 | 说明 | 示例 |
 |------|------|------|
@@ -175,6 +163,6 @@ rm -rf %{buildroot}
 - **GitHub**: [https://github.com/yi-nology/git-manage-service](https://github.com/yi-nology/git-manage-service)
 - **Issues**: [https://github.com/yi-nology/git-manage-service/issues](https://github.com/yi-nology/git-manage-service/issues)
 - **Releases**: [https://github.com/yi-nology/git-manage-service/releases](https://github.com/yi-nology/git-manage-service/releases)
-- **Patch 管理](./patch-manager.md)
+- [Patch 管理](./patch-manager.md)
 - [分支管理](./usage.md#分支管理)
 - [部署指南](./deployment.md)
