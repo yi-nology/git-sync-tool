@@ -7,8 +7,8 @@
     "doc": "docs"
   },
   "scripts": {
-    "dev": "vuepress dev docs",
-    "build": "vuepress build docs"
+    "dev": "vuepress dev ../docs",
+    "build": "vuepress build ../docs"
   },
   "keywords": ["git", "service", "documentation"],
   "author": "",
