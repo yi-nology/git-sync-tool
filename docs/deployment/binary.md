@@ -2,7 +2,7 @@
 
 这是最简单直接的部署方式，适合单机环境。
 
-![文档截图](/images/docs/docs-deployment.png)
+![文档截图](/git-manage-service/images/docs/docs-deployment.png)
 
 ## 下载安装
 
