@@ -37,9 +37,34 @@
 
 ## 🚀 快速开始
 
-### 下载安装
+### 方式 1：桌面应用（推荐）🖥️
 
-从 [Releases](https://github.com/yi-nology/git-manage-service/releases) 下载适合你系统的版本：
+从 [Releases](https://github.com/yi-nology/git-manage-service/releases) 下载桌面应用：
+
+| 平台 | 文件 | 说明 |
+|------|------|------|
+| **macOS** | `GitManageService-macOS.zip` | Universal Binary (Intel + M1/M2) |
+| **Windows** | `GitManageService-Windows.zip` | 包含安装程序 |
+| **Linux** | `GitManageService-Linux.tar.gz` | DEB/RPM/AppImage |
+
+```bash
+# macOS
+unzip GitManageService-macOS.zip
+open "Git Manage Service.app"
+
+# Windows
+# 双击 git-manage-desktop.exe 或运行安装程序
+
+# Linux
+tar -xzf GitManageService-Linux.tar.gz
+sudo dpkg -i git-manage-desktop.deb  # DEB
+# 或
+./git-manage-desktop.AppImage         # AppImage
+```
+
+### 方式 2：Web 服务
+
+从 [Releases](https://github.com/yi-nology/git-manage-service/releases) 下载 Web 服务版本：
 
 ```bash
 # macOS Apple Silicon
