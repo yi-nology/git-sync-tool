@@ -247,6 +247,10 @@ const initFormRules = {
   ],
   name: [{ required: true, message: '请输入软件包名称', trigger: 'blur' }],
   version: [{ required: true, message: '请输入版本号', trigger: 'blur' }],
+  release: [{ required: true, message: '请输入发布号', trigger: 'blur' }],
+  summary: [{ required: true, message: '请输入简要描述', trigger: 'blur' }],
+  license: [{ required: true, message: '请选择许可证', trigger: 'change' }],
+}
 
 // 暴露刷新方法给父组件
 defineExpose({
@@ -264,10 +268,6 @@ defineExpose({
     }
   }
 })
-  release: [{ required: true, message: '请输入发布号', trigger: 'blur' }],
-  summary: [{ required: true, message: '请输入简要描述', trigger: 'blur' }],
-  license: [{ required: true, message: '请选择许可证', trigger: 'change' }],
-}
 
 watch(filterText, (val) => {
   treeRef.value?.filter(val)
