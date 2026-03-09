@@ -122,7 +122,7 @@
 
         <!-- Spec 编辑器 -->
         <div v-if="activeTab === 'spec'">
-          <SpecEditor :repo-key="repoKey" />
+          <SpecEditor ref="specEditorRef" :repo-key="repoKey" />
         </div>
         
         <!-- Git有效提交度量 -->
@@ -520,6 +520,7 @@ const repo = ref<RepoDTO | null>(null)
 const scanData = ref<ScanResult | null>(null)
 const activeTab = ref('info')
 const currentVersion = ref('')
+const specEditorRef = ref<{ refresh: () => void; clearEditor: () => void } | null>(null)
 
 // Stats
 const statsFilter = ref({ branch: '', author: '', since: '', until: '' })
@@ -613,6 +614,13 @@ onMounted(async () => {
 watch(activeTab, (val) => {
   if (val === 'versions' && versionList.value.length === 0) {
     loadVersions()
+  }
+  // 切换到 spec tab 时刷新文件树（分支可能已切换）
+  if (val === 'spec') {
+    nextTick(() => {
+      specEditorRef.value?.clearEditor()
+      specEditorRef.value?.refresh()
+    })
   }
 })
 
