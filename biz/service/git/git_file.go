@@ -62,6 +62,12 @@ func (s *GitService) GetTree(repoPath, ref, dirPath string, recursive bool) ([]T
 		return nil, err
 	}
 
+	// 规范化路径：处理 "." 和空路径
+	dirPath = strings.TrimSpace(dirPath)
+	if dirPath == "." || dirPath == "" {
+		dirPath = ""
+	}
+
 	// 如果指定了路径，获取子树
 	if dirPath != "" && dirPath != "/" {
 		dirPath = strings.TrimPrefix(dirPath, "/")
