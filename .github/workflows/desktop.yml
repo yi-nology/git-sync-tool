@@ -47,6 +47,7 @@ jobs:
 
       - name: Build macOS app
         run: |
+          export WAILS_BUILD=1
           wails build -platform darwin/universal
           cd build/bin
           if [ -d "Git Manage Service.app" ]; then
@@ -98,6 +99,7 @@ jobs:
 
       - name: Build Windows exe
         run: |
+          $env:WAILS_BUILD="1"
           wails build -platform windows/amd64
           Compress-Archive -Path build/bin/* -DestinationPath GitManageService-Windows.zip
 
@@ -146,6 +148,7 @@ jobs:
 
       - name: Build Linux packages
         run: |
+          export WAILS_BUILD=1
           wails build -platform linux/amd64
           cd build/bin
           tar -czf GitManageService-Linux.tar.gz git-manage-desktop

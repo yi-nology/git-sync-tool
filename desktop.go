@@ -55,6 +55,13 @@ func (a *App) shutdown(ctx context.Context) {
 
 // startBackend 启动后端服务
 func (a *App) startBackend() {
+	// 检查是否在构建时（通过环境变量或命令行参数判断）
+	// 在生成绑定时跳过后端初始化
+	if os.Getenv("WAILS_BUILD") != "" {
+		log.Println("Skipping backend initialization during build")
+		return
+	}
+	
 	log.Println("Initializing backend services...")
 	
 	// 加载配置
