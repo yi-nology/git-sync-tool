@@ -4,7 +4,7 @@ heroImage: /images/homepage.png
 heroText: Git Manage Service
 tagline: 轻量级多仓库自动化同步管理系统
 actionText: 快速开始 →
-actionLink: /usage
+actionLink: /getting-started
 features:
   - title: 📦 多仓库管理
     details: 轻松注册和管理本地 Git 仓库，支持仓库克隆、导入和可视化浏览
@@ -13,82 +13,55 @@ features:
   - title: ⏰ 自动化执行
     details: 内置 Cron 调度器，支持定时同步任务，也可通过 Webhook 触发
   - title: 🔔 多渠道通知
-    details: 支持钉钉、企业微信、飞书、蓝信、邮件、自定义 Webhook，支持自定义消息模板
+    details: 支持钉钉、企业微信、飞书、蓝信、邮件、自定义 Webhook
   - title: 🔐 SSH 密钥管理
     details: 统一管理 SSH 密钥，支持将密钥存储在数据库中
   - title: 📊 代码质量分析
     details: 提交统计、贡献者排行、代码度量等分析功能
-footer: MIT Licensed | Copyright © 2024-present | [GitHub](https://github.com/yi-nology/git-manage-service)
+footer: MIT Licensed | Copyright © 2024-present
 ---
 
-## 🚀 功能亮点
+<div class="quick-links">
 
-<div class="features-grid">
-
-### 仓库管理
-![仓库列表](./images/repo-list-with-data.png)
-
-支持注册现有仓库或克隆远程仓库，一键管理所有本地 Git 仓库。
-
-### 分支操作
-![分支管理](./images/branch-management.png)
-
-直观的分支管理界面，支持切换、推送、拉取、合并等操作。
-
-### 同步任务
-![同步任务](./images/sync-tasks.png)
-
-创建灵活的同步规则，支持单分支和全分支同步模式。
-
-### 代码度量
-![Git 度量](./images/git-metrics.png)
-
-提供贡献者排行、提交趋势、文件类型分布等分析。
-
-### 审计日志
-![审计日志](./images/audit-log.png)
-
-完整记录所有操作日志，支持按类型、对象、时间筛选。
-
-### 通知配置
-![通知渠道](./images/notification-channel.png)
-
-配置多种通知渠道，支持 8 种触发事件和自定义消息模板。
-
-</div>
-
-## 📋 快速开始
-
-### 下载安装
-
-从 [Releases](https://github.com/yi-nology/git-manage-service/releases) 下载适合你系统的版本：
-
-| 平台 | 架构 | 下载 |
-|------|------|------|
-| Linux | AMD64 / ARM64 | `git-manage-service-linux-*.tar.gz` |
-| macOS | Intel / Apple Silicon | `git-manage-service-darwin-*.tar.gz` |
-| Windows | AMD64 / ARM64 | `git-manage-service-windows-*.exe.zip` |
-
-### 启动服务
+## 🚀 5 分钟上手
 
 ```bash
+# 下载
+wget https://github.com/yi-nology/git-manage-service/releases/download/v0.7.2/git-manage-service-darwin-arm64.tar.gz
+
 # 解压
 tar -xzf git-manage-service-*.tar.gz
 
 # 运行
 ./git-manage-service
 
-# 访问 Web 界面
+# 访问
 open http://localhost:38080
 ```
 
-### Docker 部署
+[查看完整安装指南 →](/getting-started)
 
-```bash
-# SQLite（最简单）
-cd deploy/docker-compose/sqlite
-docker-compose up -d
-```
+</div>
+
+<div class="features-preview">
+
+## 📸 功能预览
+
+| 仓库管理 | 分支操作 |
+|:---:|:---:|
+| ![仓库列表](/images/repo-list-with-data.png) | ![分支管理](/images/branch-management.png) |
+
+| 同步任务 | 代码度量 |
+|:---:|:---:|
+| ![同步任务](/images/sync-tasks.png) | ![Git 度量](/images/git-metrics.png) |
+
+| 审计日志 | 通知配置 |
+|:---:|:---:|
+| ![审计日志](/images/audit-log.png) | ![通知渠道](/images/notification-channel.png) |
+
+</div>
+
+<div class="tech-stack">
 
 ## 🛠 技术栈
 
@@ -101,41 +74,45 @@ docker-compose up -d
 | Redis (可选) | Monaco Editor |
 | MinIO (可选) | TypeScript |
 
+</div>
+
+<div class="doc-nav">
+
 ## 📖 文档导航
 
-- [使用指南](/usage) - 详细的功能使用说明
-- [部署指南](/deployment) - 生产环境部署方案
-- [产品手册](/product_manual) - 完整的产品手册
-- [Webhook 接口](/webhook) - Webhook 集成文档
+| 类型 | 内容 |
+|------|------|
+| 🚀 [快速开始](/getting-started) | 5 分钟完成安装和基本配置 |
+| 📘 [功能指南](/features/repo) | 详细的功能使用说明 |
+| 📦 [部署方案](/deployment/binary) | 生产环境部署指南 |
+| ⚙️ [配置参考](/configuration) | 完整的配置项说明 |
+| 🔌 [API 文档](/api) | HTTP API 接口参考 |
 
-## 🤝 参与贡献
-
-项目开源在 [GitHub](https://github.com/yi-nology/git-manage-service)，欢迎 Star ⭐️ 和 PR！
-
-## 🔗 相关链接
-
-- **GitHub 仓库**: [yi-nology/git-manage-service](https://github.com/yi-nology/git-manage-service)
-- **Issues**: [问题反馈](https://github.com/yi-nology/git-manage-service/issues)
-- **Releases**: [版本下载](https://github.com/yi-nology/git-manage-service/releases)
+</div>
 
 <style>
-.features-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
-  margin-top: 20px;
+.quick-links {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 20px;
+  margin: 20px 0;
 }
 
-.features-grid img {
+.features-preview table {
+  width: 100%;
+}
+
+.features-preview img {
   max-width: 100%;
   border-radius: 8px;
   box-shadow: 0 2px 12px rgba(0,0,0,0.1);
-  margin: 10px 0;
 }
 
-@media (max-width: 768px) {
-  .features-grid {
-    grid-template-columns: 1fr;
-  }
+.tech-stack table {
+  width: 100%;
+}
+
+.doc-nav table {
+  width: 100%;
 }
 </style>
