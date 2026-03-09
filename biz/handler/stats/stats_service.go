@@ -70,7 +70,9 @@ func ListCommits(ctx context.Context, c *app.RequestContext) {
 	}
 
 	commits := statsSvc.StatsSvc.ParseCommits(raw)
-	response.Success(c, commits)
+	response.Success(c, map[string]interface{}{
+		"commits": commits,
+	})
 }
 
 // GetStats .

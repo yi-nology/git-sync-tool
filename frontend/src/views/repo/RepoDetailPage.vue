@@ -486,7 +486,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowLeft, Share, Switch, Refresh, Edit, Search, Download, Setting, Plus, Top, Delete, CopyDocument, Connection, DocumentCopy, InfoFilled, Document, DataAnalysis, Files, Timer, Folder, Box, Link } from '@element-plus/icons-vue'

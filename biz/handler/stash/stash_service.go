@@ -35,8 +35,8 @@ func ListStash(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	// 转换为proto格式
-	var entries []*stash.StashEntry
+	// 转换为proto格式（初始化切片避免返回null）
+	entries := make([]*stash.StashEntry, 0, len(stashes))
 	for _, s := range stashes {
 		entries = append(entries, &stash.StashEntry{
 			Index:   int32(s.Index),

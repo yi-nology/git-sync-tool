@@ -66,6 +66,40 @@ func (s *GitService) StashSave(path, message string, includeUntracked bool) erro
 		"includeUntracked": includeUntracked,
 	})
 
+	// 检查是否有可暂存的更改
+	status, err := s.RunCommand(path, "status", "--porcelain")
+	if err != nil {
+		logger.ErrorWithErr("Failed to check status", err, logrus.Fields{"path": path})
+		return err
+	}
+
+	// 如果启用了 includeUntracked，检查所有文件；否则只检查已跟踪的修改
+	hasChanges := false
+	if includeUntracked {
+		hasChanges = status != ""
+	} else {
+		// 只检查已修改的文件（M, A, D, R, C 状态，排除 ??）
+		lines := strings.Split(status, "\n")
+		for _, line := range lines {
+			if len(line) > 2 && line[:2] != "??" {
+				hasChanges = true
+				break
+			}
+		}
+	}
+
+	if !hasChanges {
+		logger.Warn("No changes to stash", logrus.Fields{"path": path})
+		return fmt.Errorf("no changes to stash")
+	}
+
+	// 记录执行前的 stash 数量
+	beforeList, _ := s.RunCommand(path, "stash", "list")
+	beforeCount := len(strings.Split(beforeList, "\n"))
+	if beforeList == "" {
+		beforeCount = 0
+	}
+
 	args := []string{"stash", "push"}
 	if message != "" {
 		args = append(args, "-m", message)
@@ -74,13 +108,25 @@ func (s *GitService) StashSave(path, message string, includeUntracked bool) erro
 		args = append(args, "-u")
 	}
 
-	_, err := s.RunCommand(path, args...)
+	_, err = s.RunCommand(path, args...)
 	if err != nil {
 		logger.ErrorWithErr("Failed to save stash", err, logrus.Fields{"path": path})
 		return err
 	}
 
-	logger.Info("Stash saved successfully", logrus.Fields{"path": path})
+	// 验证 stash 是否真的被创建
+	afterList, _ := s.RunCommand(path, "stash", "list")
+	afterCount := len(strings.Split(afterList, "\n"))
+	if afterList == "" {
+		afterCount = 0
+	}
+
+	if afterCount <= beforeCount {
+		logger.Error("Stash was not created", logrus.Fields{"path": path, "before": beforeCount, "after": afterCount})
+		return fmt.Errorf("failed to create stash: no stash entry was added")
+	}
+
+	logger.Info("Stash saved successfully", logrus.Fields{"path": path, "new_count": afterCount})
 	return nil
 }
 
