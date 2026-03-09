@@ -111,59 +111,63 @@ URL: https://api.example.com/notify
 
 ### 模板语法
 
-使用 Go 模板语法 `{{.Var}}`：
+使用 Go 模板语法，格式为双花括号包裹变量名：
 
-```
-标题：[{{.StatusText}}] {{.TaskKey}} 同步通知
-内容：任务 {{.TaskKey}} 于 {{.Timestamp}} 执行{{.StatusText}}
-      {{.SourceRemote}}/{{.SourceBranch}} -> {{.TargetRemote}}/{{.TargetBranch}}
-      耗时: {{.Duration}}
-      {{if .ErrorMessage}}错误: {{.ErrorMessage}}{{end}}
+```go
+标题：[状态文字] 任务标识 同步通知
+内容：任务 任务标识 于 时间 执行状态文字
+      源远程/源分支 -> 目标远程/目标分支
+      耗时: 执行耗时
+      错误: 错误信息（如有）
 ```
 
 ### 可用变量
 
 | 变量 | 说明 | 适用事件 |
 |------|------|----------|
-| `{{.TaskKey}}` | 任务标识 | 全部 |
-| `{{.Status}}` | 状态码 (success/failure) | 全部 |
-| `{{.StatusText}}` | 状态文字 (成功/失败) | 全部 |
-| `{{.EventType}}` | 事件类型 | 全部 |
-| `{{.EventLabel}}` | 事件名称 | 全部 |
-| `{{.Timestamp}}` | 时间 | 全部 |
-| `{{.RepoKey}}` | 仓库标识 | 全部 |
-| `{{.SourceRemote}}` | 源远程仓库 | 同步事件 |
-| `{{.SourceBranch}}` | 源分支 | 同步事件 |
-| `{{.TargetRemote}}` | 目标远程仓库 | 同步事件 |
-| `{{.TargetBranch}}` | 目标分支 | 同步事件 |
-| `{{.ErrorMessage}}` | 错误信息 | 失败/错误/冲突 |
-| `{{.CommitRange}}` | 提交范围 | 同步成功 |
-| `{{.Duration}}` | 执行耗时 | 同步/备份 |
-| `{{.CronExpression}}` | Cron 表达式 | 定时任务 |
-| `{{.WebhookSource}}` | Webhook 来源 | Webhook 事件 |
-| `{{.BackupPath}}` | 备份路径 | 备份事件 |
+| `.TaskKey` | 任务标识 | 全部 |
+| `.Status` | 状态码 (success/failure) | 全部 |
+| `.StatusText` | 状态文字 (成功/失败) | 全部 |
+| `.EventType` | 事件类型 | 全部 |
+| `.EventLabel` | 事件名称 | 全部 |
+| `.Timestamp` | 时间 | 全部 |
+| `.RepoKey` | 仓库标识 | 全部 |
+| `.SourceRemote` | 源远程仓库 | 同步事件 |
+| `.SourceBranch` | 源分支 | 同步事件 |
+| `.TargetRemote` | 目标远程仓库 | 同步事件 |
+| `.TargetBranch` | 目标分支 | 同步事件 |
+| `.ErrorMessage` | 错误信息 | 失败/错误/冲突 |
+| `.CommitRange` | 提交范围 | 同步成功 |
+| `.Duration` | 执行耗时 | 同步/备份 |
+| `.CronExpression` | Cron 表达式 | 定时任务 |
+| `.WebhookSource` | Webhook 来源 | Webhook 事件 |
+| `.BackupPath` | 备份路径 | 备份事件 |
+
+::: tip 使用方式
+在模板中使用变量时，用双花括号包裹：将变量名包裹在 `{{` 和 `}}` 中，例如 `{{.TaskKey}}`。
+:::
 
 ### 模板示例
 
 #### 简单模板
 
-```
+```go
 【Git 同步通知】
-任务: {{.TaskKey}}
-状态: {{.StatusText}}
-时间: {{.Timestamp}}
+任务: 任务标识变量
+状态: 状态文字变量
+时间: 时间变量
 ```
 
 #### 详细模板
 
-```
-【同步{{.StatusText}}】
-任务: {{.TaskKey}}
-仓库: {{.RepoKey}}
-{{.SourceRemote}}/{{.SourceBranch}} -> {{.TargetRemote}}/{{.TargetBranch}}
-耗时: {{.Duration}}
-{{if .CommitRange}}提交: {{.CommitRange}}{{end}}
-{{if .ErrorMessage}}错误: {{.ErrorMessage}}{{end}}
+```go
+【同步状态文字】
+任务: 任务标识
+仓库: 仓库标识
+源远程/源分支 -> 目标远程/目标分支
+耗时: 执行耗时
+提交: 提交范围（如有）
+错误: 错误信息（如有）
 ```
 
 ## 两级模板配置
