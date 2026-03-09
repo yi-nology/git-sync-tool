@@ -1,7 +1,7 @@
 # Git Manage Service
 
 <p align="center">
-  <img src="docs/images/logo.svg" alt="Git Manage Service" width="128" height="128">
+  <img src="docs/.vuepress/public/images/logo.svg" alt="Git Manage Service" width="128" height="128">
 </p>
 
 <p align="center">
@@ -98,11 +98,11 @@ docker run -d \
 
 | 仓库管理 | 分支操作 |
 |:---:|:---:|
-| ![仓库列表](docs/images/repo-list-with-data.png) | ![分支管理](docs/images/branch-management.png) |
+| ![仓库列表](docs/.vuepress/public/images/repo-list-with-data.png) | ![分支管理](docs/.vuepress/public/images/branch-management.png) |
 
 | 同步任务 | 代码度量 |
 |:---:|:---:|
-| ![同步任务](docs/images/sync-tasks.png) | ![Git 度量](docs/images/git-metrics.png) |
+| ![同步任务](docs/.vuepress/public/images/sync-tasks.png) | ![Git 度量](docs/.vuepress/public/images/git-metrics.png) |
 
 更多截图请查看 [文档](docs/README.md)。
 
