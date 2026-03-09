@@ -23,6 +23,10 @@ footer: MIT Licensed | Copyright © 2024-present
 
 <div class="quick-links">
 
+## 📸 文档预览
+
+![文档首页](/images/docs/docs-home.png)
+
 ## 🚀 5 分钟上手
 
 ```bash
