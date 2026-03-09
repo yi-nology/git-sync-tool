@@ -6,6 +6,8 @@ import (
 	"context"
 	"embed"
 	"log"
+	"os"
+	"strings"
 
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
@@ -55,10 +57,15 @@ func (a *App) shutdown(ctx context.Context) {
 
 // startBackend 启动后端服务
 func (a *App) startBackend() {
-	// 检查是否在构建时（通过环境变量或命令行参数判断）
-	// 在生成绑定时跳过后端初始化
-	if os.Getenv("WAILS_BUILD") != "" {
-		log.Println("Skipping backend initialization during build")
+	// 检查是否在 Wails 构建时（生成绑定阶段）
+	// Wails 在生成绑定时会运行应用，但此时不应初始化后端
+	// 检测方法：检查环境变量或是否在临时构建目录中
+	isBuildTime := os.Getenv("WAILS_BUILD") != "" || 
+		strings.Contains(os.Getenv("PWD"), "wails") ||
+		strings.Contains(os.Args[0], "wails")
+	
+	if isBuildTime {
+		log.Println("Skipping backend initialization during build/bindings generation")
 		return
 	}
 	

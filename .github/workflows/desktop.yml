@@ -48,7 +48,7 @@ jobs:
       - name: Build macOS app
         run: |
           export WAILS_BUILD=1
-          wails build -platform darwin/universal
+          wails build -platform darwin/universal -skipbindings
           cd build/bin
           if [ -d "Git Manage Service.app" ]; then
             zip -r GitManageService-macOS.zip "Git Manage Service.app"
@@ -100,7 +100,7 @@ jobs:
       - name: Build Windows exe
         run: |
           $env:WAILS_BUILD="1"
-          wails build -platform windows/amd64
+          wails build -platform windows/amd64 -skipbindings
           Compress-Archive -Path build/bin/* -DestinationPath GitManageService-Windows.zip
 
       - name: Upload artifact
@@ -149,7 +149,7 @@ jobs:
       - name: Build Linux packages
         run: |
           export WAILS_BUILD=1
-          wails build -platform linux/amd64
+          wails build -platform linux/amd64 -skipbindings
           cd build/bin
           tar -czf GitManageService-Linux.tar.gz git-manage-desktop
 
