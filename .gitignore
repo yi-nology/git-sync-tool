@@ -37,4 +37,4 @@ dumped_hertz_remote_config.json
 		  .trae
 data/git_sync.db
 docs/.vuepress/dist
-public
+/public
