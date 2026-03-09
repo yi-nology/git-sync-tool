@@ -1,6 +1,6 @@
 # Patch 管理
 
-![文档截图](images/docs/docs-patch-manager.png)
+![文档截图](/images/docs/docs-patch-manager.png)
 
 ## 概述
 
@@ -201,5 +201,5 @@ index 0000000..abc1234
 - **Issues**: [https://github.com/yi-nology/git-manage-service/issues](https://github.com/yi-nology/git-manage-service/issues)
 - **Releases**: [https://github.com/yi-nology/git-manage-service/releases](https://github.com/yi-nology/git-manage-service/releases)
 - [Spec 编辑器](./spec-editor.md)
-- [分支管理](./usage.md#分支管理)
+- [分支管理](./branch.md)
 - [Webhook 接口](./webhook.md)

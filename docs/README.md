@@ -18,6 +18,10 @@ features:
     details: 统一管理 SSH 密钥，支持将密钥存储在数据库中
   - title: 📊 代码质量分析
     details: 提交统计、贡献者排行、代码度量等分析功能
+  - title: 📝 Spec 编辑器
+    details: 集成 Monaco Editor 的 RPM Spec 文件编辑器，支持实时语法检查
+  - title: 🩹 Patch 管理
+    details: 生成、管理和应用 Git Patch 文件，支持批量操作
 footer: MIT Licensed | Copyright © 2024-present
 ---
 
@@ -25,7 +29,7 @@ footer: MIT Licensed | Copyright © 2024-present
 
 ## 📸 文档预览
 
-![文档首页](images/docs/docs-home.png)
+![文档首页](/images/docs/docs-home.png)
 
 ## 🚀 5 分钟上手
 
@@ -53,15 +57,15 @@ open http://localhost:38080
 
 | 仓库管理 | 分支操作 |
 |:---:|:---:|
-| ![仓库列表](images/repo-list-with-data.png) | ![分支管理](images/branch-management.png) |
+| ![仓库列表](/images/repo-list-with-data.png) | ![分支管理](/images/branch-management.png) |
 
 | 同步任务 | 代码度量 |
 |:---:|:---:|
-| ![同步任务](images/sync-tasks.png) | ![Git 度量](images/git-metrics.png) |
+| ![同步任务](/images/sync-tasks.png) | ![Git 度量](/images/git-metrics.png) |
 
 | 审计日志 | 通知配置 |
 |:---:|:---:|
-| ![审计日志](images/audit-log.png) | ![通知渠道](images/notification-channel.png) |
+| ![审计日志](/images/audit-log.png) | ![通知渠道](/images/notification-channel.png) |
 
 </div>
 
