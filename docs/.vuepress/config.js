@@ -140,10 +140,7 @@ module.exports = {
     smoothScroll: true
   },
   markdown: {
-    lineNumbers: true,
-    extendMarkdown: md => {
-      md.use(require('markdown-it-attrs'))
-    }
+    lineNumbers: true
   },
   plugins: []
 }
