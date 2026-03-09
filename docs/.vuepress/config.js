@@ -1,7 +1,7 @@
 module.exports = {
   title: 'Git Manage Service',
   description: 'Git 管理服务文档',
-  base: '/',
+  base: '/git-manage-service/',
   themeConfig: {
     nav: [
       {
