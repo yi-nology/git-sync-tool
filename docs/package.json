@@ -1,0 +1,12 @@
+{
+  "name": "git-manage-service-docs",
+  "version": "0.7.2",
+  "description": "Git Manage Service Documentation",
+  "scripts": {
+    "dev": "vuepress dev .",
+    "build": "vuepress build ."
+  },
+  "devDependencies": {
+    "vuepress": "^1.9.10"
+  }
+}
