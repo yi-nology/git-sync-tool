@@ -2,6 +2,8 @@
 
 仓库管理是 Git Manage Service 的核心功能，支持注册本地仓库、克隆远程仓库、浏览仓库内容等操作。
 
+![文档截图](/images/docs/docs-repo.png)
+
 ## 功能概览
 
 ![仓库列表](/images/repo-list-with-data.png)

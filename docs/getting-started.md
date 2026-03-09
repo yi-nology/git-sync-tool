@@ -2,6 +2,8 @@
 
 本指南将帮助你在 5 分钟内完成 Git Manage Service 的安装和基本配置。
 
+![文档截图](/images/docs/docs-getting-started.png)
+
 ## 1. 下载安装
 
 ### 方式一：下载预编译二进制（推荐）
