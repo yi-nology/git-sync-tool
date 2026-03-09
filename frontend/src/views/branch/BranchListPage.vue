@@ -283,10 +283,6 @@ const showTagDialog = ref(false)
 const tagForm = ref({ ref: '', name: '', message: '', push_remote: '', versionType: 'patch' as 'patch' | 'minor' | 'major' | 'custom' })
 const tagNextVersion = ref<NextVersionInfo | null>(null)
 
-// 分支列表已按 Tab 过滤
-  return grouped
-})
-
 onMounted(async () => {
   // 先获取远程源列表
   try {
