@@ -1,4 +1,4 @@
-// +build desktop
+//go:build desktop
 
 package main
 
@@ -11,7 +11,7 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
 )
 
-//go:embed all:public
+//go:embed all:frontend/dist
 var assets embed.FS
 
 func main() {
@@ -28,6 +28,7 @@ func main() {
 		},
 		BackgroundColour: &options.RGBA{R: 27, G: 38, B: 54, A: 1},
 		OnStartup:        app.startup,
+		OnShutdown:       app.shutdown,
 		Bind: []interface{}{
 			app,
 		},
