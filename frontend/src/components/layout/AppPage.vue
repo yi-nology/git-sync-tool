@@ -14,18 +14,12 @@
 </template>
 
 <script setup lang="ts">
-import AppBreadcrumb from '@/components/common/AppBreadcrumb.vue'
+import AppBreadcrumb, { type BreadcrumbItem } from '@/components/common/AppBreadcrumb.vue'
 
-defineProps({
-  title: {
-    type: String,
-    default: ''
-  },
-  breadcrumb: {
-    type: Array,
-    default: () => []
-  }
-})
+defineProps<{
+  title?: string
+  breadcrumb?: BreadcrumbItem[]
+}>()
 </script>
 
 <style scoped>

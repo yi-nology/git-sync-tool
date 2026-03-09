@@ -243,7 +243,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowLeft, Plus, Delete, Edit, Select, Top, Bottom, Switch, Download, CircleCheck, PriceTag, View, RefreshRight } from '@element-plus/icons-vue'
@@ -267,7 +267,6 @@ const total = ref(0)
 const activeTab = ref('local')
 const searchQuery = ref('')
 const remoteNames = ref<string[]>([])
-const activeRemoteTabs = ref<string[]>([])
 
 const showCreateDialog = ref(false)
 const createForm = ref({ name: '', base_ref: '' })
