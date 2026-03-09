@@ -1,6 +1,6 @@
 # Spec 编辑器
 
-![文档截图](images/docs/docs-spec-editor.png)
+![文档截图](/images/docs/docs-spec-editor.png)
 
 ## 概述
 
@@ -166,5 +166,5 @@ rm -rf %{buildroot}
 - **Issues**: [https://github.com/yi-nology/git-manage-service/issues](https://github.com/yi-nology/git-manage-service/issues)
 - **Releases**: [https://github.com/yi-nology/git-manage-service/releases](https://github.com/yi-nology/git-manage-service/releases)
 - [Patch 管理](./patch-manager.md)
-- [分支管理](./usage.md#分支管理)
-- [部署指南](./deployment.md)
+- [分支管理](./branch.md)
+- [部署指南](../deployment/binary.md)

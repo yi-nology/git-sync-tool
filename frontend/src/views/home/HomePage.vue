@@ -96,6 +96,8 @@ import {
   Coin,
   Setting,
   Link,
+  Edit,
+  Stamp,
 } from '@element-plus/icons-vue'
 import { getAppInfo } from '@/api/modules/system'
 import type { AppInfo } from '@/api/modules/system'
@@ -126,6 +128,18 @@ const features = [
     desc: '支持数据库统一管理 SSH 密钥，灵活配置仓库认证方式。',
     icon: Key,
     color: '#F56C6C',
+  },
+  {
+    title: 'Spec 编辑器',
+    desc: '集成 Monaco Editor 的 RPM Spec 文件编辑器，支持实时语法检查和智能补全。',
+    icon: Edit,
+    color: '#06B6D4',
+  },
+  {
+    title: 'Patch 管理',
+    desc: '生成、管理和应用 Git Patch 文件，支持批量操作和自动化工作流。',
+    icon: Stamp,
+    color: '#8B5CF6',
   },
   {
     title: '多数据库支持',

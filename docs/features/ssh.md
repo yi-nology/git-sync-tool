@@ -4,7 +4,7 @@ SSH 密钥管理功能用于统一管理访问 Git 仓库所需的 SSH 密钥，
 
 ## 功能概览
 
-![SSH 密钥管理](images/ssh-keys.png)
+![SSH 密钥管理](/images/ssh-keys.png)
 
 - **密钥存储**: 安全存储 SSH 私钥
 - **密钥关联**: 将密钥关联到特定仓库
@@ -21,7 +21,7 @@ SSH 密钥管理功能用于统一管理访问 Git 仓库所需的 SSH 密钥，
 4. 填写密钥信息
 5. 保存
 
-![新增 SSH 密钥](images/ssh-key-add.png)
+![新增 SSH 密钥](/images/ssh-key-add.png)
 
 ### 配置项说明
 
