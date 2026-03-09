@@ -354,7 +354,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, nextTick, onMounted, watch } from 'vue'
 import { ElMessage, type InputInstance } from 'element-plus'
-import { Plus, Refresh, Promotion, Edit, Delete, InfoFilled } from '@element-plus/icons-vue'
+import { Promotion, Edit, Delete, InfoFilled } from '@element-plus/icons-vue'
 import { listChannels, createChannel, updateChannel, deleteChannel, testChannel } from '@/api/modules/notification'
 import type { NotificationChannel } from '@/api/modules/notification'
 import AppPage from '@/components/layout/AppPage.vue'

@@ -124,15 +124,12 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessageBox } from 'element-plus'
 import {
-  Plus,
   Delete,
   View,
   Share,
   Refresh,
   FolderOpened,
   Download,
-  ArrowDown,
-  Search,
   Folder,
 } from '@element-plus/icons-vue'
 import { useRepoStore } from '@/stores/useRepoStore'
