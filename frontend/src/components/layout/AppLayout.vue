@@ -34,7 +34,7 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { Connection, Search } from '@element-plus/icons-vue'
+import { Search } from '@element-plus/icons-vue'
 import { useUIStore } from '@/stores/useUIStore'
 import { useKeyboard } from '@/composables/useKeyboard'
 import ThemeSwitch from '@/components/common/ThemeSwitch.vue'
