@@ -85,11 +85,16 @@ jobs:
       - name: Create archive
         run: |
           cd dist
+          # 复制配置文件和文档到打包目录
+          cp -r ${{ github.workspace }}/conf .
+          cp ${{ github.workspace }}/README.md .
+          cp ${{ github.workspace }}/LICENSE* . 2>/dev/null || true
+          
           if [[ "${{ matrix.goos }}" == "windows" ]]; then
-            zip ${{ matrix.output }}.zip ${{ matrix.output }}
+            zip ${{ matrix.output }}.zip ${{ matrix.output }} conf README.md LICENSE* 2>/dev/null || zip ${{ matrix.output }}.zip ${{ matrix.output }} conf README.md
             echo "ASSET=${{ matrix.output }}.zip" >> $GITHUB_ENV
           else
-            tar -czf ${{ matrix.output }}.tar.gz ${{ matrix.output }}
+            tar -czf ${{ matrix.output }}.tar.gz ${{ matrix.output }} conf README.md LICENSE* 2>/dev/null || tar -czf ${{ matrix.output }}.tar.gz ${{ matrix.output }} conf README.md
             echo "ASSET=${{ matrix.output }}.tar.gz" >> $GITHUB_ENV
           fi
 
