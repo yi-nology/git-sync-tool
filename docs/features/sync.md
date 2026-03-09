@@ -2,11 +2,11 @@
 
 同步任务是 Git Manage Service 的核心功能，支持在任意 Remote 和分支之间建立自动化同步规则。
 
-![文档截图](/images/docs/docs-sync.png)
+![文档截图](images/docs/docs-sync.png)
 
 ## 功能概览
 
-![同步任务列表](/images/sync-tasks.png)
+![同步任务列表](images/sync-tasks.png)
 
 - **灵活规则**: 支持任意 Remote 和分支之间的同步
 - **定时执行**: 内置 Cron 调度器，支持定时自动同步
@@ -23,7 +23,7 @@
 3. 配置同步规则
 4. 保存并启用
 
-![新建同步任务](/images/sync-task-create.png)
+![新建同步任务](images/sync-task-create.png)
 
 ### 配置项说明
 

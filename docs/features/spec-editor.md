@@ -1,6 +1,6 @@
 # Spec 编辑器
 
-![文档截图](/images/docs/docs-spec-editor.png)
+![文档截图](images/docs/docs-spec-editor.png)
 
 ## 概述
 
