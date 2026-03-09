@@ -6,7 +6,9 @@ import (
 	"context"
 	"embed"
 	"log"
+	"net"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/wailsapp/wails/v2"
@@ -55,6 +57,16 @@ func (a *App) shutdown(ctx context.Context) {
 	log.Println("Application shutting down...")
 }
 
+// isPortInUse 检测端口是否被占用
+func isPortInUse(port int) bool {
+	listener, err := net.Listen("tcp", ":"+strconv.Itoa(port))
+	if err != nil {
+		return true
+	}
+	listener.Close()
+	return false
+}
+
 // startBackend 启动后端服务
 func (a *App) startBackend() {
 	// 检查是否在 Wails 构建时（生成绑定阶段）
@@ -86,8 +98,21 @@ func (a *App) startBackend() {
 	stats.InitStatsService()
 	audit.InitAuditService()
 	
+	// 检测端口是否被占用
+	port := 38080
+	if isPortInUse(port) {
+		log.Printf("Port %d is already in use", port)
+		log.Println("Possible reasons:")
+		log.Println("  1. Another instance is already running")
+		log.Println("  2. Previous instance didn't exit properly")
+		log.Println("\nPlease check and close the process using port 38080:")
+		log.Println("  lsof -i :38080")
+		log.Println("  kill -9 $(lsof -t -i :38080)")
+		return
+	}
+	
 	// 启动 HTTP 服务器
-	log.Println("Starting HTTP server on :38080...")
+	log.Printf("Starting HTTP server on :%d...\n", port)
 	hServer := hserver.Default(hserver.WithHostPorts(":38080"))
 	
 	// 注册路由
