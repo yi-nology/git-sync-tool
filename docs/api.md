@@ -316,7 +316,7 @@ POST /api/v1/notification/channels
     "secret": "SECxxx"
   },
   "events": ["sync_success", "sync_failure"],
-  "template": "【同步{{.StatusText}}】任务: {{.TaskKey}}"
+  "template": "【同步状态】任务: 任务标识"
 }
 ```
 
