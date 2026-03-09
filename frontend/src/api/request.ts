@@ -61,7 +61,7 @@ service.interceptors.response.use(
     // 处理非 JSON 响应
     const contentType = response.headers['content-type']
     if (contentType && !contentType.includes('application/json')) {
-      return response
+      return response.data
     }
 
     // 处理 API 响应
@@ -71,7 +71,7 @@ service.interceptors.response.use(
       return Promise.reject(new Error(res.msg || '请求失败'))
     }
 
-    return res.data
+    return response.data ? res.data : response
   },
   (error: AxiosError) => {
     const { showError } = useNotification()

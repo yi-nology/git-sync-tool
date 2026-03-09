@@ -1,24 +1,23 @@
 <template>
   <div class="app-breadcrumb">
-    <router-link v-for="(item, index) in items" :key="index" :to="item.path" class="app-breadcrumb-item" :class="{ active: index === items.length - 1 }">
-      {{ item.label }}
+    <router-link v-for="(item, index) in items" :key="index" :to="(item as BreadcrumbItem).path" class="app-breadcrumb-item" :class="{ active: index === items.length - 1 }">
+      {{ (item as BreadcrumbItem).label }}
     </router-link>
-    <span v-for="(item, index) in items.slice(0, -1)" :key="`separator-${index}`" class="app-breadcrumb-separator">
+    <span v-for="(_, index) in items.slice(0, -1)" :key="`separator-${index}`" class="app-breadcrumb-separator">
       /
     </span>
   </div>
 </template>
 
 <script setup lang="ts">
-defineProps({
-  items: {
-    type: Array,
-    default: () => [],
-    validator: (value: any[]) => {
-      return value.every(item => typeof item.label === 'string' && typeof item.path === 'string')
-    }
-  }
-})
+interface BreadcrumbItem {
+  label: string
+  path: string
+}
+
+defineProps<{
+  items: BreadcrumbItem[]
+}>()
 </script>
 
 <style scoped>

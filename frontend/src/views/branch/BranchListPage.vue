@@ -283,30 +283,7 @@ const showTagDialog = ref(false)
 const tagForm = ref({ ref: '', name: '', message: '', push_remote: '', versionType: 'patch' as 'patch' | 'minor' | 'major' | 'custom' })
 const tagNextVersion = ref<NextVersionInfo | null>(null)
 
-// 按远程源分组的远端分支
-const groupedRemoteBranches = computed(() => {
-  if (branchType.value !== 'remote') return {}
-  
-  const grouped: Record<string, BranchInfo[]> = {}
-  branches.value.forEach(branch => {
-    const parts = branch.name.split('/')
-    if (parts.length >= 2) {
-      const remoteName = parts[0]
-      if (remoteName) {
-        if (!grouped[remoteName]) {
-          grouped[remoteName] = []
-        }
-        grouped[remoteName].push(branch)
-      }
-    }
-  })
-  
-  // 默认展开所有远程源
-  const remoteKeys = Object.keys(grouped)
-  if (remoteKeys.length > 0) {
-    activeRemoteTabs.value = remoteKeys
-  }
-  
+// 分支列表已按 Tab 过滤
   return grouped
 })
 
