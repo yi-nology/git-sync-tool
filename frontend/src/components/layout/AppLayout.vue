@@ -3,8 +3,8 @@
     <el-header class="app-header">
       <div class="header-left">
         <router-link to="/" class="logo">
-          <el-icon :size="22"><Connection /></el-icon>
-          <span class="logo-text">Git Branch Manager</span>
+          <img src="/logo.svg" alt="Logo" class="logo-icon" />
+          <span class="logo-text">Git Manage Service</span>
         </router-link>
       </div>
       <el-menu
@@ -100,6 +100,11 @@ onMounted(() => {
 
 .logo-text {
   white-space: nowrap;
+}
+
+.logo-icon {
+  width: 28px;
+  height: 28px;
 }
 
 .header-menu {

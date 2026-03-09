@@ -1,6 +1,6 @@
 ---
 home: true
-heroImage: /images/homepage.png
+heroImage: /images/logo.svg
 heroText: Git Manage Service
 tagline: 轻量级多仓库自动化同步管理系统
 actionText: 快速开始 →

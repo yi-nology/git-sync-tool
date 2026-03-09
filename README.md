@@ -1,7 +1,7 @@
 # Git Manage Service
 
 <p align="center">
-  <img src="docs/images/homepage.png" alt="Git Manage Service" width="800">
+  <img src="docs/images/logo.svg" alt="Git Manage Service" width="128" height="128">
 </p>
 
 <p align="center">

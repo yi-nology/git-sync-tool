@@ -3,7 +3,8 @@ module.exports = {
   description: '轻量级多仓库自动化同步管理系统',
   base: '/git-manage-service/',
   head: [
-    ['meta', { name: 'theme-color', content: '#3eaf7c' }],
+    ['link', { rel: 'icon', type: 'image/svg+xml', href: '/images/favicon.svg' }],
+    ['meta', { name: 'theme-color', content: '#6366f1' }],
     ['meta', { name: 'apple-mobile-web-app-capable', content: 'yes' }],
     ['meta', { name: 'apple-mobile-web-app-status-bar-style', content: 'black' }]
   ],

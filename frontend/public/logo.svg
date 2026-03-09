@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6366f1"/>
+      <stop offset="100%" style="stop-color:#8b5cf6"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#ec4899"/>
+      <stop offset="100%" style="stop-color:#f43f5e"/>
+    </linearGradient>
+  </defs>
+  <!-- Background -->
+  <rect x="8" y="8" width="112" height="112" rx="24" fill="url(#bg)"/>
+  <!-- Git branch graphic -->
+  <g fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round">
+    <!-- Main vertical line -->
+    <path d="M40 36 L40 92"/>
+    <!-- Branch curve -->
+    <path d="M40 52 Q40 68 56 68 L72 68"/>
+    <!-- Sync arrow -->
+    <path d="M72 52 L88 68 L72 84" stroke="url(#accent)" stroke-width="5"/>
+  </g>
+  <!-- Commit nodes -->
+  <circle cx="40" cy="36" r="8" fill="#fff"/>
+  <circle cx="40" cy="52" r="6" fill="#fda4af"/>
+  <circle cx="40" cy="92" r="8" fill="#fff"/>
+  <circle cx="72" cy="68" r="6" fill="#fda4af"/>
+  <!-- Sync indicator -->
+  <circle cx="88" cy="68" r="5" fill="url(#accent)"/>
+</svg>
