@@ -17,8 +17,8 @@ features:
   - title: 🔐 SSH 密钥管理
     details: 统一管理 SSH 密钥，支持将密钥存储在数据库中
   - title: 📊 代码质量分析
-    details: 提供提交统计、贡献者排行、代码度量等分析功能
-footer: MIT Licensed | Copyright © 2024-present
+    details: 提交统计、贡献者排行、代码度量等分析功能
+footer: MIT Licensed | Copyright © 2024-present | [GitHub](https://github.com/yi-nology/git-manage-service)
 ---
 
 ## 🚀 功能亮点
@@ -111,6 +111,12 @@ docker-compose up -d
 ## 🤝 参与贡献
 
 项目开源在 [GitHub](https://github.com/yi-nology/git-manage-service)，欢迎 Star ⭐️ 和 PR！
+
+## 🔗 相关链接
+
+- **GitHub 仓库**: [yi-nology/git-manage-service](https://github.com/yi-nology/git-manage-service)
+- **Issues**: [问题反馈](https://github.com/yi-nology/git-manage-service/issues)
+- **Releases**: [版本下载](https://github.com/yi-nology/git-manage-service/releases)
 
 <style>
 .features-grid {
