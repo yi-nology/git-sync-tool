@@ -1,3 +1,5 @@
+//go:build !desktop
+
 package main
 
 import (
@@ -41,13 +43,6 @@ import (
 var (
 	mode    = flag.String("mode", "all", "启动模式: http, rpc, all")
 	version = flag.Bool("version", false, "显示版本信息")
-)
-
-var (
-	// 这些变量在编译时通过 -ldflags 注入
-	Version   = "dev"     // 版本号，如 v1.0.0
-	BuildTime = "unknown" // 构建时间
-	GitCommit = "unknown" // Git commit hash
 )
 
 const (

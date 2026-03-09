@@ -1,14 +1,13 @@
 name: Desktop Build
 
 on:
-  # 暂时禁用，等待完成 Wails 集成
-  # push:
-  #   tags:
-  #     - 'v*'
+  push:
+    tags:
+      - 'v*-desktop'
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to build (e.g., v0.7.5)'
+        description: 'Version to build (e.g., v0.8.0)'
         required: false
 
 permissions:
@@ -26,6 +25,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: '1.21'
+          cache: true
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -34,14 +34,30 @@ jobs:
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
 
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm install
+
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
+
       - name: Install Wails
         run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
 
       - name: Build macOS app
         run: |
-          wails build -platform darwin/universal -clean
+          wails build -platform darwin/universal
           cd build/bin
-          zip -r GitManageService-macOS.zip "Git Manage Service.app"
+          if [ -d "Git Manage Service.app" ]; then
+            zip -r GitManageService-macOS.zip "Git Manage Service.app"
+          elif [ -f "git-manage-desktop" ]; then
+            zip GitManageService-macOS.zip git-manage-desktop
+          else
+            echo "Build output not found"
+            ls -la
+            exit 1
+          fi
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -60,6 +76,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: '1.21'
+          cache: true
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -68,12 +85,20 @@ jobs:
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
 
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm install
+
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
+
       - name: Install Wails
         run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
 
       - name: Build Windows exe
         run: |
-          wails build -platform windows/amd64 -clean -nsis
+          wails build -platform windows/amd64
           Compress-Archive -Path build/bin/* -DestinationPath GitManageService-Windows.zip
 
       - name: Upload artifact
@@ -93,6 +118,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: '1.21'
+          cache: true
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -104,27 +130,25 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          # Ubuntu 24.04 使用 libwebkit2gtk-4.1-dev
           sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev || \
           sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm install
+
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
 
       - name: Install Wails
         run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
 
       - name: Build Linux packages
         run: |
-          # Build DEB
-          wails build -platform linux/amd64 -clean -deb
-          
-          # Build RPM (需要额外工具，可选)
-          # wails build -platform linux/amd64 -clean -rpm
-          
-          # Build AppImage
-          wails build -platform linux/amd64 -clean -appimage
-          
-          # Package all
+          wails build -platform linux/amd64
           cd build/bin
-          tar -czf GitManageService-Linux.tar.gz *
+          tar -czf GitManageService-Linux.tar.gz git-manage-desktop
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -159,25 +183,39 @@ jobs:
             
             ### 📦 Downloads
             
-            - **macOS**: `GitManageService-macOS.zip`
-            - **Windows**: `GitManageService-Windows.zip`  
-            - **Linux**: `GitManageService-Linux.tar.gz` (包含 DEB 和 AppImage)
+            - **macOS**: `GitManageService-macOS.zip` (Universal Binary)
+            - **Windows**: `GitManageService-Windows.zip` (64-bit)
+            - **Linux**: `GitManageService-Linux.tar.gz` (64-bit)
             
             ### 🚀 快速开始
             
             #### macOS
             1. 下载并解压 `GitManageService-macOS.zip`
-            2. 双击打开 `Git Manage Service.app`
+            2. 双击 `Git Manage Service.app`
             3. 首次运行可能需要在"系统偏好设置 > 安全性与隐私"中允许
             
             #### Windows
             1. 下载并解压 `GitManageService-Windows.zip`
             2. 双击 `git-manage-desktop.exe` 运行
-            3. 或运行安装程序进行安装
             
             #### Linux
-            1. 下载并解压 `GitManageService-Linux.tar.gz`
-            2. DEB: `sudo dpkg -i git-manage-desktop.deb`
-            3. AppImage: `chmod +x git-manage-desktop.AppImage && ./git-manage-desktop.AppImage`
+            ```bash
+            tar -xzf GitManageService-Linux.tar.gz
+            chmod +x git-manage-desktop
+            ./git-manage-desktop
+            ```
+            
+            ### 📝 功能说明
+            
+            桌面应用集成了完整的 Web UI，双击启动后会：
+            1. 自动启动后端服务（端口 38080）
+            2. 打开图形界面显示 Web UI
+            3. 支持所有 Web 版本的功能
+            
+            ### ⚙️ 技术栈
+            
+            - **前端**: Vue 3 + Vite + Element Plus
+            - **后端**: Go + Hertz
+            - **桌面框架**: Wails v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

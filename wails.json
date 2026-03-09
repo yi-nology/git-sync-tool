@@ -18,5 +18,6 @@
     "comments": "Git repository management desktop application"
   },
   "build:dir": "build",
-  "frontend:dir": "frontend"
+  "frontend:dir": "frontend",
+  "build:tags": "desktop"
 }
