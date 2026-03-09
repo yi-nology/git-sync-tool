@@ -4,7 +4,7 @@
 
 ## 功能概览
 
-![Git 度量](/images/git-metrics.png)
+![Git 度量](images/git-metrics.png)
 
 - **贡献统计**: 贡献者排行榜
 - **提交趋势**: 按时间维度的提交分析
@@ -62,7 +62,7 @@
 2. 点击目标仓库
 3. 选择 **"代码度量"** 标签
 
-![真实工程代码度量](/images/real-engineering-metrics.png)
+![真实工程代码度量](images/real-engineering-metrics.png)
 
 ### 统计维度
 

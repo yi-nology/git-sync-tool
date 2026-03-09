@@ -2,11 +2,11 @@
 
 仓库管理是 Git Manage Service 的核心功能，支持注册本地仓库、克隆远程仓库、浏览仓库内容等操作。
 
-![文档截图](/images/docs/docs-repo.png)
+![文档截图](images/docs/docs-repo.png)
 
 ## 功能概览
 
-![仓库列表](/images/repo-list-with-data.png)
+![仓库列表](images/repo-list-with-data.png)
 
 - **注册仓库**: 将本地已有仓库添加到系统管理
 - **克隆仓库**: 从远程 URL 克隆新仓库
@@ -25,7 +25,7 @@
    - **SSH 密钥**: 访问私有仓库时使用的密钥（可选）
 4. 点击保存
 
-![注册仓库](/images/repo-register.png)
+![注册仓库](images/repo-register.png)
 
 ### 注意事项
 
@@ -58,7 +58,7 @@
 
 点击仓库名称进入详情页面，可以看到：
 
-![仓库详情](/images/repo-detail.png)
+![仓库详情](images/repo-detail.png)
 
 ### 基本信息
 
@@ -78,7 +78,7 @@
 
 ### 文件浏览
 
-![文件浏览](/images/file-browser.png)
+![文件浏览](images/file-browser.png)
 
 - 浏览仓库目录结构
 - 查看文件内容
@@ -89,7 +89,7 @@
 
 ### 有效提交度量
 
-![Git 度量](/images/git-metrics.png)
+![Git 度量](images/git-metrics.png)
 
 提供以下分析：
 
@@ -102,7 +102,7 @@
 
 ### 真实工程代码度量
 
-![真实工程代码度量](/images/real-engineering-metrics.png)
+![真实工程代码度量](images/real-engineering-metrics.png)
 
 基于 git blame 分析：
 

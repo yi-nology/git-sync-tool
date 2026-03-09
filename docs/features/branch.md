@@ -4,7 +4,7 @@
 
 ## 功能概览
 
-![分支管理](/images/branch-management.png)
+![分支管理](images/branch-management.png)
 
 - **查看分支**: 列出所有本地和远程分支
 - **切换分支**: 快速切换当前工作分支
