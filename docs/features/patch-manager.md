@@ -1,5 +1,7 @@
 # Patch 管理
 
+![文档截图](/images/docs/docs-patch-manager.png)
+
 ## 概述
 
 Patch 管理功能帮助开发者生成、管理和应用 Git Patch 文件，支持批量操作和自动化工作流。

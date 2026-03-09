@@ -1,5 +1,7 @@
 # Spec 编辑器
 
+![文档截图](/images/docs/docs-spec-editor.png)
+
 ## 概述
 
 Spec 编辑器是 Git Manage Service 提供的专业 RPM Spec 文件编辑工具，集成 Monaco Editor 和实时语法检查功能，帮助开发者高效编写和管理 RPM 打包规范文件。
