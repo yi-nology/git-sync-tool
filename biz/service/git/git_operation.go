@@ -428,8 +428,31 @@ func (s *GitService) CheckoutBranch(path, branch string) error {
 	if err != nil {
 		return err
 	}
+
+	// 先尝试查找本地分支引用
+	refName := plumbing.ReferenceName("refs/heads/" + branch)
+	ref, err := r.Reference(refName, true)
+	if err != nil {
+		// 如果本地分支不存在，尝试从远程分支创建
+		remoteRefName := plumbing.ReferenceName("refs/remotes/origin/" + branch)
+		remoteRef, err := r.Reference(remoteRefName, true)
+		if err != nil {
+			return fmt.Errorf("branch %s not found (local or remote)", branch)
+		}
+
+		// 从远程分支创建本地分支
+		return w.Checkout(&git.CheckoutOptions{
+			Hash:   remoteRef.Hash(),
+			Branch: refName,
+			Create: true,
+			Force:  true,
+		})
+	}
+
+	// 本地分支存在，直接 checkout
 	return w.Checkout(&git.CheckoutOptions{
-		Branch: plumbing.ReferenceName("refs/heads/" + branch),
+		Hash:   ref.Hash(),
+		Branch: refName,
 		Force:  true,
 	})
 }
