@@ -5,9 +5,11 @@ package main
 import (
 	"context"
 	"embed"
+	"fmt"
 	"log"
 	"net"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -83,6 +85,12 @@ func (a *App) startBackend() {
 	
 	log.Println("Initializing backend services...")
 	
+	// 设置桌面应用的数据目录
+	if err := setupDesktopDataDir(); err != nil {
+		log.Printf("Failed to setup data directory: %v\n", err)
+		return
+	}
+	
 	// 加载配置
 	configs.Init()
 	
@@ -123,6 +131,34 @@ func (a *App) startBackend() {
 	if err := hServer.Run(); err != nil {
 		log.Printf("HTTP server error: %v\n", err)
 	}
+}
+
+// setupDesktopDataDir 设置桌面应用的数据目录
+func setupDesktopDataDir() error {
+	// 获取用户主目录
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("failed to get user home directory: %w", err)
+	}
+	
+	// 设置应用数据目录（macOS: ~/Library/Application Support/Git Manage Service/）
+	dataDir := filepath.Join(homeDir, "Library", "Application Support", "Git Manage Service")
+	
+	// 确保目录存在
+	if err := os.MkdirAll(dataDir, 0755); err != nil {
+		return fmt.Errorf("failed to create data directory: %w", err)
+	}
+	
+	// 切换工作目录到数据目录
+	if err := os.Chdir(dataDir); err != nil {
+		return fmt.Errorf("failed to change working directory: %w", err)
+	}
+	
+	log.Printf("Application data directory: %s\n", dataDir)
+	log.Printf("Database will be stored at: %s/git_sync.db\n", dataDir)
+	log.Printf("Config file will be stored at: %s/config.yaml\n", dataDir)
+	
+	return nil
 }
 
 // GetVersion 获取版本信息
