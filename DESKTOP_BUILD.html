@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Desktop Application Build Guide | Git Manage Service</title>
+    <meta name="generator" content="VuePress 1.9.10">
+    <link rel="icon" type="image/svg+xml" href="/git-manage-service/images/favicon.svg">
+    <meta name="description" content="轻量级多仓库自动化同步管理系统">
+    <meta name="theme-color" content="#6366f1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    
+    <link rel="preload" href="/git-manage-service/assets/css/0.styles.92870b7f.css" as="style"><link rel="preload" href="/git-manage-service/assets/js/app.750adb06.js" as="script"><link rel="preload" href="/git-manage-service/assets/js/2.98b0deb4.js" as="script"><link rel="preload" href="/git-manage-service/assets/js/1.77e78a7e.js" as="script"><link rel="preload" href="/git-manage-service/assets/js/23.aca484b7.js" as="script"><link rel="prefetch" href="/git-manage-service/assets/js/10.b6fc63e7.js"><link rel="prefetch" href="/git-manage-service/assets/js/11.a556731a.js"><link rel="prefetch" href="/git-manage-service/assets/js/12.bc135387.js"><link rel="prefetch" href="/git-manage-service/assets/js/13.1520762d.js"><link rel="prefetch" href="/git-manage-service/assets/js/14.440abb79.js"><link rel="prefetch" href="/git-manage-service/assets/js/15.540584f5.js"><link rel="prefetch" href="/git-manage-service/assets/js/16.d61ffc33.js"><link rel="prefetch" href="/git-manage-service/assets/js/17.fe7e2849.js"><link rel="prefetch" href="/git-manage-service/assets/js/18.5341d2b3.js"><link rel="prefetch" href="/git-manage-service/assets/js/19.6ee6f591.js"><link rel="prefetch" href="/git-manage-service/assets/js/20.57fccbda.js"><link rel="prefetch" href="/git-manage-service/assets/js/21.5e6ee4ad.js"><link rel="prefetch" href="/git-manage-service/assets/js/22.df847616.js"><link rel="prefetch" href="/git-manage-service/assets/js/24.2612f3c4.js"><link rel="prefetch" href="/git-manage-service/assets/js/25.5fe74e41.js"><link rel="prefetch" href="/git-manage-service/assets/js/26.e207301a.js"><link rel="prefetch" href="/git-manage-service/assets/js/27.bf8829bf.js"><link rel="prefetch" href="/git-manage-service/assets/js/28.5389d93b.js"><link rel="prefetch" href="/git-manage-service/assets/js/29.891e2cbd.js"><link rel="prefetch" href="/git-manage-service/assets/js/3.48c22373.js"><link rel="prefetch" href="/git-manage-service/assets/js/30.966a53c4.js"><link rel="prefetch" href="/git-manage-service/assets/js/31.ea9d62f1.js"><link rel="prefetch" href="/git-manage-service/assets/js/32.f3cae7d1.js"><link rel="prefetch" href="/git-manage-service/assets/js/33.b6f29c1a.js"><link rel="prefetch" href="/git-manage-service/assets/js/34.2e19edb2.js"><link rel="prefetch" href="/git-manage-service/assets/js/35.5fc2d87a.js"><link rel="prefetch" href="/git-manage-service/assets/js/36.bad81078.js"><link rel="prefetch" href="/git-manage-service/assets/js/37.a34f505c.js"><link rel="prefetch" href="/git-manage-service/assets/js/38.634918af.js"><link rel="prefetch" href="/git-manage-service/assets/js/39.2cc24f34.js"><link rel="prefetch" href="/git-manage-service/assets/js/4.76aca2d3.js"><link rel="prefetch" href="/git-manage-service/assets/js/40.17162df2.js"><link rel="prefetch" href="/git-manage-service/assets/js/41.5b67bec4.js"><link rel="prefetch" href="/git-manage-service/assets/js/42.8e970f35.js"><link rel="prefetch" href="/git-manage-service/assets/js/43.72c9d1f6.js"><link rel="prefetch" href="/git-manage-service/assets/js/44.77bda58e.js"><link rel="prefetch" href="/git-manage-service/assets/js/45.1a83d330.js"><link rel="prefetch" href="/git-manage-service/assets/js/46.c386c8aa.js"><link rel="prefetch" href="/git-manage-service/assets/js/47.633d32c6.js"><link rel="prefetch" href="/git-manage-service/assets/js/48.816c075f.js"><link rel="prefetch" href="/git-manage-service/assets/js/49.bd7c834d.js"><link rel="prefetch" href="/git-manage-service/assets/js/5.eeff0cb2.js"><link rel="prefetch" href="/git-manage-service/assets/js/50.7b952003.js"><link rel="prefetch" href="/git-manage-service/assets/js/51.24c2a73f.js"><link rel="prefetch" href="/git-manage-service/assets/js/52.5f12a4aa.js"><link rel="prefetch" href="/git-manage-service/assets/js/53.016a820b.js"><link rel="prefetch" href="/git-manage-service/assets/js/54.f8464e3d.js"><link rel="prefetch" href="/git-manage-service/assets/js/55.f06bf92d.js"><link rel="prefetch" href="/git-manage-service/assets/js/56.83db2469.js"><link rel="prefetch" href="/git-manage-service/assets/js/57.f793bf03.js"><link rel="prefetch" href="/git-manage-service/assets/js/58.abac3e94.js"><link rel="prefetch" href="/git-manage-service/assets/js/59.eba890f2.js"><link rel="prefetch" href="/git-manage-service/assets/js/6.196c85db.js"><link rel="prefetch" href="/git-manage-service/assets/js/7.dadc5d64.js"><link rel="prefetch" href="/git-manage-service/assets/js/vendors~docsearch.bd0b093a.js">
+    <link rel="stylesheet" href="/git-manage-service/assets/css/0.styles.92870b7f.css">
+  </head>
+  <body>
+    <div id="app" data-server-rendered="true"><div class="theme-container"><header class="navbar"><div class="sidebar-button"><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" viewBox="0 0 448 512" class="icon"><path fill="currentColor" d="M436 124H12c-6.627 0-12-5.373-12-12V80c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12z"></path></svg></div> <a href="/git-manage-service/" class="home-link router-link-active"><!----> <span class="site-name">Git Manage Service</span></a> <div class="links"><div class="search-box"><input aria-label="Search" autocomplete="off" spellcheck="false" value=""> <!----></div> <nav class="nav-links can-hide"><div class="nav-item"><a href="/git-manage-service/" class="nav-link">
+  首页
+</a></div><div class="nav-item"><a href="/git-manage-service/getting-started.html" class="nav-link">
+  快速开始
+</a></div><div class="nav-item"><div class="dropdown-wrapper"><button type="button" aria-label="功能指南" class="dropdown-title"><span class="title">功能指南</span> <span class="arrow down"></span></button> <button type="button" aria-label="功能指南" class="mobile-dropdown-title"><span class="title">功能指南</span> <span class="arrow right"></span></button> <ul class="nav-dropdown" style="display:none;"><li class="dropdown-item"><!----> <a href="/git-manage-service/features/repo.html" class="nav-link">
+  仓库管理
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/branch.html" class="nav-link">
+  分支管理
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/sync.html" class="nav-link">
+  同步任务
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/webhook.html" class="nav-link">
+  Webhook
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/notification.html" class="nav-link">
+  通知配置
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/ssh.html" class="nav-link">
+  SSH 密钥
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/metrics.html" class="nav-link">
+  代码度量
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/spec-editor.html" class="nav-link">
+  Spec 编辑器
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/patch-manager.html" class="nav-link">
+  Patch 管理
+</a></li></ul></div></div><div class="nav-item"><div class="dropdown-wrapper"><button type="button" aria-label="部署方案" class="dropdown-title"><span class="title">部署方案</span> <span class="arrow down"></span></button> <button type="button" aria-label="部署方案" class="mobile-dropdown-title"><span class="title">部署方案</span> <span class="arrow right"></span></button> <ul class="nav-dropdown" style="display:none;"><li class="dropdown-item"><!----> <a href="/git-manage-service/deployment/binary.html" class="nav-link">
+  二进制部署
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/deployment/docker.html" class="nav-link">
+  Docker 部署
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/deployment/kubernetes.html" class="nav-link">
+  Kubernetes
+</a></li></ul></div></div><div class="nav-item"><a href="/git-manage-service/configuration.html" class="nav-link">
+  配置参考
+</a></div><div class="nav-item"><a href="/git-manage-service/api.html" class="nav-link">
+  API 文档
+</a></div> <a href="https://github.com/yi-nology/git-manage-service" target="_blank" rel="noopener noreferrer" class="repo-link">
+    GitHub
+    <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></nav></div></header> <div class="sidebar-mask"></div> <aside class="sidebar"><nav class="nav-links"><div class="nav-item"><a href="/git-manage-service/" class="nav-link">
+  首页
+</a></div><div class="nav-item"><a href="/git-manage-service/getting-started.html" class="nav-link">
+  快速开始
+</a></div><div class="nav-item"><div class="dropdown-wrapper"><button type="button" aria-label="功能指南" class="dropdown-title"><span class="title">功能指南</span> <span class="arrow down"></span></button> <button type="button" aria-label="功能指南" class="mobile-dropdown-title"><span class="title">功能指南</span> <span class="arrow right"></span></button> <ul class="nav-dropdown" style="display:none;"><li class="dropdown-item"><!----> <a href="/git-manage-service/features/repo.html" class="nav-link">
+  仓库管理
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/branch.html" class="nav-link">
+  分支管理
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/sync.html" class="nav-link">
+  同步任务
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/webhook.html" class="nav-link">
+  Webhook
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/notification.html" class="nav-link">
+  通知配置
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/ssh.html" class="nav-link">
+  SSH 密钥
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/metrics.html" class="nav-link">
+  代码度量
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/spec-editor.html" class="nav-link">
+  Spec 编辑器
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/patch-manager.html" class="nav-link">
+  Patch 管理
+</a></li></ul></div></div><div class="nav-item"><div class="dropdown-wrapper"><button type="button" aria-label="部署方案" class="dropdown-title"><span class="title">部署方案</span> <span class="arrow down"></span></button> <button type="button" aria-label="部署方案" class="mobile-dropdown-title"><span class="title">部署方案</span> <span class="arrow right"></span></button> <ul class="nav-dropdown" style="display:none;"><li class="dropdown-item"><!----> <a href="/git-manage-service/deployment/binary.html" class="nav-link">
+  二进制部署
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/deployment/docker.html" class="nav-link">
+  Docker 部署
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/deployment/kubernetes.html" class="nav-link">
+  Kubernetes
+</a></li></ul></div></div><div class="nav-item"><a href="/git-manage-service/configuration.html" class="nav-link">
+  配置参考
+</a></div><div class="nav-item"><a href="/git-manage-service/api.html" class="nav-link">
+  API 文档
+</a></div> <a href="https://github.com/yi-nology/git-manage-service" target="_blank" rel="noopener noreferrer" class="repo-link">
+    GitHub
+    <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></nav>  <ul class="sidebar-links"><li><section class="sidebar-group depth-0"><p class="sidebar-heading open"><span>📖 概览</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/git-manage-service/" aria-current="page" class="sidebar-link">Home</a></li><li><a href="/git-manage-service/getting-started.html" class="sidebar-link">快速开始</a></li></ul></section></li><li><section class="sidebar-group collapsable depth-0"><p class="sidebar-heading"><span>🚀 功能指南</span> <span class="arrow right"></span></p> <!----></section></li><li><section class="sidebar-group collapsable depth-0"><p class="sidebar-heading"><span>📦 部署方案</span> <span class="arrow right"></span></p> <!----></section></li><li><section class="sidebar-group collapsable depth-0"><p class="sidebar-heading"><span>⚙️ 参考</span> <span class="arrow right"></span></p> <!----></section></li></ul> </aside> <main class="page"> <div class="theme-default-content content__default"><h1 id="desktop-application-build-guide"><a href="#desktop-application-build-guide" class="header-anchor">#</a> Desktop Application Build Guide</h1> <p>本文档说明如何将 Git Manage Service 打包成桌面应用程序。</p> <h2 id="🎯-支持的平台"><a href="#🎯-支持的平台" class="header-anchor">#</a> 🎯 支持的平台</h2> <table><thead><tr><th>平台</th> <th>格式</th> <th>说明</th></tr></thead> <tbody><tr><td><strong>macOS</strong></td> <td><code>.app</code></td> <td>Universal Binary (Intel + Apple Silicon)</td></tr> <tr><td><strong>Windows</strong></td> <td><code>.exe</code></td> <td>Windows 安装程序 (NSIS)</td></tr> <tr><td><strong>Linux</strong></td> <td><code>.deb</code>, <code>.rpm</code>, <code>.AppImage</code></td> <td>多种 Linux 发行版支持</td></tr></tbody></table> <h2 id="📋-前置要求"><a href="#📋-前置要求" class="header-anchor">#</a> 📋 前置要求</h2> <h3 id="macos"><a href="#macos" class="header-anchor">#</a> macOS</h3> <div class="language-bash line-numbers-mode"><pre class="language-bash"><code><span class="token comment"># 安装 Xcode Command Line Tools</span>
+xcode-select <span class="token parameter variable">--install</span>
+
+<span class="token comment"># 安装 Go (1.21+)</span>
+brew <span class="token function">install</span> go
+
+<span class="token comment"># 安装 Node.js (20+)</span>
+brew <span class="token function">install</span> <span class="token function">node</span>
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br></div></div><h3 id="windows"><a href="#windows" class="header-anchor">#</a> Windows</h3> <div class="language-powershell line-numbers-mode"><pre class="language-powershell"><code><span class="token comment"># 安装 Visual Studio Build Tools (包含 C++ 工具链)</span>
+<span class="token comment"># https://visualstudio.microsoft.com/downloads/</span>
+
+<span class="token comment"># 安装 Go</span>
+<span class="token comment"># https://golang.org/dl/</span>
+
+<span class="token comment"># 安装 Node.js</span>
+<span class="token comment"># https://nodejs.org/</span>
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br></div></div><h3 id="linux-ubuntu-debian"><a href="#linux-ubuntu-debian" class="header-anchor">#</a> Linux (Ubuntu/Debian)</h3> <div class="language-bash line-numbers-mode"><pre class="language-bash"><code><span class="token comment"># 安装依赖</span>
+<span class="token function">sudo</span> <span class="token function">apt-get</span> update
+<span class="token function">sudo</span> <span class="token function">apt-get</span> <span class="token function">install</span> <span class="token parameter variable">-y</span> <span class="token punctuation">\</span>
+  libgtk-3-dev <span class="token punctuation">\</span>
+  libwebkit2gtk-4.0-dev <span class="token punctuation">\</span>
+  build-essential
+
+<span class="token comment"># 安装 Go</span>
+<span class="token function">sudo</span> snap <span class="token function">install</span> go <span class="token parameter variable">--classic</span>
+
+<span class="token comment"># 安装 Node.js</span>
+<span class="token function">sudo</span> snap <span class="token function">install</span> <span class="token function">node</span> <span class="token parameter variable">--classic</span> <span class="token parameter variable">--channel</span><span class="token operator">=</span><span class="token number">20</span>
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br><span class="line-number">11</span><br><span class="line-number">12</span><br></div></div><h2 id="🚀-快速开始"><a href="#🚀-快速开始" class="header-anchor">#</a> 🚀 快速开始</h2> <h3 id="_1-设置环境"><a href="#_1-设置环境" class="header-anchor">#</a> 1. 设置环境</h3> <div class="language-bash line-numbers-mode"><pre class="language-bash"><code><span class="token comment"># 运行设置脚本</span>
+<span class="token function">chmod</span> +x script/setup-desktop.sh
+./script/setup-desktop.sh
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br></div></div><h3 id="_2-构建应用"><a href="#_2-构建应用" class="header-anchor">#</a> 2. 构建应用</h3> <h4 id="构建当前平台"><a href="#构建当前平台" class="header-anchor">#</a> 构建当前平台</h4> <div class="language-bash line-numbers-mode"><pre class="language-bash"><code><span class="token function">make</span> desktop
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br></div></div><h4 id="构建特定平台"><a href="#构建特定平台" class="header-anchor">#</a> 构建特定平台</h4> <div class="language-bash line-numbers-mode"><pre class="language-bash"><code><span class="token comment"># macOS</span>
+<span class="token function">make</span> desktop-darwin
+
+<span class="token comment"># Windows (需要在 Windows 系统上运行)</span>
+<span class="token function">make</span> desktop-windows
+
+<span class="token comment"># Linux (需要在 Linux 系统上运行)</span>
+<span class="token function">make</span> desktop-linux
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br></div></div><h4 id="构建所有平台"><a href="#构建所有平台" class="header-anchor">#</a> 构建所有平台</h4> <div class="language-bash line-numbers-mode"><pre class="language-bash"><code><span class="token comment"># 注意：需要使用 CI/CD 或在各自平台上构建</span>
+<span class="token function">make</span> desktop-all
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br></div></div><h2 id="📦-输出位置"><a href="#📦-输出位置" class="header-anchor">#</a> 📦 输出位置</h2> <p>构建完成后，应用会生成在 <code>build/bin/</code> 目录：</p> <div class="language- line-numbers-mode"><pre class="language-text"><code>build/bin/
+├── Git Manage Service.app    # macOS
+├── git-manage-desktop.exe    # Windows
+└── git-manage-desktop        # Linux
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br></div></div><h2 id="🔧-高级配置"><a href="#🔧-高级配置" class="header-anchor">#</a> 🔧 高级配置</h2> <h3 id="自定义应用信息"><a href="#自定义应用信息" class="header-anchor">#</a> 自定义应用信息</h3> <p>编辑 <code>wails.json</code>:</p> <div class="language-json line-numbers-mode"><pre class="language-json"><code><span class="token punctuation">{</span>
+  <span class="token property">&quot;name&quot;</span><span class="token operator">:</span> <span class="token string">&quot;Git Manage Service&quot;</span><span class="token punctuation">,</span>
+  <span class="token property">&quot;outputfilename&quot;</span><span class="token operator">:</span> <span class="token string">&quot;git-manage-desktop&quot;</span><span class="token punctuation">,</span>
+  <span class="token property">&quot;info&quot;</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token property">&quot;companyName&quot;</span><span class="token operator">:</span> <span class="token string">&quot;yi-nology&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;productName&quot;</span><span class="token operator">:</span> <span class="token string">&quot;Git Manage Service&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;productVersion&quot;</span><span class="token operator">:</span> <span class="token string">&quot;0.7.5&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;copyright&quot;</span><span class="token operator">:</span> <span class="token string">&quot;Copyright © 2026 yi-nology&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;comments&quot;</span><span class="token operator">:</span> <span class="token string">&quot;Git repository management desktop application&quot;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br><span class="line-number">11</span><br></div></div><h3 id="添加应用图标"><a href="#添加应用图标" class="header-anchor">#</a> 添加应用图标</h3> <ol><li><p>准备图标文件：</p> <ul><li>macOS: <code>build/appicon.icns</code></li> <li>Windows: <code>build/appicon.ico</code></li> <li>Linux: <code>build/appicon.png</code></li></ul></li> <li><p>使用工具生成：</p></li></ol> <div class="language-bash line-numbers-mode"><pre class="language-bash"><code><span class="token comment"># 安装 icon 生成工具</span>
+go <span class="token function">install</span> github.com/wailsapp/wails/v2/cmd/wails@latest
+
+<span class="token comment"># 从 PNG 生成所有格式</span>
+wails generate icon <span class="token parameter variable">-input</span> logo.png
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br></div></div><h3 id="添加系统托盘"><a href="#添加系统托盘" class="header-anchor">#</a> 添加系统托盘</h3> <p>在 <code>desktop-app.go</code> 中添加：</p> <div class="language-go line-numbers-mode"><pre class="language-go"><code><span class="token keyword">import</span> <span class="token string">&quot;github.com/wailsapp/wails/v2/pkg/menu&quot;</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>a <span class="token operator">*</span>App<span class="token punctuation">)</span> <span class="token function">menu</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">*</span>menu<span class="token punctuation">.</span>Menu <span class="token punctuation">{</span>
+    <span class="token comment">// 创建菜单</span>
+    <span class="token keyword">return</span> menu<span class="token punctuation">.</span><span class="token function">NewMenu</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br></div></div><h2 id="🎨-开发模式"><a href="#🎨-开发模式" class="header-anchor">#</a> 🎨 开发模式</h2> <p>运行桌面应用开发服务器：</p> <div class="language-bash line-numbers-mode"><pre class="language-bash"><code>wails dev
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br></div></div><p>这会：</p> <ol><li>启动前端开发服务器</li> <li>启动后端服务</li> <li>打开桌面应用窗口</li> <li>支持热重载</li></ol> <h2 id="📊-构建选项"><a href="#📊-构建选项" class="header-anchor">#</a> 📊 构建选项</h2> <h3 id="macos-2"><a href="#macos-2" class="header-anchor">#</a> macOS</h3> <div class="language-bash line-numbers-mode"><pre class="language-bash"><code><span class="token comment"># 仅 Intel</span>
+wails build <span class="token parameter variable">-platform</span> darwin/amd64
+
+<span class="token comment"># 仅 Apple Silicon</span>
+wails build <span class="token parameter variable">-platform</span> darwin/arm64
+
+<span class="token comment"># Universal Binary</span>
+wails build <span class="token parameter variable">-platform</span> darwin/universal
+
+<span class="token comment"># 使用 UPX 压缩（需要安装 upx）</span>
+wails build <span class="token parameter variable">-upx</span>
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br><span class="line-number">11</span><br></div></div><h3 id="windows-2"><a href="#windows-2" class="header-anchor">#</a> Windows</h3> <div class="language-bash line-numbers-mode"><pre class="language-bash"><code><span class="token comment"># 64位</span>
+wails build <span class="token parameter variable">-platform</span> windows/amd64
+
+<span class="token comment"># 32位</span>
+wails build <span class="token parameter variable">-platform</span> windows/386
+
+<span class="token comment"># 生成安装程序</span>
+wails build <span class="token parameter variable">-nsis</span>
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br></div></div><h3 id="linux"><a href="#linux" class="header-anchor">#</a> Linux</h3> <div class="language-bash line-numbers-mode"><pre class="language-bash"><code><span class="token comment"># DEB 包</span>
+wails build <span class="token parameter variable">-deb</span>
+
+<span class="token comment"># RPM 包</span>
+wails build <span class="token parameter variable">-rpm</span>
+
+<span class="token comment"># AppImage</span>
+wails build <span class="token parameter variable">-appimage</span>
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br></div></div><h2 id="🔄-ci-cd-自动构建"><a href="#🔄-ci-cd-自动构建" class="header-anchor">#</a> 🔄 CI/CD 自动构建</h2> <p>项目包含 GitHub Actions workflow，在推送 tag 时自动构建：</p> <div class="language-bash line-numbers-mode"><pre class="language-bash"><code><span class="token comment"># 创建并推送 tag</span>
+<span class="token function">git</span> tag v0.7.5
+<span class="token function">git</span> push origin v0.7.5
+
+<span class="token comment"># GitHub Actions 会自动：</span>
+<span class="token comment"># 1. 构建 macOS/Windows/Linux 应用</span>
+<span class="token comment"># 2. 创建 GitHub Release</span>
+<span class="token comment"># 3. 上传所有构建产物</span>
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br></div></div><p>手动触发构建：</p> <ol><li>进入 GitHub Actions</li> <li>选择 &quot;Desktop Build&quot; workflow</li> <li>点击 &quot;Run workflow&quot;</li></ol> <h2 id="🐛-常见问题"><a href="#🐛-常见问题" class="header-anchor">#</a> 🐛 常见问题</h2> <h3 id="macos-无法打开-因为它来自身份不明的开发者"><a href="#macos-无法打开-因为它来自身份不明的开发者" class="header-anchor">#</a> macOS: &quot;无法打开，因为它来自身份不明的开发者&quot;</h3> <div class="language-bash line-numbers-mode"><pre class="language-bash"><code><span class="token comment"># 允许运行</span>
+xattr <span class="token parameter variable">-cr</span> <span class="token string">&quot;Git Manage Service.app&quot;</span>
+
+<span class="token comment"># 或在系统偏好设置中允许</span>
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br></div></div><h3 id="windows-缺少-dll"><a href="#windows-缺少-dll" class="header-anchor">#</a> Windows: 缺少 DLL</h3> <p>安装 Visual C++ Redistributable:
+https://support.microsoft.com/en-us/help/2977003/the-latest-supported-visual-c-downloads</p> <h3 id="linux-webkit2gtk-错误"><a href="#linux-webkit2gtk-错误" class="header-anchor">#</a> Linux: webkit2gtk 错误</h3> <div class="language-bash line-numbers-mode"><pre class="language-bash"><code><span class="token comment"># Ubuntu/Debian</span>
+<span class="token function">sudo</span> <span class="token function">apt-get</span> <span class="token function">install</span> libwebkit2gtk-4.0-dev
+
+<span class="token comment"># Fedora</span>
+<span class="token function">sudo</span> dnf <span class="token function">install</span> webkit2gtk3-devel
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br></div></div><h2 id="📚-相关文档"><a href="#📚-相关文档" class="header-anchor">#</a> 📚 相关文档</h2> <ul><li><a href="https://wails.io/docs/introduction" target="_blank" rel="noopener noreferrer">Wails 官方文档<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></li> <li><a href="https://wails.io/docs/guides/icons" target="_blank" rel="noopener noreferrer">应用图标生成<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></li> <li><a href="https://wails.io/docs/guides/signing" target="_blank" rel="noopener noreferrer">Windows 签名<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></li> <li><a href="https://wails.io/docs/guides/updates" target="_blank" rel="noopener noreferrer">自动更新<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></li></ul> <h2 id="🤝-贡献"><a href="#🤝-贡献" class="header-anchor">#</a> 🤝 贡献</h2> <p>如果您遇到问题或有改进建议，请：</p> <ol><li>查看 <a href="https://github.com/yi-nology/git-manage-service/issues" target="_blank" rel="noopener noreferrer">Issues<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></li> <li>提交新的 Issue</li> <li>或提交 Pull Request</li></ol></div> <footer class="page-edit"><div class="edit-link"><a href="https://github.com/yi-nology/git-manage-service/edit/main/docs/DESKTOP_BUILD.md" target="_blank" rel="noopener noreferrer">在 GitHub 上编辑此页</a> <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></div> <div class="last-updated"><span class="prefix">上次更新:</span> <span class="time">3/9/2026, 2:00:17 PM</span></div></footer> <!----> </main></div><div class="global-ui"></div></div>
+    <script src="/git-manage-service/assets/js/app.750adb06.js" defer></script><script src="/git-manage-service/assets/js/2.98b0deb4.js" defer></script><script src="/git-manage-service/assets/js/1.77e78a7e.js" defer></script><script src="/git-manage-service/assets/js/23.aca484b7.js" defer></script>
+  </body>
+</html>

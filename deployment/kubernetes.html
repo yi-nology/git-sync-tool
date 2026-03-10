@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Kubernetes 部署 | Git Manage Service</title>
+    <meta name="generator" content="VuePress 1.9.10">
+    <link rel="icon" type="image/svg+xml" href="/git-manage-service/images/favicon.svg">
+    <meta name="description" content="轻量级多仓库自动化同步管理系统">
+    <meta name="theme-color" content="#6366f1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    
+    <link rel="preload" href="/git-manage-service/assets/css/0.styles.92870b7f.css" as="style"><link rel="preload" href="/git-manage-service/assets/js/app.750adb06.js" as="script"><link rel="preload" href="/git-manage-service/assets/js/2.98b0deb4.js" as="script"><link rel="preload" href="/git-manage-service/assets/js/1.77e78a7e.js" as="script"><link rel="preload" href="/git-manage-service/assets/js/30.966a53c4.js" as="script"><link rel="prefetch" href="/git-manage-service/assets/js/10.b6fc63e7.js"><link rel="prefetch" href="/git-manage-service/assets/js/11.a556731a.js"><link rel="prefetch" href="/git-manage-service/assets/js/12.bc135387.js"><link rel="prefetch" href="/git-manage-service/assets/js/13.1520762d.js"><link rel="prefetch" href="/git-manage-service/assets/js/14.440abb79.js"><link rel="prefetch" href="/git-manage-service/assets/js/15.540584f5.js"><link rel="prefetch" href="/git-manage-service/assets/js/16.d61ffc33.js"><link rel="prefetch" href="/git-manage-service/assets/js/17.fe7e2849.js"><link rel="prefetch" href="/git-manage-service/assets/js/18.5341d2b3.js"><link rel="prefetch" href="/git-manage-service/assets/js/19.6ee6f591.js"><link rel="prefetch" href="/git-manage-service/assets/js/20.57fccbda.js"><link rel="prefetch" href="/git-manage-service/assets/js/21.5e6ee4ad.js"><link rel="prefetch" href="/git-manage-service/assets/js/22.df847616.js"><link rel="prefetch" href="/git-manage-service/assets/js/23.aca484b7.js"><link rel="prefetch" href="/git-manage-service/assets/js/24.2612f3c4.js"><link rel="prefetch" href="/git-manage-service/assets/js/25.5fe74e41.js"><link rel="prefetch" href="/git-manage-service/assets/js/26.e207301a.js"><link rel="prefetch" href="/git-manage-service/assets/js/27.bf8829bf.js"><link rel="prefetch" href="/git-manage-service/assets/js/28.5389d93b.js"><link rel="prefetch" href="/git-manage-service/assets/js/29.891e2cbd.js"><link rel="prefetch" href="/git-manage-service/assets/js/3.48c22373.js"><link rel="prefetch" href="/git-manage-service/assets/js/31.ea9d62f1.js"><link rel="prefetch" href="/git-manage-service/assets/js/32.f3cae7d1.js"><link rel="prefetch" href="/git-manage-service/assets/js/33.b6f29c1a.js"><link rel="prefetch" href="/git-manage-service/assets/js/34.2e19edb2.js"><link rel="prefetch" href="/git-manage-service/assets/js/35.5fc2d87a.js"><link rel="prefetch" href="/git-manage-service/assets/js/36.bad81078.js"><link rel="prefetch" href="/git-manage-service/assets/js/37.a34f505c.js"><link rel="prefetch" href="/git-manage-service/assets/js/38.634918af.js"><link rel="prefetch" href="/git-manage-service/assets/js/39.2cc24f34.js"><link rel="prefetch" href="/git-manage-service/assets/js/4.76aca2d3.js"><link rel="prefetch" href="/git-manage-service/assets/js/40.17162df2.js"><link rel="prefetch" href="/git-manage-service/assets/js/41.5b67bec4.js"><link rel="prefetch" href="/git-manage-service/assets/js/42.8e970f35.js"><link rel="prefetch" href="/git-manage-service/assets/js/43.72c9d1f6.js"><link rel="prefetch" href="/git-manage-service/assets/js/44.77bda58e.js"><link rel="prefetch" href="/git-manage-service/assets/js/45.1a83d330.js"><link rel="prefetch" href="/git-manage-service/assets/js/46.c386c8aa.js"><link rel="prefetch" href="/git-manage-service/assets/js/47.633d32c6.js"><link rel="prefetch" href="/git-manage-service/assets/js/48.816c075f.js"><link rel="prefetch" href="/git-manage-service/assets/js/49.bd7c834d.js"><link rel="prefetch" href="/git-manage-service/assets/js/5.eeff0cb2.js"><link rel="prefetch" href="/git-manage-service/assets/js/50.7b952003.js"><link rel="prefetch" href="/git-manage-service/assets/js/51.24c2a73f.js"><link rel="prefetch" href="/git-manage-service/assets/js/52.5f12a4aa.js"><link rel="prefetch" href="/git-manage-service/assets/js/53.016a820b.js"><link rel="prefetch" href="/git-manage-service/assets/js/54.f8464e3d.js"><link rel="prefetch" href="/git-manage-service/assets/js/55.f06bf92d.js"><link rel="prefetch" href="/git-manage-service/assets/js/56.83db2469.js"><link rel="prefetch" href="/git-manage-service/assets/js/57.f793bf03.js"><link rel="prefetch" href="/git-manage-service/assets/js/58.abac3e94.js"><link rel="prefetch" href="/git-manage-service/assets/js/59.eba890f2.js"><link rel="prefetch" href="/git-manage-service/assets/js/6.196c85db.js"><link rel="prefetch" href="/git-manage-service/assets/js/7.dadc5d64.js"><link rel="prefetch" href="/git-manage-service/assets/js/vendors~docsearch.bd0b093a.js">
+    <link rel="stylesheet" href="/git-manage-service/assets/css/0.styles.92870b7f.css">
+  </head>
+  <body>
+    <div id="app" data-server-rendered="true"><div class="theme-container"><header class="navbar"><div class="sidebar-button"><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" viewBox="0 0 448 512" class="icon"><path fill="currentColor" d="M436 124H12c-6.627 0-12-5.373-12-12V80c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12z"></path></svg></div> <a href="/git-manage-service/" class="home-link router-link-active"><!----> <span class="site-name">Git Manage Service</span></a> <div class="links"><div class="search-box"><input aria-label="Search" autocomplete="off" spellcheck="false" value=""> <!----></div> <nav class="nav-links can-hide"><div class="nav-item"><a href="/git-manage-service/" class="nav-link">
+  首页
+</a></div><div class="nav-item"><a href="/git-manage-service/getting-started.html" class="nav-link">
+  快速开始
+</a></div><div class="nav-item"><div class="dropdown-wrapper"><button type="button" aria-label="功能指南" class="dropdown-title"><span class="title">功能指南</span> <span class="arrow down"></span></button> <button type="button" aria-label="功能指南" class="mobile-dropdown-title"><span class="title">功能指南</span> <span class="arrow right"></span></button> <ul class="nav-dropdown" style="display:none;"><li class="dropdown-item"><!----> <a href="/git-manage-service/features/repo.html" class="nav-link">
+  仓库管理
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/branch.html" class="nav-link">
+  分支管理
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/sync.html" class="nav-link">
+  同步任务
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/webhook.html" class="nav-link">
+  Webhook
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/notification.html" class="nav-link">
+  通知配置
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/ssh.html" class="nav-link">
+  SSH 密钥
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/metrics.html" class="nav-link">
+  代码度量
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/spec-editor.html" class="nav-link">
+  Spec 编辑器
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/patch-manager.html" class="nav-link">
+  Patch 管理
+</a></li></ul></div></div><div class="nav-item"><div class="dropdown-wrapper"><button type="button" aria-label="部署方案" class="dropdown-title"><span class="title">部署方案</span> <span class="arrow down"></span></button> <button type="button" aria-label="部署方案" class="mobile-dropdown-title"><span class="title">部署方案</span> <span class="arrow right"></span></button> <ul class="nav-dropdown" style="display:none;"><li class="dropdown-item"><!----> <a href="/git-manage-service/deployment/binary.html" class="nav-link">
+  二进制部署
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/deployment/docker.html" class="nav-link">
+  Docker 部署
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/deployment/kubernetes.html" aria-current="page" class="nav-link router-link-exact-active router-link-active">
+  Kubernetes
+</a></li></ul></div></div><div class="nav-item"><a href="/git-manage-service/configuration.html" class="nav-link">
+  配置参考
+</a></div><div class="nav-item"><a href="/git-manage-service/api.html" class="nav-link">
+  API 文档
+</a></div> <a href="https://github.com/yi-nology/git-manage-service" target="_blank" rel="noopener noreferrer" class="repo-link">
+    GitHub
+    <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></nav></div></header> <div class="sidebar-mask"></div> <aside class="sidebar"><nav class="nav-links"><div class="nav-item"><a href="/git-manage-service/" class="nav-link">
+  首页
+</a></div><div class="nav-item"><a href="/git-manage-service/getting-started.html" class="nav-link">
+  快速开始
+</a></div><div class="nav-item"><div class="dropdown-wrapper"><button type="button" aria-label="功能指南" class="dropdown-title"><span class="title">功能指南</span> <span class="arrow down"></span></button> <button type="button" aria-label="功能指南" class="mobile-dropdown-title"><span class="title">功能指南</span> <span class="arrow right"></span></button> <ul class="nav-dropdown" style="display:none;"><li class="dropdown-item"><!----> <a href="/git-manage-service/features/repo.html" class="nav-link">
+  仓库管理
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/branch.html" class="nav-link">
+  分支管理
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/sync.html" class="nav-link">
+  同步任务
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/webhook.html" class="nav-link">
+  Webhook
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/notification.html" class="nav-link">
+  通知配置
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/ssh.html" class="nav-link">
+  SSH 密钥
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/metrics.html" class="nav-link">
+  代码度量
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/spec-editor.html" class="nav-link">
+  Spec 编辑器
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/patch-manager.html" class="nav-link">
+  Patch 管理
+</a></li></ul></div></div><div class="nav-item"><div class="dropdown-wrapper"><button type="button" aria-label="部署方案" class="dropdown-title"><span class="title">部署方案</span> <span class="arrow down"></span></button> <button type="button" aria-label="部署方案" class="mobile-dropdown-title"><span class="title">部署方案</span> <span class="arrow right"></span></button> <ul class="nav-dropdown" style="display:none;"><li class="dropdown-item"><!----> <a href="/git-manage-service/deployment/binary.html" class="nav-link">
+  二进制部署
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/deployment/docker.html" class="nav-link">
+  Docker 部署
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/deployment/kubernetes.html" aria-current="page" class="nav-link router-link-exact-active router-link-active">
+  Kubernetes
+</a></li></ul></div></div><div class="nav-item"><a href="/git-manage-service/configuration.html" class="nav-link">
+  配置参考
+</a></div><div class="nav-item"><a href="/git-manage-service/api.html" class="nav-link">
+  API 文档
+</a></div> <a href="https://github.com/yi-nology/git-manage-service" target="_blank" rel="noopener noreferrer" class="repo-link">
+    GitHub
+    <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></nav>  <ul class="sidebar-links"><li><section class="sidebar-group depth-0"><p class="sidebar-heading"><span>📖 概览</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/git-manage-service/" aria-current="page" class="sidebar-link">Home</a></li><li><a href="/git-manage-service/getting-started.html" class="sidebar-link">快速开始</a></li></ul></section></li><li><section class="sidebar-group collapsable depth-0"><p class="sidebar-heading"><span>🚀 功能指南</span> <span class="arrow right"></span></p> <!----></section></li><li><section class="sidebar-group collapsable depth-0"><p class="sidebar-heading open"><span>📦 部署方案</span> <span class="arrow down"></span></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/git-manage-service/deployment/binary.html" class="sidebar-link">二进制部署</a></li><li><a href="/git-manage-service/deployment/docker.html" class="sidebar-link">Docker 部署</a></li><li><a href="/git-manage-service/deployment/kubernetes.html" aria-current="page" class="active sidebar-link">Kubernetes 部署</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/git-manage-service/deployment/kubernetes.html#前提条件" class="sidebar-link">前提条件</a></li><li class="sidebar-sub-header"><a href="/git-manage-service/deployment/kubernetes.html#快速部署" class="sidebar-link">快速部署</a></li><li class="sidebar-sub-header"><a href="/git-manage-service/deployment/kubernetes.html#部署清单" class="sidebar-link">部署清单</a></li><li class="sidebar-sub-header"><a href="/git-manage-service/deployment/kubernetes.html#配置说明" class="sidebar-link">配置说明</a></li><li class="sidebar-sub-header"><a href="/git-manage-service/deployment/kubernetes.html#hpa-自动扩缩容" class="sidebar-link">HPA（自动扩缩容）</a></li><li class="sidebar-sub-header"><a href="/git-manage-service/deployment/kubernetes.html#常用命令" class="sidebar-link">常用命令</a></li><li class="sidebar-sub-header"><a href="/git-manage-service/deployment/kubernetes.html#升级" class="sidebar-link">升级</a></li><li class="sidebar-sub-header"><a href="/git-manage-service/deployment/kubernetes.html#监控和日志" class="sidebar-link">监控和日志</a></li><li class="sidebar-sub-header"><a href="/git-manage-service/deployment/kubernetes.html#故障排查" class="sidebar-link">故障排查</a></li><li class="sidebar-sub-header"><a href="/git-manage-service/deployment/kubernetes.html#下一步" class="sidebar-link">下一步</a></li></ul></li></ul></section></li><li><section class="sidebar-group collapsable depth-0"><p class="sidebar-heading"><span>⚙️ 参考</span> <span class="arrow right"></span></p> <!----></section></li></ul> </aside> <main class="page"> <div class="theme-default-content content__default"><h1 id="kubernetes-部署"><a href="#kubernetes-部署" class="header-anchor">#</a> Kubernetes 部署</h1> <p>Kubernetes 部署适合需要高可用、自动扩缩容的生产环境。</p> <h2 id="前提条件"><a href="#前提条件" class="header-anchor">#</a> 前提条件</h2> <ul><li>Kubernetes 集群（1.20+）</li> <li>kubectl 已配置并连接到集群</li> <li>Helm 3（可选，用于 Helm 部署）</li></ul> <h2 id="快速部署"><a href="#快速部署" class="header-anchor">#</a> 快速部署</h2> <h3 id="使用-kubectl"><a href="#使用-kubectl" class="header-anchor">#</a> 使用 kubectl</h3> <div class="language-bash line-numbers-mode"><pre class="language-bash"><code><span class="token comment"># 克隆仓库</span>
+<span class="token function">git</span> clone https://github.com/yi-nology/git-manage-service.git
+<span class="token builtin class-name">cd</span> git-manage-service
+
+<span class="token comment"># 创建命名空间</span>
+kubectl create namespace git-manage
+
+<span class="token comment"># 部署</span>
+kubectl apply <span class="token parameter variable">-f</span> deploy/k8s/ <span class="token parameter variable">-n</span> git-manage
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br></div></div><h3 id="使用-helm"><a href="#使用-helm" class="header-anchor">#</a> 使用 Helm</h3> <div class="language-bash line-numbers-mode"><pre class="language-bash"><code><span class="token comment"># 添加仓库（如果已发布）</span>
+helm repo <span class="token function">add</span> git-manage-service https://yi-nology.github.io/git-manage-service
+
+<span class="token comment"># 安装</span>
+helm <span class="token function">install</span> git-manage-service git-manage-service/git-manage-service <span class="token punctuation">\</span>
+  <span class="token parameter variable">--namespace</span> git-manage <span class="token punctuation">\</span>
+  --create-namespace
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br></div></div><h2 id="部署清单"><a href="#部署清单" class="header-anchor">#</a> 部署清单</h2> <h3 id="namespace"><a href="#namespace" class="header-anchor">#</a> Namespace</h3> <div class="language-yaml line-numbers-mode"><pre class="language-yaml"><code><span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> v1
+<span class="token key atrule">kind</span><span class="token punctuation">:</span> Namespace
+<span class="token key atrule">metadata</span><span class="token punctuation">:</span>
+  <span class="token key atrule">name</span><span class="token punctuation">:</span> git<span class="token punctuation">-</span>manage
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br></div></div><h3 id="deployment"><a href="#deployment" class="header-anchor">#</a> Deployment</h3> <div class="language-yaml line-numbers-mode"><pre class="language-yaml"><code><span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> apps/v1
+<span class="token key atrule">kind</span><span class="token punctuation">:</span> Deployment
+<span class="token key atrule">metadata</span><span class="token punctuation">:</span>
+  <span class="token key atrule">name</span><span class="token punctuation">:</span> git<span class="token punctuation">-</span>manage<span class="token punctuation">-</span>service
+  <span class="token key atrule">namespace</span><span class="token punctuation">:</span> git<span class="token punctuation">-</span>manage
+<span class="token key atrule">spec</span><span class="token punctuation">:</span>
+  <span class="token key atrule">replicas</span><span class="token punctuation">:</span> <span class="token number">2</span>
+  <span class="token key atrule">selector</span><span class="token punctuation">:</span>
+    <span class="token key atrule">matchLabels</span><span class="token punctuation">:</span>
+      <span class="token key atrule">app</span><span class="token punctuation">:</span> git<span class="token punctuation">-</span>manage<span class="token punctuation">-</span>service
+  <span class="token key atrule">template</span><span class="token punctuation">:</span>
+    <span class="token key atrule">metadata</span><span class="token punctuation">:</span>
+      <span class="token key atrule">labels</span><span class="token punctuation">:</span>
+        <span class="token key atrule">app</span><span class="token punctuation">:</span> git<span class="token punctuation">-</span>manage<span class="token punctuation">-</span>service
+    <span class="token key atrule">spec</span><span class="token punctuation">:</span>
+      <span class="token key atrule">containers</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> git<span class="token punctuation">-</span>manage<span class="token punctuation">-</span>service
+        <span class="token key atrule">image</span><span class="token punctuation">:</span> ghcr.io/yi<span class="token punctuation">-</span>nology/git<span class="token punctuation">-</span>manage<span class="token punctuation">-</span>service<span class="token punctuation">:</span>latest
+        <span class="token key atrule">ports</span><span class="token punctuation">:</span>
+        <span class="token punctuation">-</span> <span class="token key atrule">containerPort</span><span class="token punctuation">:</span> <span class="token number">38080</span>
+          <span class="token key atrule">name</span><span class="token punctuation">:</span> http
+        <span class="token punctuation">-</span> <span class="token key atrule">containerPort</span><span class="token punctuation">:</span> <span class="token number">8888</span>
+          <span class="token key atrule">name</span><span class="token punctuation">:</span> rpc
+        <span class="token key atrule">env</span><span class="token punctuation">:</span>
+        <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> DB_TYPE
+          <span class="token key atrule">value</span><span class="token punctuation">:</span> <span class="token string">&quot;mysql&quot;</span>
+        <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> DB_HOST
+          <span class="token key atrule">value</span><span class="token punctuation">:</span> <span class="token string">&quot;mysql-service&quot;</span>
+        <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> DB_PORT
+          <span class="token key atrule">value</span><span class="token punctuation">:</span> <span class="token string">&quot;3306&quot;</span>
+        <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> DB_USER
+          <span class="token key atrule">valueFrom</span><span class="token punctuation">:</span>
+            <span class="token key atrule">secretKeyRef</span><span class="token punctuation">:</span>
+              <span class="token key atrule">name</span><span class="token punctuation">:</span> git<span class="token punctuation">-</span>manage<span class="token punctuation">-</span>secret
+              <span class="token key atrule">key</span><span class="token punctuation">:</span> db<span class="token punctuation">-</span>user
+        <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> DB_PASSWORD
+          <span class="token key atrule">valueFrom</span><span class="token punctuation">:</span>
+            <span class="token key atrule">secretKeyRef</span><span class="token punctuation">:</span>
+              <span class="token key atrule">name</span><span class="token punctuation">:</span> git<span class="token punctuation">-</span>manage<span class="token punctuation">-</span>secret
+              <span class="token key atrule">key</span><span class="token punctuation">:</span> db<span class="token punctuation">-</span>password
+        <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> DB_NAME
+          <span class="token key atrule">value</span><span class="token punctuation">:</span> <span class="token string">&quot;git_manage&quot;</span>
+        <span class="token key atrule">resources</span><span class="token punctuation">:</span>
+          <span class="token key atrule">requests</span><span class="token punctuation">:</span>
+            <span class="token key atrule">cpu</span><span class="token punctuation">:</span> <span class="token string">&quot;100m&quot;</span>
+            <span class="token key atrule">memory</span><span class="token punctuation">:</span> <span class="token string">&quot;256Mi&quot;</span>
+          <span class="token key atrule">limits</span><span class="token punctuation">:</span>
+            <span class="token key atrule">cpu</span><span class="token punctuation">:</span> <span class="token string">&quot;1000m&quot;</span>
+            <span class="token key atrule">memory</span><span class="token punctuation">:</span> <span class="token string">&quot;1Gi&quot;</span>
+        <span class="token key atrule">livenessProbe</span><span class="token punctuation">:</span>
+          <span class="token key atrule">httpGet</span><span class="token punctuation">:</span>
+            <span class="token key atrule">path</span><span class="token punctuation">:</span> /api/health
+            <span class="token key atrule">port</span><span class="token punctuation">:</span> <span class="token number">38080</span>
+          <span class="token key atrule">initialDelaySeconds</span><span class="token punctuation">:</span> <span class="token number">30</span>
+          <span class="token key atrule">periodSeconds</span><span class="token punctuation">:</span> <span class="token number">10</span>
+        <span class="token key atrule">readinessProbe</span><span class="token punctuation">:</span>
+          <span class="token key atrule">httpGet</span><span class="token punctuation">:</span>
+            <span class="token key atrule">path</span><span class="token punctuation">:</span> /api/health
+            <span class="token key atrule">port</span><span class="token punctuation">:</span> <span class="token number">38080</span>
+          <span class="token key atrule">initialDelaySeconds</span><span class="token punctuation">:</span> <span class="token number">5</span>
+          <span class="token key atrule">periodSeconds</span><span class="token punctuation">:</span> <span class="token number">5</span>
+        <span class="token key atrule">volumeMounts</span><span class="token punctuation">:</span>
+        <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> repos
+          <span class="token key atrule">mountPath</span><span class="token punctuation">:</span> /app/repos
+        <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> data
+          <span class="token key atrule">mountPath</span><span class="token punctuation">:</span> /app/data
+      <span class="token key atrule">volumes</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> repos
+        <span class="token key atrule">persistentVolumeClaim</span><span class="token punctuation">:</span>
+          <span class="token key atrule">claimName</span><span class="token punctuation">:</span> git<span class="token punctuation">-</span>manage<span class="token punctuation">-</span>repos<span class="token punctuation">-</span>pvc
+      <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> data
+        <span class="token key atrule">persistentVolumeClaim</span><span class="token punctuation">:</span>
+          <span class="token key atrule">claimName</span><span class="token punctuation">:</span> git<span class="token punctuation">-</span>manage<span class="token punctuation">-</span>data<span class="token punctuation">-</span>pvc
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br><span class="line-number">11</span><br><span class="line-number">12</span><br><span class="line-number">13</span><br><span class="line-number">14</span><br><span class="line-number">15</span><br><span class="line-number">16</span><br><span class="line-number">17</span><br><span class="line-number">18</span><br><span class="line-number">19</span><br><span class="line-number">20</span><br><span class="line-number">21</span><br><span class="line-number">22</span><br><span class="line-number">23</span><br><span class="line-number">24</span><br><span class="line-number">25</span><br><span class="line-number">26</span><br><span class="line-number">27</span><br><span class="line-number">28</span><br><span class="line-number">29</span><br><span class="line-number">30</span><br><span class="line-number">31</span><br><span class="line-number">32</span><br><span class="line-number">33</span><br><span class="line-number">34</span><br><span class="line-number">35</span><br><span class="line-number">36</span><br><span class="line-number">37</span><br><span class="line-number">38</span><br><span class="line-number">39</span><br><span class="line-number">40</span><br><span class="line-number">41</span><br><span class="line-number">42</span><br><span class="line-number">43</span><br><span class="line-number">44</span><br><span class="line-number">45</span><br><span class="line-number">46</span><br><span class="line-number">47</span><br><span class="line-number">48</span><br><span class="line-number">49</span><br><span class="line-number">50</span><br><span class="line-number">51</span><br><span class="line-number">52</span><br><span class="line-number">53</span><br><span class="line-number">54</span><br><span class="line-number">55</span><br><span class="line-number">56</span><br><span class="line-number">57</span><br><span class="line-number">58</span><br><span class="line-number">59</span><br><span class="line-number">60</span><br><span class="line-number">61</span><br><span class="line-number">62</span><br><span class="line-number">63</span><br><span class="line-number">64</span><br><span class="line-number">65</span><br><span class="line-number">66</span><br><span class="line-number">67</span><br><span class="line-number">68</span><br><span class="line-number">69</span><br><span class="line-number">70</span><br><span class="line-number">71</span><br><span class="line-number">72</span><br><span class="line-number">73</span><br></div></div><h3 id="service"><a href="#service" class="header-anchor">#</a> Service</h3> <div class="language-yaml line-numbers-mode"><pre class="language-yaml"><code><span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> v1
+<span class="token key atrule">kind</span><span class="token punctuation">:</span> Service
+<span class="token key atrule">metadata</span><span class="token punctuation">:</span>
+  <span class="token key atrule">name</span><span class="token punctuation">:</span> git<span class="token punctuation">-</span>manage<span class="token punctuation">-</span>service
+  <span class="token key atrule">namespace</span><span class="token punctuation">:</span> git<span class="token punctuation">-</span>manage
+<span class="token key atrule">spec</span><span class="token punctuation">:</span>
+  <span class="token key atrule">selector</span><span class="token punctuation">:</span>
+    <span class="token key atrule">app</span><span class="token punctuation">:</span> git<span class="token punctuation">-</span>manage<span class="token punctuation">-</span>service
+  <span class="token key atrule">ports</span><span class="token punctuation">:</span>
+  <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> http
+    <span class="token key atrule">port</span><span class="token punctuation">:</span> <span class="token number">38080</span>
+    <span class="token key atrule">targetPort</span><span class="token punctuation">:</span> <span class="token number">38080</span>
+  <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> rpc
+    <span class="token key atrule">port</span><span class="token punctuation">:</span> <span class="token number">8888</span>
+    <span class="token key atrule">targetPort</span><span class="token punctuation">:</span> <span class="token number">8888</span>
+  <span class="token key atrule">type</span><span class="token punctuation">:</span> ClusterIP
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br><span class="line-number">11</span><br><span class="line-number">12</span><br><span class="line-number">13</span><br><span class="line-number">14</span><br><span class="line-number">15</span><br><span class="line-number">16</span><br></div></div><h3 id="ingress"><a href="#ingress" class="header-anchor">#</a> Ingress</h3> <div class="language-yaml line-numbers-mode"><pre class="language-yaml"><code><span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> networking.k8s.io/v1
+<span class="token key atrule">kind</span><span class="token punctuation">:</span> Ingress
+<span class="token key atrule">metadata</span><span class="token punctuation">:</span>
+  <span class="token key atrule">name</span><span class="token punctuation">:</span> git<span class="token punctuation">-</span>manage<span class="token punctuation">-</span>ingress
+  <span class="token key atrule">namespace</span><span class="token punctuation">:</span> git<span class="token punctuation">-</span>manage
+  <span class="token key atrule">annotations</span><span class="token punctuation">:</span>
+    <span class="token key atrule">nginx.ingress.kubernetes.io/proxy-body-size</span><span class="token punctuation">:</span> <span class="token string">&quot;100m&quot;</span>
+<span class="token key atrule">spec</span><span class="token punctuation">:</span>
+  <span class="token key atrule">ingressClassName</span><span class="token punctuation">:</span> nginx
+  <span class="token key atrule">rules</span><span class="token punctuation">:</span>
+  <span class="token punctuation">-</span> <span class="token key atrule">host</span><span class="token punctuation">:</span> git<span class="token punctuation">-</span>manage.example.com
+    <span class="token key atrule">http</span><span class="token punctuation">:</span>
+      <span class="token key atrule">paths</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> <span class="token key atrule">path</span><span class="token punctuation">:</span> /
+        <span class="token key atrule">pathType</span><span class="token punctuation">:</span> Prefix
+        <span class="token key atrule">backend</span><span class="token punctuation">:</span>
+          <span class="token key atrule">service</span><span class="token punctuation">:</span>
+            <span class="token key atrule">name</span><span class="token punctuation">:</span> git<span class="token punctuation">-</span>manage<span class="token punctuation">-</span>service
+            <span class="token key atrule">port</span><span class="token punctuation">:</span>
+              <span class="token key atrule">number</span><span class="token punctuation">:</span> <span class="token number">38080</span>
+  <span class="token key atrule">tls</span><span class="token punctuation">:</span>
+  <span class="token punctuation">-</span> <span class="token key atrule">hosts</span><span class="token punctuation">:</span>
+    <span class="token punctuation">-</span> git<span class="token punctuation">-</span>manage.example.com
+    <span class="token key atrule">secretName</span><span class="token punctuation">:</span> git<span class="token punctuation">-</span>manage<span class="token punctuation">-</span>tls
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br><span class="line-number">11</span><br><span class="line-number">12</span><br><span class="line-number">13</span><br><span class="line-number">14</span><br><span class="line-number">15</span><br><span class="line-number">16</span><br><span class="line-number">17</span><br><span class="line-number">18</span><br><span class="line-number">19</span><br><span class="line-number">20</span><br><span class="line-number">21</span><br><span class="line-number">22</span><br><span class="line-number">23</span><br><span class="line-number">24</span><br></div></div><h3 id="pvc"><a href="#pvc" class="header-anchor">#</a> PVC</h3> <div class="language-yaml line-numbers-mode"><pre class="language-yaml"><code><span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> v1
+<span class="token key atrule">kind</span><span class="token punctuation">:</span> PersistentVolumeClaim
+<span class="token key atrule">metadata</span><span class="token punctuation">:</span>
+  <span class="token key atrule">name</span><span class="token punctuation">:</span> git<span class="token punctuation">-</span>manage<span class="token punctuation">-</span>repos<span class="token punctuation">-</span>pvc
+  <span class="token key atrule">namespace</span><span class="token punctuation">:</span> git<span class="token punctuation">-</span>manage
+<span class="token key atrule">spec</span><span class="token punctuation">:</span>
+  <span class="token key atrule">accessModes</span><span class="token punctuation">:</span>
+    <span class="token punctuation">-</span> ReadWriteOnce
+  <span class="token key atrule">resources</span><span class="token punctuation">:</span>
+    <span class="token key atrule">requests</span><span class="token punctuation">:</span>
+      <span class="token key atrule">storage</span><span class="token punctuation">:</span> 50Gi
+  <span class="token key atrule">storageClassName</span><span class="token punctuation">:</span> standard
+
+<span class="token punctuation">---</span>
+<span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> v1
+<span class="token key atrule">kind</span><span class="token punctuation">:</span> PersistentVolumeClaim
+<span class="token key atrule">metadata</span><span class="token punctuation">:</span>
+  <span class="token key atrule">name</span><span class="token punctuation">:</span> git<span class="token punctuation">-</span>manage<span class="token punctuation">-</span>data<span class="token punctuation">-</span>pvc
+  <span class="token key atrule">namespace</span><span class="token punctuation">:</span> git<span class="token punctuation">-</span>manage
+<span class="token key atrule">spec</span><span class="token punctuation">:</span>
+  <span class="token key atrule">accessModes</span><span class="token punctuation">:</span>
+    <span class="token punctuation">-</span> ReadWriteOnce
+  <span class="token key atrule">resources</span><span class="token punctuation">:</span>
+    <span class="token key atrule">requests</span><span class="token punctuation">:</span>
+      <span class="token key atrule">storage</span><span class="token punctuation">:</span> 10Gi
+  <span class="token key atrule">storageClassName</span><span class="token punctuation">:</span> standard
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br><span class="line-number">11</span><br><span class="line-number">12</span><br><span class="line-number">13</span><br><span class="line-number">14</span><br><span class="line-number">15</span><br><span class="line-number">16</span><br><span class="line-number">17</span><br><span class="line-number">18</span><br><span class="line-number">19</span><br><span class="line-number">20</span><br><span class="line-number">21</span><br><span class="line-number">22</span><br><span class="line-number">23</span><br><span class="line-number">24</span><br><span class="line-number">25</span><br><span class="line-number">26</span><br></div></div><h3 id="secret"><a href="#secret" class="header-anchor">#</a> Secret</h3> <div class="language-yaml line-numbers-mode"><pre class="language-yaml"><code><span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> v1
+<span class="token key atrule">kind</span><span class="token punctuation">:</span> Secret
+<span class="token key atrule">metadata</span><span class="token punctuation">:</span>
+  <span class="token key atrule">name</span><span class="token punctuation">:</span> git<span class="token punctuation">-</span>manage<span class="token punctuation">-</span>secret
+  <span class="token key atrule">namespace</span><span class="token punctuation">:</span> git<span class="token punctuation">-</span>manage
+<span class="token key atrule">type</span><span class="token punctuation">:</span> Opaque
+<span class="token key atrule">stringData</span><span class="token punctuation">:</span>
+  <span class="token key atrule">db-user</span><span class="token punctuation">:</span> root
+  <span class="token key atrule">db-password</span><span class="token punctuation">:</span> your_password
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br></div></div><h2 id="配置说明"><a href="#配置说明" class="header-anchor">#</a> 配置说明</h2> <h3 id="环境变量配置"><a href="#环境变量配置" class="header-anchor">#</a> 环境变量配置</h3> <p>使用 ConfigMap 管理非敏感配置：</p> <div class="language-yaml line-numbers-mode"><pre class="language-yaml"><code><span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> v1
+<span class="token key atrule">kind</span><span class="token punctuation">:</span> ConfigMap
+<span class="token key atrule">metadata</span><span class="token punctuation">:</span>
+  <span class="token key atrule">name</span><span class="token punctuation">:</span> git<span class="token punctuation">-</span>manage<span class="token punctuation">-</span>config
+  <span class="token key atrule">namespace</span><span class="token punctuation">:</span> git<span class="token punctuation">-</span>manage
+<span class="token key atrule">data</span><span class="token punctuation">:</span>
+  <span class="token key atrule">DB_TYPE</span><span class="token punctuation">:</span> <span class="token string">&quot;mysql&quot;</span>
+  <span class="token key atrule">DB_HOST</span><span class="token punctuation">:</span> <span class="token string">&quot;mysql-service&quot;</span>
+  <span class="token key atrule">DB_PORT</span><span class="token punctuation">:</span> <span class="token string">&quot;3306&quot;</span>
+  <span class="token key atrule">DB_NAME</span><span class="token punctuation">:</span> <span class="token string">&quot;git_manage&quot;</span>
+  <span class="token key atrule">REDIS_ADDR</span><span class="token punctuation">:</span> <span class="token string">&quot;redis-service:6379&quot;</span>
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br><span class="line-number">11</span><br></div></div><h3 id="资源配置"><a href="#资源配置" class="header-anchor">#</a> 资源配置</h3> <p>根据实际负载调整：</p> <table><thead><tr><th>环境</th> <th>CPU</th> <th>内存</th></tr></thead> <tbody><tr><td>开发</td> <td>100m - 500m</td> <td>256Mi - 512Mi</td></tr> <tr><td>测试</td> <td>500m - 1000m</td> <td>512Mi - 1Gi</td></tr> <tr><td>生产</td> <td>1000m - 2000m</td> <td>1Gi - 2Gi</td></tr></tbody></table> <h3 id="副本数"><a href="#副本数" class="header-anchor">#</a> 副本数</h3> <div class="language-yaml line-numbers-mode"><pre class="language-yaml"><code><span class="token key atrule">spec</span><span class="token punctuation">:</span>
+  <span class="token key atrule">replicas</span><span class="token punctuation">:</span> <span class="token number">2</span>  <span class="token comment"># 生产环境建议 2+</span>
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br></div></div><h2 id="hpa-自动扩缩容"><a href="#hpa-自动扩缩容" class="header-anchor">#</a> HPA（自动扩缩容）</h2> <div class="language-yaml line-numbers-mode"><pre class="language-yaml"><code><span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> autoscaling/v2
+<span class="token key atrule">kind</span><span class="token punctuation">:</span> HorizontalPodAutoscaler
+<span class="token key atrule">metadata</span><span class="token punctuation">:</span>
+  <span class="token key atrule">name</span><span class="token punctuation">:</span> git<span class="token punctuation">-</span>manage<span class="token punctuation">-</span>hpa
+  <span class="token key atrule">namespace</span><span class="token punctuation">:</span> git<span class="token punctuation">-</span>manage
+<span class="token key atrule">spec</span><span class="token punctuation">:</span>
+  <span class="token key atrule">scaleTargetRef</span><span class="token punctuation">:</span>
+    <span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> apps/v1
+    <span class="token key atrule">kind</span><span class="token punctuation">:</span> Deployment
+    <span class="token key atrule">name</span><span class="token punctuation">:</span> git<span class="token punctuation">-</span>manage<span class="token punctuation">-</span>service
+  <span class="token key atrule">minReplicas</span><span class="token punctuation">:</span> <span class="token number">2</span>
+  <span class="token key atrule">maxReplicas</span><span class="token punctuation">:</span> <span class="token number">10</span>
+  <span class="token key atrule">metrics</span><span class="token punctuation">:</span>
+  <span class="token punctuation">-</span> <span class="token key atrule">type</span><span class="token punctuation">:</span> Resource
+    <span class="token key atrule">resource</span><span class="token punctuation">:</span>
+      <span class="token key atrule">name</span><span class="token punctuation">:</span> cpu
+      <span class="token key atrule">target</span><span class="token punctuation">:</span>
+        <span class="token key atrule">type</span><span class="token punctuation">:</span> Utilization
+        <span class="token key atrule">averageUtilization</span><span class="token punctuation">:</span> <span class="token number">70</span>
+  <span class="token punctuation">-</span> <span class="token key atrule">type</span><span class="token punctuation">:</span> Resource
+    <span class="token key atrule">resource</span><span class="token punctuation">:</span>
+      <span class="token key atrule">name</span><span class="token punctuation">:</span> memory
+      <span class="token key atrule">target</span><span class="token punctuation">:</span>
+        <span class="token key atrule">type</span><span class="token punctuation">:</span> Utilization
+        <span class="token key atrule">averageUtilization</span><span class="token punctuation">:</span> <span class="token number">80</span>
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br><span class="line-number">11</span><br><span class="line-number">12</span><br><span class="line-number">13</span><br><span class="line-number">14</span><br><span class="line-number">15</span><br><span class="line-number">16</span><br><span class="line-number">17</span><br><span class="line-number">18</span><br><span class="line-number">19</span><br><span class="line-number">20</span><br><span class="line-number">21</span><br><span class="line-number">22</span><br><span class="line-number">23</span><br><span class="line-number">24</span><br><span class="line-number">25</span><br></div></div><h2 id="常用命令"><a href="#常用命令" class="header-anchor">#</a> 常用命令</h2> <div class="language-bash line-numbers-mode"><pre class="language-bash"><code><span class="token comment"># 查看部署状态</span>
+kubectl get all <span class="token parameter variable">-n</span> git-manage
+
+<span class="token comment"># 查看 Pod 日志</span>
+kubectl logs <span class="token parameter variable">-f</span> deployment/git-manage-service <span class="token parameter variable">-n</span> git-manage
+
+<span class="token comment"># 进入 Pod</span>
+kubectl <span class="token builtin class-name">exec</span> <span class="token parameter variable">-it</span> deployment/git-manage-service <span class="token parameter variable">-n</span> git-manage -- <span class="token function">sh</span>
+
+<span class="token comment"># 扩缩容</span>
+kubectl scale deployment/git-manage-service <span class="token parameter variable">--replicas</span><span class="token operator">=</span><span class="token number">3</span> <span class="token parameter variable">-n</span> git-manage
+
+<span class="token comment"># 更新镜像</span>
+kubectl <span class="token builtin class-name">set</span> image deployment/git-manage-service <span class="token punctuation">\</span>
+  git-manage-service<span class="token operator">=</span>ghcr.io/yi-nology/git-manage-service:vX.X.X <span class="token punctuation">\</span>
+  <span class="token parameter variable">-n</span> git-manage
+
+<span class="token comment"># 查看资源使用</span>
+kubectl <span class="token function">top</span> pods <span class="token parameter variable">-n</span> git-manage
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br><span class="line-number">11</span><br><span class="line-number">12</span><br><span class="line-number">13</span><br><span class="line-number">14</span><br><span class="line-number">15</span><br><span class="line-number">16</span><br><span class="line-number">17</span><br><span class="line-number">18</span><br><span class="line-number">19</span><br></div></div><h2 id="升级"><a href="#升级" class="header-anchor">#</a> 升级</h2> <div class="language-bash line-numbers-mode"><pre class="language-bash"><code><span class="token comment"># 更新镜像版本</span>
+kubectl <span class="token builtin class-name">set</span> image deployment/git-manage-service <span class="token punctuation">\</span>
+  git-manage-service<span class="token operator">=</span>ghcr.io/yi-nology/git-manage-service:v0.7.2 <span class="token punctuation">\</span>
+  <span class="token parameter variable">-n</span> git-manage
+
+<span class="token comment"># 查看滚动更新状态</span>
+kubectl rollout status deployment/git-manage-service <span class="token parameter variable">-n</span> git-manage
+
+<span class="token comment"># 回滚</span>
+kubectl rollout undo deployment/git-manage-service <span class="token parameter variable">-n</span> git-manage
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br></div></div><h2 id="监控和日志"><a href="#监控和日志" class="header-anchor">#</a> 监控和日志</h2> <h3 id="prometheus-监控"><a href="#prometheus-监控" class="header-anchor">#</a> Prometheus 监控</h3> <p>添加 Prometheus annotations：</p> <div class="language-yaml line-numbers-mode"><pre class="language-yaml"><code><span class="token key atrule">metadata</span><span class="token punctuation">:</span>
+  <span class="token key atrule">annotations</span><span class="token punctuation">:</span>
+    <span class="token key atrule">prometheus.io/scrape</span><span class="token punctuation">:</span> <span class="token string">&quot;true&quot;</span>
+    <span class="token key atrule">prometheus.io/port</span><span class="token punctuation">:</span> <span class="token string">&quot;38080&quot;</span>
+    <span class="token key atrule">prometheus.io/path</span><span class="token punctuation">:</span> <span class="token string">&quot;/metrics&quot;</span>
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br></div></div><h3 id="日志采集"><a href="#日志采集" class="header-anchor">#</a> 日志采集</h3> <p>使用 Filebeat 或 Fluentd 采集日志。</p> <h2 id="故障排查"><a href="#故障排查" class="header-anchor">#</a> 故障排查</h2> <h3 id="pod-无法启动"><a href="#pod-无法启动" class="header-anchor">#</a> Pod 无法启动</h3> <div class="language-bash line-numbers-mode"><pre class="language-bash"><code><span class="token comment"># 查看 Pod 状态</span>
+kubectl describe pod <span class="token operator">&lt;</span>pod-name<span class="token operator">&gt;</span> <span class="token parameter variable">-n</span> git-manage
+
+<span class="token comment"># 查看事件</span>
+kubectl get events <span class="token parameter variable">-n</span> git-manage --sort-by<span class="token operator">=</span><span class="token string">'.lastTimestamp'</span>
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br></div></div><h3 id="服务无法访问"><a href="#服务无法访问" class="header-anchor">#</a> 服务无法访问</h3> <div class="language-bash line-numbers-mode"><pre class="language-bash"><code><span class="token comment"># 检查 Service</span>
+kubectl get svc <span class="token parameter variable">-n</span> git-manage
+
+<span class="token comment"># 检查 Endpoints</span>
+kubectl get endpoints <span class="token parameter variable">-n</span> git-manage
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br></div></div><h2 id="下一步"><a href="#下一步" class="header-anchor">#</a> 下一步</h2> <ul><li><a href="/configuration">配置参考</a> - 完整配置说明</li> <li><a href="/api">API 文档</a> - HTTP API 参考</li></ul></div> <footer class="page-edit"><div class="edit-link"><a href="https://github.com/yi-nology/git-manage-service/edit/main/docs/deployment/kubernetes.md" target="_blank" rel="noopener noreferrer">在 GitHub 上编辑此页</a> <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></div> <div class="last-updated"><span class="prefix">上次更新:</span> <span class="time">3/9/2026, 1:33:36 AM</span></div></footer> <div class="page-nav"><p class="inner"><span class="prev">
+      ←
+      <a href="/git-manage-service/deployment/docker.html" class="prev">
+        Docker 部署
+      </a></span> <span class="next"><a href="/git-manage-service/configuration.html">
+        配置参考
+      </a>
+      →
+    </span></p></div> </main></div><div class="global-ui"></div></div>
+    <script src="/git-manage-service/assets/js/app.750adb06.js" defer></script><script src="/git-manage-service/assets/js/2.98b0deb4.js" defer></script><script src="/git-manage-service/assets/js/1.77e78a7e.js" defer></script><script src="/git-manage-service/assets/js/30.966a53c4.js" defer></script>
+  </body>
+</html>
