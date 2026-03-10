@@ -6,7 +6,7 @@
 set -e
 
 APP_NAME="Git Manage Service"
-PORT=38080
+PORT=12345
 PID_FILE="/tmp/git-manage-service.pid"
 
 # 检查是否已经在运行

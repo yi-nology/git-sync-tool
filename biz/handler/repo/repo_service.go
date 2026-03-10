@@ -499,6 +499,43 @@ func ScanDirectory(ctx context.Context, c *app.RequestContext) {
 	gitSvc := git.NewGitService()
 	var repos []api.ScannedRepo
 
+	// 首先检查当前路径是否是 Git 仓库
+	if gitSvc.IsGitRepo(req.Path) {
+		name := filepath.Base(req.Path)
+		repo := api.ScannedRepo{
+			Name:    name,
+			Path:    req.Path,
+			Remotes: []domain.GitRemote{},
+		}
+
+		// 获取远程配置
+		config, err := gitSvc.GetRepoConfig(req.Path)
+		if err == nil {
+			repo.Remotes = config.Remotes
+		}
+
+		// 获取当前分支
+		branch, _ := gitSvc.GetHeadBranch(req.Path)
+		repo.CurrentBranch = branch
+
+		// 获取最后一次提交的短哈希
+		if branch != "" {
+			if hash, err := gitSvc.GetCommitHash(req.Path, "", branch); err == nil {
+				if len(hash) > 7 {
+					repo.LastCommit = hash[:7]
+				} else {
+					repo.LastCommit = hash
+				}
+			}
+		}
+
+		// 检查是否有未提交的更改
+		status, _ := gitSvc.GetStatus(req.Path)
+		repo.HasChanges = status != ""
+
+		repos = append(repos, repo)
+	}
+
 	// 扫描函数
 	var scan func(path string, currentDepth int)
 	scan = func(path string, currentDepth int) {
@@ -565,7 +602,10 @@ func ScanDirectory(ctx context.Context, c *app.RequestContext) {
 		}
 	}
 
-	scan(req.Path, 1)
+	// 开始扫描子目录
+	if depth > 0 {
+		scan(req.Path, 1)
+	}
 
 	response.Success(c, api.ScanDirectoryResp{
 		Repos: repos,

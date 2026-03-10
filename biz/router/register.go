@@ -10,6 +10,7 @@ import (
 
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/app/server"
+	"github.com/yi-nology/git-manage-service/biz/middleware"
 	"github.com/yi-nology/git-manage-service/biz/router/audit"
 	"github.com/yi-nology/git-manage-service/biz/router/branch"
 	"github.com/yi-nology/git-manage-service/biz/router/commit"
@@ -44,6 +45,9 @@ func SetEmbedFS(public, docs fs.FS) {
 
 // GeneratedRegister registers all routes
 func GeneratedRegister(h *server.Hertz) {
+	// 全局 CORS 中间件
+	h.Use(middleware.CORS())
+
 	// 注册 Hz 生成的路由
 	audit.Register(h)
 	branch.Register(h)
@@ -64,14 +68,34 @@ func GeneratedRegister(h *server.Hertz) {
 	spec.Register(h)
 	stats.Register(h)
 
-	// 前端 SPA - 从嵌入的 FS 读取
-	// 注意：这个路由应该在所有 API 路由之后注册，并且只匹配非 API 路径
-	h.GET("/*filepath", func(ctx context.Context, c *app.RequestContext) {
-		fp := c.Param("filepath")
+	// 根路径
+	h.GET("/", func(ctx context.Context, c *app.RequestContext) {
+		if embeddedPublicFS != nil {
+			serveEmbedFile(c, embeddedPublicFS, "index.html", "text/html; charset=utf-8")
+		} else {
+			c.String(http.StatusInternalServerError, "Embedded file system not initialized")
+		}
+	})
 
-		// 跳过 API 路径，让 API 路由处理
+	// 前端 SPA - 使用 NoRoute 处理未匹配的路由
+	// 避免使用 GET /*filepath 通配符路由，因为它会与所有 API POST 路由冲突导致 405
+	h.NoRoute(func(ctx context.Context, c *app.RequestContext) {
+		fp := string(c.Path())
+		fp = strings.TrimPrefix(fp, "/")
+
+		// API 路径返回 404
 		if strings.HasPrefix(fp, "api/") {
-			c.Next(ctx)
+			c.JSON(http.StatusNotFound, map[string]interface{}{
+				"code": 404,
+				"msg":  "not found",
+			})
+			return
+		}
+
+		// 只处理 GET 和 HEAD 请求的静态文件
+		method := string(c.Method())
+		if method != "GET" && method != "HEAD" {
+			c.Status(http.StatusMethodNotAllowed)
 			return
 		}
 
@@ -83,36 +107,6 @@ func GeneratedRegister(h *server.Hertz) {
 			if !serveEmbedFile(c, embeddedPublicFS, fp, "") {
 				serveEmbedFile(c, embeddedPublicFS, "index.html", "text/html; charset=utf-8")
 			}
-		} else {
-			c.String(http.StatusInternalServerError, "Embedded file system not initialized")
-		}
-	})
-
-	h.HEAD("/*filepath", func(ctx context.Context, c *app.RequestContext) {
-		fp := c.Param("filepath")
-
-		// 跳过 API 路径，让 API 路由处理
-		if strings.HasPrefix(fp, "api/") {
-			c.Next(ctx)
-			return
-		}
-
-		if fp == "" {
-			fp = "index.html"
-		}
-		if embeddedPublicFS != nil {
-			if !serveEmbedFile(c, embeddedPublicFS, fp, "") {
-				serveEmbedFile(c, embeddedPublicFS, "index.html", "text/html; charset=utf-8")
-			}
-		} else {
-			c.String(http.StatusInternalServerError, "Embedded file system not initialized")
-		}
-	})
-
-	// 根路径重定向到 index.html
-	h.GET("/", func(ctx context.Context, c *app.RequestContext) {
-		if embeddedPublicFS != nil {
-			serveEmbedFile(c, embeddedPublicFS, "index.html", "text/html; charset=utf-8")
 		} else {
 			c.String(http.StatusInternalServerError, "Embedded file system not initialized")
 		}

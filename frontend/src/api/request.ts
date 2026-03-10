@@ -2,9 +2,30 @@ import axios, { type AxiosInstance, type AxiosResponse, type InternalAxiosReques
 import type { ApiResponse } from '@/types/common'
 import { useNotification } from '@/composables/useNotification'
 
+// 动态设置 baseURL
+// Wails 桌面应用: http://localhost:12345/api/v1 (直接访问后端)
+// Web 开发模式: /api/v1 (通过 Vite 代理)
+// Web 生产模式: /api/v1 (通过反向代理)
+const getBaseURL = () => {
+  // 检测是否在 Wails 桌面应用中运行
+  // Wails 会设置特定的端口（34115 在开发模式）
+  const isWails = window.location.port === '34115' || 
+                  window.location.search.includes('wails') ||
+                  (window as any).wails !== undefined
+  
+  if (isWails) {
+    // Wails 桌面应用：直接访问后端 API
+    const port = import.meta.env.VITE_API_PORT || '12345'
+    return `http://localhost:${port}/api/v1`
+  }
+  
+  // Web 应用：使用相对路径（开发时通过 Vite 代理，生产时通过反向代理）
+  return '/api/v1'
+}
+
 // 创建 axios 实例
 const service: AxiosInstance = axios.create({
-  baseURL: '/api/v1',
+  baseURL: getBaseURL(),
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',

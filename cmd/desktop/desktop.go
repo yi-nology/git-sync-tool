@@ -98,14 +98,14 @@ func isPortInUse(port int) bool {
 func (a *App) startBackend() {
 	log.Println("Initializing backend services...")
 
-	// 设置桌面应用的数据目录
+	// 先加载配置（此时 CWD 还在项目目录，能找到 conf/config.yaml）
+	configs.Init()
+
+	// 设置桌面应用的数据目录（会切换 CWD）
 	if err := setupDesktopDataDir(); err != nil {
 		log.Printf("Failed to setup data directory: %v\n", err)
 		return
 	}
-
-	// 加载配置
-	configs.Init()
 
 	// 初始化数据库
 	db.Init()
@@ -163,6 +163,18 @@ func setupDesktopDataDir() error {
 	// 确保目录存在
 	if err := os.MkdirAll(dataDir, 0755); err != nil {
 		return fmt.Errorf("failed to create data directory: %w", err)
+	}
+
+	// 确保数据库文件的父目录存在
+	dbPath := configs.GlobalConfig.Database.Path
+	if dbPath == "" {
+		dbPath = "git_sync.db"
+	}
+	dbDir := filepath.Dir(dbPath)
+	if dbDir != "." && dbDir != "" {
+		if err := os.MkdirAll(filepath.Join(dataDir, dbDir), 0755); err != nil {
+			return fmt.Errorf("failed to create database directory: %w", err)
+		}
 	}
 
 	// 切换工作目录到数据目录

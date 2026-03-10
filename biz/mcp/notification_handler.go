@@ -2,44 +2,37 @@ package mcp
 
 import (
 	"encoding/json"
+
+	"github.com/yi-nology/git-manage-service/biz/service/notification"
 )
 
-type notificationHandler struct {}
-
-func newNotificationHandler() *notificationHandler {
-	return &notificationHandler{}
-}
-
-func (h *notificationHandler) handleNotificationSend(params json.RawMessage) ([]byte, error) {
+func (s *MCPServer) handleNotificationSend(params json.RawMessage) ([]byte, error) {
 	var sendParams struct {
-		Channel   string `json:"channel"`
-		Recipient string `json:"recipient"`
-		Message   string `json:"message"`
-		Subject   string `json:"subject"`
+		ChannelID string      `json:"channel_id"`
+		Event     string      `json:"event"`
+		Message   string      `json:"message"`
+		Data      interface{} `json:"data"`
 	}
 
 	if err := json.Unmarshal(params, &sendParams); err != nil {
-		resp := ToolResponse{
-			Success: false,
-			Message: "Invalid parameters",
-		}
-		content, _ := json.Marshal(resp)
-		return content, nil
+		return s.errorResponse("Invalid parameters")
 	}
 
-	// 这里应该调用通知服务的发送方法
-	// 暂时返回成功
-	resp := ToolResponse{
-		Success: true,
-		Message: "Notification sent successfully",
-	}
-	content, _ := json.Marshal(resp)
-	return content, nil
+	// 调用通知服务发送通知
+	s.notificationService.Send(&notification.NotificationMessage{
+		Title:        sendParams.Message,
+		Content:      sendParams.Message,
+		Status:       "success",
+		TriggerEvent: sendParams.Event,
+		TaskKey:      "",
+		RepoKey:      "",
+	})
+
+	return s.successResponse("Notification sent successfully")
 }
 
-func (h *notificationHandler) handleNotificationChannels(params json.RawMessage) ([]byte, error) {
-	// 这里应该调用通知服务的获取渠道方法
-	// 暂时返回成功
+func (s *MCPServer) handleNotificationChannels(params json.RawMessage) ([]byte, error) {
+	// 暂时返回成功，因为 notificationService 没有 ListChannels 和 ManageChannel 方法
 	responseData := struct {
 		Channels []string `json:"channels"`
 	}{
@@ -49,9 +42,10 @@ func (h *notificationHandler) handleNotificationChannels(params json.RawMessage)
 	data, _ := json.Marshal(responseData)
 	resp := ToolResponse{
 		Success: true,
-		Message: "Notification channels retrieved successfully",
+		Message: "Channels retrieved successfully",
 		Data:    data,
 	}
+
 	content, _ := json.Marshal(resp)
 	return content, nil
 }
