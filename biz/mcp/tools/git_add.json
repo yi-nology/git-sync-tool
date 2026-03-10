@@ -1,0 +1,34 @@
+{
+  "name": "git_add",
+  "description": "Add files to Git staging area",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "path": {
+        "type": "string",
+        "description": "The local repository path"
+      },
+      "files": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "List of files to add (leave empty to add all)"
+      }
+    },
+    "required": ["path"]
+  },
+  "returns": {
+    "type": "object",
+    "properties": {
+      "success": {
+        "type": "boolean",
+        "description": "Whether the add operation was successful"
+      },
+      "message": {
+        "type": "string",
+        "description": "Operation result message"
+      }
+    }
+  }
+}

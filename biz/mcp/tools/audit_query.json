@@ -1,0 +1,85 @@
+{
+  "name": "audit_query",
+  "description": "Query audit logs",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "type": {
+        "type": "string",
+        "description": "Action type filter"
+      },
+      "object_type": {
+        "type": "string",
+        "description": "Object type filter"
+      },
+      "start_time": {
+        "type": "string",
+        "description": "Start time (YYYY-MM-DD HH:MM:SS)"
+      },
+      "end_time": {
+        "type": "string",
+        "description": "End time (YYYY-MM-DD HH:MM:SS)"
+      },
+      "page": {
+        "type": "integer",
+        "description": "Page number",
+        "default": 1
+      },
+      "page_size": {
+        "type": "integer",
+        "description": "Page size",
+        "default": 20
+      }
+    }
+  },
+  "returns": {
+    "type": "object",
+    "properties": {
+      "success": {
+        "type": "boolean",
+        "description": "Whether the query was successful"
+      },
+      "message": {
+        "type": "string",
+        "description": "Operation result message"
+      },
+      "logs": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "Log ID"
+            },
+            "user": {
+              "type": "string",
+              "description": "User"
+            },
+            "action": {
+              "type": "string",
+              "description": "Action"
+            },
+            "object_type": {
+              "type": "string",
+              "description": "Object type"
+            },
+            "object_id": {
+              "type": "string",
+              "description": "Object ID"
+            },
+            "details": {
+              "type": "string",
+              "description": "Details"
+            },
+            "created_at": {
+              "type": "string",
+              "description": "Creation time"
+            }
+          }
+        },
+        "description": "List of audit logs"
+      }
+    }
+  }
+}

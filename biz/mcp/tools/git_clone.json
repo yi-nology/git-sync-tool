@@ -1,0 +1,44 @@
+{
+  "name": "git_clone",
+  "description": "Clone a Git repository from a remote URL",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "remote_url": {
+        "type": "string",
+        "description": "The remote repository URL"
+      },
+      "local_path": {
+        "type": "string",
+        "description": "The local directory path to clone into"
+      },
+      "auth_type": {
+        "type": "string",
+        "description": "Authentication type (ssh, https)",
+        "default": "ssh"
+      },
+      "auth_key": {
+        "type": "string",
+        "description": "Authentication key or username"
+      },
+      "auth_secret": {
+        "type": "string",
+        "description": "Authentication secret or password"
+      }
+    },
+    "required": ["remote_url", "local_path"]
+  },
+  "returns": {
+    "type": "object",
+    "properties": {
+      "success": {
+        "type": "boolean",
+        "description": "Whether the clone operation was successful"
+      },
+      "message": {
+        "type": "string",
+        "description": "Operation result message"
+      }
+    }
+  }
+}

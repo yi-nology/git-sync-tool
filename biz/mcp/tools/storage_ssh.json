@@ -1,0 +1,67 @@
+{
+  "name": "storage_ssh",
+  "description": "Manage SSH keys",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "action": {
+        "type": "string",
+        "description": "Action to perform (list, create, delete, test)"
+      },
+      "key_id": {
+        "type": "string",
+        "description": "Key ID for delete/test actions"
+      },
+      "key": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Key name"
+          },
+          "type": {
+            "type": "string",
+            "description": "Key type (rsa, ed25519)"
+          },
+          "private_key": {
+            "type": "string",
+            "description": "Private key content"
+          },
+          "description": {
+            "type": "string",
+            "description": "Key description"
+          }
+        }
+      },
+      "test_repo_url": {
+        "type": "string",
+        "description": "Repository URL for testing"
+      }
+    },
+    "required": ["action"]
+  },
+  "returns": {
+    "type": "object",
+    "properties": {
+      "success": {
+        "type": "boolean",
+        "description": "Whether the operation was successful"
+      },
+      "message": {
+        "type": "string",
+        "description": "Operation result message"
+      },
+      "keys": {
+        "type": "array",
+        "items": {
+          "type": "object"
+        },
+        "description": "List of SSH keys (for list action)"
+      },
+      "test_result": {
+        "type": "object",
+        "description": "Test result (for test action)"
+      }
+    }
+  }
+}

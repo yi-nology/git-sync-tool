@@ -1,0 +1,31 @@
+{
+  "name": "git_status",
+  "description": "Get Git repository status",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "path": {
+        "type": "string",
+        "description": "The local repository path"
+      }
+    },
+    "required": ["path"]
+  },
+  "returns": {
+    "type": "object",
+    "properties": {
+      "success": {
+        "type": "boolean",
+        "description": "Whether the operation was successful"
+      },
+      "message": {
+        "type": "string",
+        "description": "Operation result message"
+      },
+      "status": {
+        "type": "string",
+        "description": "The repository status"
+      }
+    }
+  }
+}

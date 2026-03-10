@@ -1,0 +1,31 @@
+{
+  "name": "git_checkout",
+  "description": "Checkout a Git branch",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "path": {
+        "type": "string",
+        "description": "The local repository path"
+      },
+      "branch": {
+        "type": "string",
+        "description": "The branch name to checkout"
+      }
+    },
+    "required": ["path", "branch"]
+  },
+  "returns": {
+    "type": "object",
+    "properties": {
+      "success": {
+        "type": "boolean",
+        "description": "Whether the checkout operation was successful"
+      },
+      "message": {
+        "type": "string",
+        "description": "Operation result message"
+      }
+    }
+  }
+}
