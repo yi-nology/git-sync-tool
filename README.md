@@ -107,6 +107,155 @@ docker run -d \
 | [配置参考](docs/configuration.md) | 完整的配置项说明 |
 | [API 文档](docs/api.md) | HTTP API 接口参考 |
 | [Webhook 集成](docs/features/webhook.md) | 外部触发同步 |
+| [MCP 对接](docs/features/mcp.md) | MCP 服务对接指南 |
+
+## 📡 MCP 服务对接
+
+### 什么是 MCP
+
+MCP (Model Context Protocol) 是 Git Manage Service 提供的一种基于 TCP 协议的服务接口，用于与其他系统或工具进行集成。通过 MCP，您可以远程执行 Git 操作、管理同步任务和发送通知等。
+
+### 服务启动
+
+MCP 服务默认在 `cmd/server` 启动时自动运行，端口为 **9000**。
+
+### 对接方式
+
+#### 1. 建立 TCP 连接
+
+```bash
+# 使用 nc 命令测试连接
+nc localhost 9000
+```
+
+#### 2. 发送请求
+
+MCP 使用 JSON 格式的请求和响应：
+
+**请求格式：**
+```json
+{
+  "tool": "工具名称",
+  "parameters": {
+    "参数1": "值1",
+    "参数2": "值2"
+  }
+}
+```
+
+**响应格式：**
+```json
+{
+  "success": true,
+  "message": "操作成功",
+  "data": "可选的返回数据"
+}
+```
+
+#### 3. 支持的工具
+
+| 工具名称 | 描述 | 参数 |
+|---------|------|------|
+| `git_clone` | 克隆仓库 | `remote_url`, `local_path`, `auth_type`, `auth_key`, `auth_secret` |
+| `git_fetch` | 获取远程更新 | `path`, `remote` |
+| `git_push` | 推送代码 | `path`, `target_remote`, `source_hash`, `target_branch`, `options` |
+| `git_checkout` | 切换分支 | `path`, `branch` |
+| `git_branches` | 获取分支列表 | `path` |
+| `git_add` | 添加文件 | `path`, `files` |
+| `git_commit` | 提交更改 | `path`, `message`, `author_name`, `author_email` |
+| `git_status` | 获取状态 | `path` |
+| `git_log` | 获取提交日志 | `path`, `branch`, `since`, `until` |
+| `git_auth` | 验证认证信息 | `auth_type`, `auth_key`, `auth_secret` |
+| `notification_send` | 发送通知 | `channel_id`, `event`, `message`, `data` |
+| `notification_channels` | 获取通知渠道 | 无 |
+| `sync_task` | 创建同步任务 | 无 |
+| `sync_run` | 运行同步任务 | 无 |
+
+#### 4. 示例代码
+
+**Go 示例：**
+```go
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"net"
+)
+
+type ToolRequest struct {
+	Tool       string          `json:"tool"`
+	Parameters json.RawMessage `json:"parameters"`
+}
+
+type ToolResponse struct {
+	Success bool            `json:"success"`
+	Message string          `json:"message"`
+	Data    json.RawMessage `json:"data,omitempty"`
+}
+
+func main() {
+	// 建立连接
+	conn, err := net.Dial("tcp", "localhost:9000")
+	if err != nil {
+		fmt.Println("连接失败:", err)
+		return
+	}
+	defer conn.Close()
+
+	// 构建请求
+	req := ToolRequest{
+		Tool: "git_branches",
+		Parameters: json.RawMessage(`{"path": "/path/to/repo"}`),
+	}
+
+	// 发送请求
+	reqData, _ := json.Marshal(req)
+	conn.Write(reqData)
+
+	// 接收响应
+	buffer := make([]byte, 4096)
+	n, _ := conn.Read(buffer)
+	respData := buffer[:n]
+
+	// 解析响应
+	var resp ToolResponse
+	json.Unmarshal(respData, &resp)
+
+	fmt.Println("响应:", resp)
+}
+```
+
+**Python 示例：**
+```python
+import json
+import socket
+
+def mcp_request(tool, parameters):
+    # 建立连接
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.connect(("localhost", 9000))
+    
+    # 构建请求
+    request = {
+        "tool": tool,
+        "parameters": parameters
+    }
+    
+    # 发送请求
+    sock.sendall(json.dumps(request).encode('utf-8'))
+    
+    # 接收响应
+    response = sock.recv(4096)
+    sock.close()
+    
+    # 解析响应
+    return json.loads(response.decode('utf-8'))
+
+# 示例：获取分支列表
+result = mcp_request("git_branches", {"path": "/path/to/repo"})
+print(result)
+```
 
 ## 🛠 技术栈
 
