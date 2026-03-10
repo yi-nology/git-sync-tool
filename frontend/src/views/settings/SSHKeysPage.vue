@@ -178,9 +178,10 @@ onMounted(() => {
 async function fetchSSHKeys() {
   loading.value = true
   try {
-    sshKeys.value = await listDBSSHKeys()
+    sshKeys.value = await listDBSSHKeys() || []
   } catch (e) {
     ElMessage.error('获取 SSH 密钥列表失败')
+    sshKeys.value = []
   } finally {
     loading.value = false
   }

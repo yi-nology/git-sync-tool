@@ -41,12 +41,12 @@ export interface TestDBSSHKeyResp {
 
 // 列出所有数据库SSH密钥
 export function listDBSSHKeys() {
-  return request.get<unknown, DBSSHKey[]>('/system/db-ssh-keys/')
+  return request.get<unknown, DBSSHKey[]>('/system/db-ssh-keys')
 }
 
 // 创建SSH密钥
 export function createDBSSHKey(data: CreateDBSSHKeyReq) {
-  return request.post<unknown, DBSSHKey>('/system/db-ssh-keys/', data)
+  return request.post<unknown, DBSSHKey>('/system/db-ssh-keys', data)
 }
 
 // 获取SSH密钥详情

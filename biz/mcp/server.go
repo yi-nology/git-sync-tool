@@ -8,34 +8,20 @@ import (
 	"os"
 	"path/filepath"
 
+
 	"github.com/yi-nology/git-manage-service/biz/service/git"
 	"github.com/yi-nology/git-manage-service/biz/service/notification"
 	"github.com/yi-nology/git-manage-service/biz/service/sync"
 )
-
-type ToolDefinition struct {
-	Name        string          `json:"name"`
-	Description string          `json:"description"`
-	Parameters  json.RawMessage `json:"parameters"`
-	Returns     json.RawMessage `json:"returns"`
-}
-
-type ToolRequest struct {
-	Tool       string          `json:"tool"`
-	Parameters json.RawMessage `json:"parameters"`
-}
-
-type ToolResponse struct {
-	Success bool            `json:"success"`
-	Message string          `json:"message"`
-	Data    json.RawMessage `json:"data,omitempty"`
-}
 
 type MCPServer struct {
 	tools               map[string]ToolDefinition
 	gitService          *git.GitService
 	notificationService *notification.NotificationService
 	syncService         *sync.SyncService
+	listener            net.Listener
+	isRunning           bool
+	mu                  sync.Mutex
 }
 
 func NewMCPServer() *MCPServer {
@@ -44,6 +30,7 @@ func NewMCPServer() *MCPServer {
 		gitService:          git.NewGitService(),
 		notificationService: notification.NewNotificationService(),
 		syncService:         sync.NewSyncService(),
+		isRunning:           false,
 	}
 }
 
@@ -82,433 +69,6 @@ func (s *MCPServer) LoadTools() error {
 	return nil
 }
 
-func (s *MCPServer) HandleRequest(request []byte) ([]byte, error) {
-	var toolReq ToolRequest
-	if err := json.Unmarshal(request, &toolReq); err != nil {
-		return s.errorResponse("Invalid request format")
-	}
-
-	tool, exists := s.tools[toolReq.Tool]
-	if !exists {
-		return s.errorResponse("Tool not found")
-	}
-
-	switch tool.Name {
-	case "git_clone":
-		return s.handleGitClone(toolReq.Parameters)
-	case "git_fetch":
-		return s.handleGitFetch(toolReq.Parameters)
-	case "git_push":
-		return s.handleGitPush(toolReq.Parameters)
-	case "git_checkout":
-		return s.handleGitCheckout(toolReq.Parameters)
-	case "git_branches":
-		return s.handleGitBranches(toolReq.Parameters)
-	case "git_add":
-		return s.handleGitAdd(toolReq.Parameters)
-	case "git_commit":
-		return s.handleGitCommit(toolReq.Parameters)
-	case "git_status":
-		return s.handleGitStatus(toolReq.Parameters)
-	case "git_log":
-		return s.handleGitLog(toolReq.Parameters)
-	case "git_auth":
-		return s.handleGitAuth(toolReq.Parameters)
-	case "notification_send":
-		return s.handleNotificationSend(toolReq.Parameters)
-	case "notification_channels":
-		return s.handleNotificationChannels(toolReq.Parameters)
-	case "sync_task":
-		return s.handleSyncTask(toolReq.Parameters)
-	case "sync_run":
-		return s.handleSyncRun(toolReq.Parameters)
-	default:
-		return s.errorResponse("Tool not implemented")
-	}
-}
-
-func (s *MCPServer) handleGitClone(params json.RawMessage) ([]byte, error) {
-	var cloneParams struct {
-		RemoteURL  string `json:"remote_url"`
-		LocalPath  string `json:"local_path"`
-		AuthType   string `json:"auth_type"`
-		AuthKey    string `json:"auth_key"`
-		AuthSecret string `json:"auth_secret"`
-	}
-
-	if err := json.Unmarshal(params, &cloneParams); err != nil {
-		return s.errorResponse("Invalid parameters")
-	}
-
-	err := s.gitService.Clone(
-		cloneParams.RemoteURL,
-		cloneParams.LocalPath,
-		cloneParams.AuthType,
-		cloneParams.AuthKey,
-		cloneParams.AuthSecret,
-	)
-
-	if err != nil {
-		return s.errorResponse(fmt.Sprintf("Clone failed: %v", err))
-	}
-
-	return s.successResponse("Repository cloned successfully")
-}
-
-func (s *MCPServer) handleGitFetch(params json.RawMessage) ([]byte, error) {
-	var fetchParams struct {
-		Path   string `json:"path"`
-		Remote string `json:"remote"`
-	}
-
-	if err := json.Unmarshal(params, &fetchParams); err != nil {
-		return s.errorResponse("Invalid parameters")
-	}
-
-	if fetchParams.Remote == "" {
-		fetchParams.Remote = "origin"
-	}
-
-	err := s.gitService.Fetch(fetchParams.Path, fetchParams.Remote, nil)
-	if err != nil {
-		return s.errorResponse(fmt.Sprintf("Fetch failed: %v", err))
-	}
-
-	return s.successResponse("Fetch completed successfully")
-}
-
-func (s *MCPServer) handleGitPush(params json.RawMessage) ([]byte, error) {
-	var pushParams struct {
-		Path         string   `json:"path"`
-		TargetRemote string   `json:"target_remote"`
-		SourceHash   string   `json:"source_hash"`
-		TargetBranch string   `json:"target_branch"`
-		Options      []string `json:"options"`
-	}
-
-	if err := json.Unmarshal(params, &pushParams); err != nil {
-		return s.errorResponse("Invalid parameters")
-	}
-
-	if pushParams.TargetRemote == "" {
-		pushParams.TargetRemote = "origin"
-	}
-
-	err := s.gitService.Push(
-		pushParams.Path,
-		pushParams.TargetRemote,
-		pushParams.SourceHash,
-		pushParams.TargetBranch,
-		pushParams.Options,
-		nil,
-	)
-
-	if err != nil {
-		return s.errorResponse(fmt.Sprintf("Push failed: %v", err))
-	}
-
-	return s.successResponse("Push completed successfully")
-}
-
-func (s *MCPServer) handleGitCheckout(params json.RawMessage) ([]byte, error) {
-	var checkoutParams struct {
-		Path   string `json:"path"`
-		Branch string `json:"branch"`
-	}
-
-	if err := json.Unmarshal(params, &checkoutParams); err != nil {
-		return s.errorResponse("Invalid parameters")
-	}
-
-	err := s.gitService.CheckoutBranch(checkoutParams.Path, checkoutParams.Branch)
-	if err != nil {
-		return s.errorResponse(fmt.Sprintf("Checkout failed: %v", err))
-	}
-
-	return s.successResponse("Branch checked out successfully")
-}
-
-func (s *MCPServer) handleGitBranches(params json.RawMessage) ([]byte, error) {
-	var branchesParams struct {
-		Path string `json:"path"`
-	}
-
-	if err := json.Unmarshal(params, &branchesParams); err != nil {
-		return s.errorResponse("Invalid parameters")
-	}
-
-	branches, err := s.gitService.GetBranches(branchesParams.Path)
-	if err != nil {
-		return s.errorResponse(fmt.Sprintf("Failed to get branches: %v", err))
-	}
-
-	responseData := struct {
-		Branches []string `json:"branches"`
-	}{
-		Branches: branches,
-	}
-
-	data, err := json.Marshal(responseData)
-	if err != nil {
-		return s.errorResponse("Failed to marshal response")
-	}
-
-	resp := ToolResponse{
-		Success: true,
-		Message: "Branches retrieved successfully",
-		Data:    data,
-	}
-
-	content, _ := json.Marshal(resp)
-	return content, nil
-}
-
-func (s *MCPServer) handleGitAdd(params json.RawMessage) ([]byte, error) {
-	var addParams struct {
-		Path  string   `json:"path"`
-		Files []string `json:"files"`
-	}
-
-	if err := json.Unmarshal(params, &addParams); err != nil {
-		return s.errorResponse("Invalid parameters")
-	}
-
-	var err error
-	if len(addParams.Files) > 0 {
-		err = s.gitService.AddFiles(addParams.Path, addParams.Files)
-	} else {
-		err = s.gitService.AddAll(addParams.Path)
-	}
-
-	if err != nil {
-		return s.errorResponse(fmt.Sprintf("Add failed: %v", err))
-	}
-
-	return s.successResponse("Files added successfully")
-}
-
-func (s *MCPServer) handleGitCommit(params json.RawMessage) ([]byte, error) {
-	var commitParams struct {
-		Path        string `json:"path"`
-		Message     string `json:"message"`
-		AuthorName  string `json:"author_name"`
-		AuthorEmail string `json:"author_email"`
-	}
-
-	if err := json.Unmarshal(params, &commitParams); err != nil {
-		return s.errorResponse("Invalid parameters")
-	}
-
-	err := s.gitService.Commit(
-		commitParams.Path,
-		commitParams.Message,
-		commitParams.AuthorName,
-		commitParams.AuthorEmail,
-	)
-
-	if err != nil {
-		return s.errorResponse(fmt.Sprintf("Commit failed: %v", err))
-	}
-
-	return s.successResponse("Changes committed successfully")
-}
-
-func (s *MCPServer) handleGitStatus(params json.RawMessage) ([]byte, error) {
-	var statusParams struct {
-		Path string `json:"path"`
-	}
-
-	if err := json.Unmarshal(params, &statusParams); err != nil {
-		return s.errorResponse("Invalid parameters")
-	}
-
-	status, err := s.gitService.GetStatus(statusParams.Path)
-	if err != nil {
-		return s.errorResponse(fmt.Sprintf("Failed to get status: %v", err))
-	}
-
-	responseData := struct {
-		Status string `json:"status"`
-	}{
-		Status: status,
-	}
-
-	data, err := json.Marshal(responseData)
-	if err != nil {
-		return s.errorResponse("Failed to marshal response")
-	}
-
-	resp := ToolResponse{
-		Success: true,
-		Message: "Status retrieved successfully",
-		Data:    data,
-	}
-
-	content, _ := json.Marshal(resp)
-	return content, nil
-}
-
-func (s *MCPServer) handleGitLog(params json.RawMessage) ([]byte, error) {
-	var logParams struct {
-		Path   string `json:"path"`
-		Branch string `json:"branch"`
-		Since  string `json:"since"`
-		Until  string `json:"until"`
-	}
-
-	if err := json.Unmarshal(params, &logParams); err != nil {
-		return s.errorResponse("Invalid parameters")
-	}
-
-	if logParams.Branch == "" {
-		logParams.Branch = "HEAD"
-	}
-
-	logs, err := s.gitService.GetCommits(logParams.Path, logParams.Branch, logParams.Since, logParams.Until)
-	if err != nil {
-		return s.errorResponse(fmt.Sprintf("Failed to get logs: %v", err))
-	}
-
-	responseData := struct {
-		Logs string `json:"logs"`
-	}{
-		Logs: logs,
-	}
-
-	data, err := json.Marshal(responseData)
-	if err != nil {
-		return s.errorResponse("Failed to marshal response")
-	}
-
-	resp := ToolResponse{
-		Success: true,
-		Message: "Logs retrieved successfully",
-		Data:    data,
-	}
-
-	content, _ := json.Marshal(resp)
-	return content, nil
-}
-
-func (s *MCPServer) handleGitAuth(params json.RawMessage) ([]byte, error) {
-	var authParams struct {
-		AuthType   string `json:"auth_type"`
-		AuthKey    string `json:"auth_key"`
-		AuthSecret string `json:"auth_secret"`
-	}
-
-	if err := json.Unmarshal(params, &authParams); err != nil {
-		return s.errorResponse("Invalid parameters")
-	}
-
-	// 这里只是验证认证信息格式，实际认证会在具体操作中使用
-	if authParams.AuthType != "ssh" && authParams.AuthType != "https" {
-		return s.errorResponse("Invalid authentication type")
-	}
-
-	return s.successResponse("Authentication setup successful")
-}
-
-func (s *MCPServer) handleNotificationSend(params json.RawMessage) ([]byte, error) {
-	var sendParams struct {
-		ChannelID string      `json:"channel_id"`
-		Event     string      `json:"event"`
-		Message   string      `json:"message"`
-		Data      interface{} `json:"data"`
-	}
-
-	if err := json.Unmarshal(params, &sendParams); err != nil {
-		return s.errorResponse("Invalid parameters")
-	}
-
-	// 调用通知服务发送通知
-	s.notificationService.Send(&notification.NotificationMessage{
-		Title:        sendParams.Message,
-		Content:      sendParams.Message,
-		Status:       "success",
-		TriggerEvent: sendParams.Event,
-		TaskKey:      "",
-		RepoKey:      "",
-	})
-
-	return s.successResponse("Notification sent successfully")
-}
-
-func (s *MCPServer) handleNotificationChannels(params json.RawMessage) ([]byte, error) {
-	// 暂时返回成功，因为 notificationService 没有 ListChannels 和 ManageChannel 方法
-	responseData := struct {
-		Channels []string `json:"channels"`
-	}{
-		Channels: []string{"email", "webhook", "slack"},
-	}
-
-	data, _ := json.Marshal(responseData)
-	resp := ToolResponse{
-		Success: true,
-		Message: "Channels retrieved successfully",
-		Data:    data,
-	}
-
-	content, _ := json.Marshal(resp)
-	return content, nil
-}
-
-func (s *MCPServer) handleSyncTask(params json.RawMessage) ([]byte, error) {
-	// 暂时返回成功，因为 syncService 没有 ListTasks, GetTask 和 ManageTask 方法
-	responseData := struct {
-		TaskID string `json:"task_id"`
-	}{
-		TaskID: "sync-123",
-	}
-
-	data, _ := json.Marshal(responseData)
-	resp := ToolResponse{
-		Success: true,
-		Message: "Sync task created successfully",
-		Data:    data,
-	}
-
-	content, _ := json.Marshal(resp)
-	return content, nil
-}
-
-func (s *MCPServer) handleSyncRun(params json.RawMessage) ([]byte, error) {
-	// 暂时返回成功，因为 syncService 没有 RunTask 方法
-	responseData := struct {
-		RunID string `json:"run_id"`
-	}{
-		RunID: "run-123",
-	}
-
-	data, _ := json.Marshal(responseData)
-	resp := ToolResponse{
-		Success: true,
-		Message: "Task started successfully",
-		Data:    data,
-	}
-
-	content, _ := json.Marshal(resp)
-	return content, nil
-}
-
-func (s *MCPServer) successResponse(message string) ([]byte, error) {
-	resp := ToolResponse{
-		Success: true,
-		Message: message,
-	}
-	content, _ := json.Marshal(resp)
-	return content, nil
-}
-
-func (s *MCPServer) errorResponse(message string) ([]byte, error) {
-	resp := ToolResponse{
-		Success: false,
-		Message: message,
-	}
-	content, _ := json.Marshal(resp)
-	return content, nil
-}
-
 func (s *MCPServer) Start() error {
 	if err := s.LoadTools(); err != nil {
 		return fmt.Errorf("failed to load tools: %v", err)
@@ -518,19 +78,60 @@ func (s *MCPServer) Start() error {
 	if err != nil {
 		return fmt.Errorf("failed to start listener: %v", err)
 	}
-	defer listener.Close()
+
+	s.mu.Lock()
+	s.listener = listener
+	s.isRunning = true
+	s.mu.Unlock()
 
 	log.Println("MCP server started on port 9000")
 
 	for {
+		s.mu.Lock()
+		running := s.isRunning
+		s.mu.Unlock()
+
+		if !running {
+			break
+		}
+
+		// 设置超时，以便能够定期检查 isRunning 状态
+		listener.SetDeadline(time.Now().Add(1 * time.Second))
 		conn, err := listener.Accept()
 		if err != nil {
+			// 检查是否是因为超时或关闭导致的错误
+			if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
+				continue
+			}
 			log.Printf("Error accepting connection: %v", err)
 			continue
 		}
 
 		go s.handleConnection(conn)
 	}
+
+	return nil
+}
+
+func (s *MCPServer) Stop() error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if !s.isRunning {
+		return nil
+	}
+
+	s.isRunning = false
+
+	if s.listener != nil {
+		if err := s.listener.Close(); err != nil {
+			return fmt.Errorf("failed to close listener: %v", err)
+		}
+		log.Println("MCP server listener closed")
+	}
+
+	log.Println("MCP server stopped")
+	return nil
 }
 
 func (s *MCPServer) handleConnection(conn net.Conn) {
@@ -558,4 +159,22 @@ func (s *MCPServer) handleConnection(conn net.Conn) {
 	if err != nil {
 		log.Printf("Error writing to connection: %v", err)
 	}
+}
+
+func (s *MCPServer) successResponse(message string) ([]byte, error) {
+	resp := ToolResponse{
+		Success: true,
+		Message: message,
+	}
+	content, _ := json.Marshal(resp)
+	return content, nil
+}
+
+func (s *MCPServer) errorResponse(message string) ([]byte, error) {
+	resp := ToolResponse{
+		Success: false,
+		Message: message,
+	}
+	content, _ := json.Marshal(resp)
+	return content, nil
 }

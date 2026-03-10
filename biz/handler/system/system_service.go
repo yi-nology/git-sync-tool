@@ -350,9 +350,9 @@ func SelectDirectory(ctx context.Context, c *app.RequestContext) {
 	switch runtime.GOOS {
 	case "darwin":
 		// macOS: 使用 osascript
-		cmd := fmt.Sprintf(`tell application "System Events" to activate
+		script := fmt.Sprintf(`tell application "System Events" to activate
 return POSIX path of (choose folder with prompt "%s")`, title)
-		result, err = execCommand("osascript", "-e", cmd)
+		result, err = execCommand("osascript", "-e", script)
 	case "windows":
 		// Windows: 使用 powershell
 		cmd := fmt.Sprintf(`Add-Type -AssemblyName System.Windows.Forms; $f = New-Object System.Windows.Forms.FolderBrowserDialog; $f.Description = '%s'; $f.ShowDialog() | Out-Null; if ($f.SelectedPath) { Write-Output $f.SelectedPath }`, title)
@@ -365,8 +365,14 @@ return POSIX path of (choose folder with prompt "%s")`, title)
 	}
 
 	if err != nil {
+		// 检查是否是用户取消
+		errMsg := err.Error()
+		if strings.Contains(errMsg, "User canceled") || strings.Contains(errMsg, "用户取消") {
+			response.Success(c, map[string]string{"path": "", "cancelled": "true"})
+			return
+		}
 		// 提供备选方案：使用目录浏览功能
-		errorMsg := "Failed to open directory dialog: " + err.Error() + ". Please use the directory browser instead."
+		errorMsg := "Failed to open directory dialog: " + errMsg + ". Please use the directory browser instead."
 		response.InternalServerError(c, errorMsg)
 		return
 	}
@@ -380,12 +386,13 @@ return POSIX path of (choose folder with prompt "%s")`, title)
 	response.Success(c, map[string]string{"path": path, "cancelled": "false"})
 }
 
-// execCommand 执行系统命令
+// execCommand 执行系统命令并返回输出
 func execCommand(name string, args ...string) (string, error) {
 	cmd := exec.Command(name, args...)
-	output, err := cmd.Output()
+	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return "", err
+		// 返回包含 stderr 的详细错误信息
+		return "", fmt.Errorf("%v: %s", err, strings.TrimSpace(string(output)))
 	}
 	return string(output), nil
 }
