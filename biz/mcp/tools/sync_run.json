@@ -1,0 +1,36 @@
+{
+  "name": "sync_run",
+  "description": "Run a sync task",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "task_id": {
+        "type": "string",
+        "description": "The sync task ID"
+      },
+      "force": {
+        "type": "boolean",
+        "description": "Whether to force run even if task is disabled",
+        "default": false
+      }
+    },
+    "required": ["task_id"]
+  },
+  "returns": {
+    "type": "object",
+    "properties": {
+      "success": {
+        "type": "boolean",
+        "description": "Whether the run was successful"
+      },
+      "message": {
+        "type": "string",
+        "description": "Operation result message"
+      },
+      "run_id": {
+        "type": "string",
+        "description": "The run ID"
+      }
+    }
+  }
+}

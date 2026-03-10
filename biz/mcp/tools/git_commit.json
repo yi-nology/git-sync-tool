@@ -1,0 +1,39 @@
+{
+  "name": "git_commit",
+  "description": "Commit changes to Git repository",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "path": {
+        "type": "string",
+        "description": "The local repository path"
+      },
+      "message": {
+        "type": "string",
+        "description": "The commit message"
+      },
+      "author_name": {
+        "type": "string",
+        "description": "The author name"
+      },
+      "author_email": {
+        "type": "string",
+        "description": "The author email"
+      }
+    },
+    "required": ["path", "message"]
+  },
+  "returns": {
+    "type": "object",
+    "properties": {
+      "success": {
+        "type": "boolean",
+        "description": "Whether the commit operation was successful"
+      },
+      "message": {
+        "type": "string",
+        "description": "Operation result message"
+      }
+    }
+  }
+}

@@ -1,0 +1,196 @@
+package mcp
+
+import (
+	"encoding/json"
+	"fmt"
+	"log"
+	"net"
+	"os"
+	"path/filepath"
+)
+
+type ToolDefinition struct {
+	Name        string          `json:"name"`
+	Description string          `json:"description"`
+	Parameters  json.RawMessage `json:"parameters"`
+	Returns     json.RawMessage `json:"returns"`
+}
+
+type ToolRequest struct {
+	Tool       string          `json:"tool"`
+	Parameters json.RawMessage `json:"parameters"`
+}
+
+type ToolResponse struct {
+	Success bool            `json:"success"`
+	Message string          `json:"message"`
+	Data    json.RawMessage `json:"data,omitempty"`
+}
+
+type MCPServer struct {
+	tools map[string]ToolDefinition
+	handlers map[string]func(json.RawMessage) ([]byte, error)
+	gitHandler *gitHandler
+	auditHandler *auditHandler
+	notificationHandler *notificationHandler
+	syncHandler *syncHandler
+	statsHandler *statsHandler
+	storageHandler *storageHandler
+}
+
+func NewMCPServer() *MCPServer {
+	server := &MCPServer{
+		tools: make(map[string]ToolDefinition),
+		handlers: make(map[string]func(json.RawMessage) ([]byte, error)),
+		gitHandler: newGitHandler(),
+		auditHandler: newAuditHandler(),
+		notificationHandler: newNotificationHandler(),
+		syncHandler: newSyncHandler(),
+		statsHandler: newStatsHandler(),
+		storageHandler: newStorageHandler(),
+	}
+	server.registerHandlers()
+	return server
+}
+
+func (s *MCPServer) registerHandlers() {
+	s.handlers["git_clone"] = s.gitHandler.handleGitClone
+	s.handlers["git_fetch"] = s.gitHandler.handleGitFetch
+	s.handlers["git_push"] = s.gitHandler.handleGitPush
+	s.handlers["git_checkout"] = s.gitHandler.handleGitCheckout
+	s.handlers["git_branches"] = s.gitHandler.handleGitBranches
+	s.handlers["git_add"] = s.gitHandler.handleGitAdd
+	s.handlers["git_commit"] = s.gitHandler.handleGitCommit
+	s.handlers["git_status"] = s.gitHandler.handleGitStatus
+	s.handlers["git_log"] = s.gitHandler.handleGitLog
+	s.handlers["git_auth"] = s.gitHandler.handleGitAuth
+	s.handlers["audit_log"] = s.auditHandler.handleAuditLog
+	s.handlers["audit_query"] = s.auditHandler.handleAuditQuery
+	s.handlers["notification_send"] = s.notificationHandler.handleNotificationSend
+	s.handlers["notification_channels"] = s.notificationHandler.handleNotificationChannels
+	s.handlers["sync_task"] = s.syncHandler.handleSyncTask
+	s.handlers["sync_run"] = s.syncHandler.handleSyncRun
+	s.handlers["stats_code"] = s.statsHandler.handleStatsCode
+	s.handlers["stats_language"] = s.statsHandler.handleStatsLanguage
+	s.handlers["storage_backup"] = s.storageHandler.handleStorageBackup
+	s.handlers["storage_ssh"] = s.storageHandler.handleStorageSSH
+}
+
+func (s *MCPServer) LoadTools() error {
+	// 获取当前工作目录
+	cwd, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("failed to get current working directory: %v", err)
+	}
+	toolsDir := filepath.Join(cwd, "biz", "mcp", "tools")
+	files, err := os.ReadDir(toolsDir)
+	if err != nil {
+		return fmt.Errorf("failed to read tools directory: %v", err)
+	}
+
+	for _, file := range files {
+		if !file.IsDir() && filepath.Ext(file.Name()) == ".json" {
+			toolPath := filepath.Join(toolsDir, file.Name())
+			content, err := os.ReadFile(toolPath)
+			if err != nil {
+				log.Printf("Warning: failed to read tool file %s: %v", toolPath, err)
+				continue
+			}
+
+			var tool ToolDefinition
+			if err := json.Unmarshal(content, &tool); err != nil {
+				log.Printf("Warning: failed to parse tool file %s: %v", toolPath, err)
+				continue
+			}
+
+			s.tools[tool.Name] = tool
+			log.Printf("Loaded tool: %s", tool.Name)
+		}
+	}
+
+	return nil
+}
+
+func (s *MCPServer) HandleRequest(request []byte) ([]byte, error) {
+	var toolReq ToolRequest
+	if err := json.Unmarshal(request, &toolReq); err != nil {
+		return s.errorResponse("Invalid request format"), nil
+	}
+
+	_, exists := s.tools[toolReq.Tool]
+	if !exists {
+		return s.errorResponse("Tool not found"), nil
+	}
+
+	handler, exists := s.handlers[toolReq.Tool]
+	if !exists {
+		return s.errorResponse("Tool handler not implemented"), nil
+	}
+
+	return handler(toolReq.Parameters)
+}
+
+func (s *MCPServer) successResponse(message string) []byte {
+	resp := ToolResponse{
+		Success: true,
+		Message: message,
+	}
+	content, _ := json.Marshal(resp)
+	return content
+}
+
+func (s *MCPServer) errorResponse(message string) []byte {
+	resp := ToolResponse{
+		Success: false,
+		Message: message,
+	}
+	content, _ := json.Marshal(resp)
+	return content
+}
+
+func (s *MCPServer) Start() error {
+	if err := s.LoadTools(); err != nil {
+		return fmt.Errorf("failed to load tools: %v", err)
+	}
+
+	listener, err := net.Listen("tcp", ":9000")
+	if err != nil {
+		return fmt.Errorf("failed to start listener: %v", err)
+	}
+	defer listener.Close()
+
+	log.Println("MCP server started on port 9000")
+
+	for {
+		conn, err := listener.Accept()
+		if err != nil {
+			log.Printf("Error accepting connection: %v", err)
+			continue
+		}
+
+		go s.handleConnection(conn)
+	}
+}
+
+func (s *MCPServer) handleConnection(conn net.Conn) {
+	defer conn.Close()
+
+	buffer := make([]byte, 4096)
+	n, err := conn.Read(buffer)
+	if err != nil {
+		log.Printf("Error reading from connection: %v", err)
+		return
+	}
+
+	request := buffer[:n]
+	response, err := s.HandleRequest(request)
+	if err != nil {
+		log.Printf("Error handling request: %v", err)
+		response = s.errorResponse("Internal server error")
+	}
+
+	_, err = conn.Write(response)
+	if err != nil {
+		log.Printf("Error writing to connection: %v", err)
+	}
+}

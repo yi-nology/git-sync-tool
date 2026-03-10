@@ -1,0 +1,39 @@
+{
+  "name": "notification_send",
+  "description": "Send a notification",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "channel_id": {
+        "type": "string",
+        "description": "The notification channel ID"
+      },
+      "event": {
+        "type": "string",
+        "description": "The event type"
+      },
+      "message": {
+        "type": "string",
+        "description": "The notification message"
+      },
+      "data": {
+        "type": "object",
+        "description": "Additional data for the notification"
+      }
+    },
+    "required": ["channel_id", "event", "message"]
+  },
+  "returns": {
+    "type": "object",
+    "properties": {
+      "success": {
+        "type": "boolean",
+        "description": "Whether the notification was sent successfully"
+      },
+      "message": {
+        "type": "string",
+        "description": "Operation result message"
+      }
+    }
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "name": "notification_channels",
+  "description": "Manage notification channels",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "action": {
+        "type": "string",
+        "description": "Action to perform (list, create, update, delete)"
+      },
+      "channel_id": {
+        "type": "string",
+        "description": "Channel ID for update/delete actions"
+      },
+      "channel": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Channel type (dingtalk, email, feishu, wechat)"
+          },
+          "name": {
+            "type": "string",
+            "description": "Channel name"
+          },
+          "config": {
+            "type": "object",
+            "description": "Channel configuration"
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Events to notify for"
+          },
+          "template": {
+            "type": "string",
+            "description": "Notification template"
+          }
+        }
+      }
+    },
+    "required": ["action"]
+  },
+  "returns": {
+    "type": "object",
+    "properties": {
+      "success": {
+        "type": "boolean",
+        "description": "Whether the operation was successful"
+      },
+      "message": {
+        "type": "string",
+        "description": "Operation result message"
+      },
+      "channels": {
+        "type": "array",
+        "items": {
+          "type": "object"
+        },
+        "description": "List of channels (for list action)"
+      }
+    }
+  }
+}

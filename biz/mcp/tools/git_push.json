@@ -1,0 +1,47 @@
+{
+  "name": "git_push",
+  "description": "Push changes to a remote repository",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "path": {
+        "type": "string",
+        "description": "The local repository path"
+      },
+      "target_remote": {
+        "type": "string",
+        "description": "The target remote name (e.g., origin)",
+        "default": "origin"
+      },
+      "source_hash": {
+        "type": "string",
+        "description": "The source commit hash or branch"
+      },
+      "target_branch": {
+        "type": "string",
+        "description": "The target branch name"
+      },
+      "options": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "Additional push options"
+      }
+    },
+    "required": ["path", "target_branch"]
+  },
+  "returns": {
+    "type": "object",
+    "properties": {
+      "success": {
+        "type": "boolean",
+        "description": "Whether the push operation was successful"
+      },
+      "message": {
+        "type": "string",
+        "description": "Operation result message"
+      }
+    }
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "name": "git_log",
+  "description": "Get Git commit logs",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "path": {
+        "type": "string",
+        "description": "The local repository path"
+      },
+      "branch": {
+        "type": "string",
+        "description": "The branch name",
+        "default": "HEAD"
+      },
+      "since": {
+        "type": "string",
+        "description": "Start date (YYYY-MM-DD)"
+      },
+      "until": {
+        "type": "string",
+        "description": "End date (YYYY-MM-DD)"
+      }
+    },
+    "required": ["path"]
+  },
+  "returns": {
+    "type": "object",
+    "properties": {
+      "success": {
+        "type": "boolean",
+        "description": "Whether the operation was successful"
+      },
+      "message": {
+        "type": "string",
+        "description": "Operation result message"
+      },
+      "logs": {
+        "type": "string",
+        "description": "The commit logs"
+      }
+    }
+  }
+}

@@ -1,0 +1,79 @@
+{
+  "name": "sync_task",
+  "description": "Manage sync tasks",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "action": {
+        "type": "string",
+        "description": "Action to perform (create, update, delete, list, get)"
+      },
+      "task_id": {
+        "type": "string",
+        "description": "Task ID for update/delete/get actions"
+      },
+      "task": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Task name"
+          },
+          "repo_id": {
+            "type": "string",
+            "description": "Repository ID"
+          },
+          "source_remote": {
+            "type": "string",
+            "description": "Source remote name"
+          },
+          "source_branch": {
+            "type": "string",
+            "description": "Source branch name"
+          },
+          "target_remote": {
+            "type": "string",
+            "description": "Target remote name"
+          },
+          "target_branch": {
+            "type": "string",
+            "description": "Target branch name"
+          },
+          "cron_expression": {
+            "type": "string",
+            "description": "Cron expression for scheduling"
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "Whether the task is enabled"
+          }
+        }
+      }
+    },
+    "required": ["action"]
+  },
+  "returns": {
+    "type": "object",
+    "properties": {
+      "success": {
+        "type": "boolean",
+        "description": "Whether the operation was successful"
+      },
+      "message": {
+        "type": "string",
+        "description": "Operation result message"
+      },
+      "tasks": {
+        "type": "array",
+        "items": {
+          "type": "object"
+        },
+        "description": "List of tasks (for list action)"
+      },
+      "task": {
+        "type": "object",
+        "description": "Task details (for get action)"
+      }
+    }
+  }
+}

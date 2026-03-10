@@ -1,0 +1,35 @@
+{
+  "name": "git_auth",
+  "description": "Handle Git authentication",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "auth_type": {
+        "type": "string",
+        "description": "Authentication type (ssh, https)"
+      },
+      "auth_key": {
+        "type": "string",
+        "description": "Authentication key or username"
+      },
+      "auth_secret": {
+        "type": "string",
+        "description": "Authentication secret or password"
+      }
+    },
+    "required": ["auth_type"]
+  },
+  "returns": {
+    "type": "object",
+    "properties": {
+      "success": {
+        "type": "boolean",
+        "description": "Whether the authentication setup was successful"
+      },
+      "message": {
+        "type": "string",
+        "description": "Operation result message"
+      }
+    }
+  }
+}

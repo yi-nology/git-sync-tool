@@ -1,0 +1,32 @@
+{
+  "name": "git_fetch",
+  "description": "Fetch changes from a remote repository",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "path": {
+        "type": "string",
+        "description": "The local repository path"
+      },
+      "remote": {
+        "type": "string",
+        "description": "The remote name (e.g., origin)",
+        "default": "origin"
+      }
+    },
+    "required": ["path"]
+  },
+  "returns": {
+    "type": "object",
+    "properties": {
+      "success": {
+        "type": "boolean",
+        "description": "Whether the fetch operation was successful"
+      },
+      "message": {
+        "type": "string",
+        "description": "Operation result message"
+      }
+    }
+  }
+}

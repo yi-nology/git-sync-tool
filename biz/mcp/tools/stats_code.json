@@ -1,0 +1,36 @@
+{
+  "name": "stats_code",
+  "description": "Get code statistics",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "path": {
+        "type": "string",
+        "description": "The repository path"
+      },
+      "branch": {
+        "type": "string",
+        "description": "The branch name",
+        "default": "HEAD"
+      }
+    },
+    "required": ["path"]
+  },
+  "returns": {
+    "type": "object",
+    "properties": {
+      "success": {
+        "type": "boolean",
+        "description": "Whether the operation was successful"
+      },
+      "message": {
+        "type": "string",
+        "description": "Operation result message"
+      },
+      "stats": {
+        "type": "object",
+        "description": "Code statistics"
+      }
+    }
+  }
+}

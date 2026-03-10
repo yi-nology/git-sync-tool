@@ -1,0 +1,43 @@
+{
+  "name": "audit_log",
+  "description": "Record an audit log entry",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "user": {
+        "type": "string",
+        "description": "The user who performed the action"
+      },
+      "action": {
+        "type": "string",
+        "description": "The action performed"
+      },
+      "object_type": {
+        "type": "string",
+        "description": "The type of object affected"
+      },
+      "object_id": {
+        "type": "string",
+        "description": "The ID of the object affected"
+      },
+      "details": {
+        "type": "string",
+        "description": "Additional details about the action"
+      }
+    },
+    "required": ["user", "action"]
+  },
+  "returns": {
+    "type": "object",
+    "properties": {
+      "success": {
+        "type": "boolean",
+        "description": "Whether the log was recorded successfully"
+      },
+      "message": {
+        "type": "string",
+        "description": "Operation result message"
+      }
+    }
+  }
+}
