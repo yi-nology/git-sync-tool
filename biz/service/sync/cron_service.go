@@ -128,3 +128,18 @@ func (s *CronService) addTask(task po.SyncTask) {
 	s.entries[task.ID] = entryID
 	fmt.Printf("Added cron task %d: %s\n", task.ID, task.Cron)
 }
+
+// Stop 停止定时任务服务
+func (s *CronService) Stop() {
+	if s.cron != nil {
+		s.cron.Stop()
+		log.Println("Cron service stopped successfully")
+	}
+}
+
+// StopCronService 停止定时任务服务（全局函数）
+func StopCronService() {
+	if CronSvc != nil {
+		CronSvc.Stop()
+	}
+}

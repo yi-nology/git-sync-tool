@@ -2,11 +2,31 @@
   <div class="register-page">
     <h2>注册本地仓库</h2>
 
+    <!-- 导入模式选择 -->
+    <el-card class="step-card">
+      <template #header>
+        <div class="card-header">
+          <span>选择导入方式</span>
+        </div>
+      </template>
+      
+      <el-radio-group v-model="importMode" size="large" @change="resetState">
+        <el-radio-button value="single">
+          <el-icon><FolderChecked /></el-icon>
+          单个仓库
+        </el-radio-button>
+        <el-radio-button value="batch">
+          <el-icon><Folders /></el-icon>
+          批量扫描
+        </el-radio-button>
+      </el-radio-group>
+    </el-card>
+
     <!-- Step 1: 选择目录 -->
     <el-card class="step-card">
       <template #header>
         <div class="card-header">
-          <span>1. 选择仓库目录</span>
+          <span>{{ importMode === 'single' ? '选择仓库目录' : '选择扫描目录' }}</span>
           <el-tag v-if="selectedPath" type="success">已选择</el-tag>
         </div>
       </template>
@@ -14,7 +34,7 @@
       <div class="path-section">
         <el-input
           v-model="selectedPath"
-          placeholder="点击下方按钮选择目录..."
+          :placeholder="importMode === 'single' ? '选择 Git 仓库根目录...' : '选择包含多个仓库的父目录...'"
           readonly
           size="large"
         >
@@ -26,21 +46,98 @@
         <div class="btn-group">
           <el-button type="primary" size="large" @click="handleSelectDir" :loading="selectingDir">
             <el-icon><FolderOpened /></el-icon>
-            选择目录
+            {{ importMode === 'single' ? '选择仓库' : '选择目录' }}
           </el-button>
-          <el-button size="large" @click="handleScan" :disabled="!selectedPath" :loading="scanning">
+          <el-button 
+            v-if="importMode === 'batch'"
+            size="large" 
+            @click="handleScan" 
+            :disabled="!selectedPath" 
+            :loading="scanning"
+          >
             <el-icon><Search /></el-icon>
             扫描仓库
+          </el-button>
+          <el-button 
+            v-else
+            type="success"
+            size="large" 
+            @click="handleCheckSingleRepo" 
+            :disabled="!selectedPath" 
+            :loading="scanning"
+          >
+            <el-icon><Check /></el-icon>
+            验证仓库
           </el-button>
         </div>
       </div>
     </el-card>
 
-    <!-- Step 2: 选择仓库 -->
-    <el-card class="step-card" v-if="scannedRepos.length > 0">
+    <!-- 单仓库模式：显示仓库信息 -->
+    <el-card class="step-card" v-if="importMode === 'single' && singleRepo">
       <template #header>
         <div class="card-header">
-          <span>2. 选择要注册的仓库 (共 {{ scannedRepos.length }} 个)</span>
+          <span>仓库信息</span>
+          <el-tag type="success">有效 Git 仓库</el-tag>
+        </div>
+      </template>
+
+      <div class="single-repo-info">
+        <div class="repo-detail">
+          <div class="detail-row">
+            <span class="label">仓库名称:</span>
+            <el-input v-model="singleRepoName" placeholder="输入仓库名称" style="width: 300px" />
+          </div>
+          <div class="detail-row">
+            <span class="label">仓库路径:</span>
+            <span class="value mono">{{ singleRepo.path }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="label">当前分支:</span>
+            <el-tag size="small">{{ singleRepo.current_branch || 'unknown' }}</el-tag>
+          </div>
+          <div class="detail-row" v-if="singleRepo.remotes?.length">
+            <span class="label">远程仓库:</span>
+            <div class="remote-list">
+              <el-tag v-for="r in singleRepo.remotes" :key="r.name" size="small" type="info" class="remote-tag">
+                {{ r.name }}: {{ simplifyUrl(r.fetch_url) }}
+              </el-tag>
+            </div>
+          </div>
+          <div class="detail-row">
+            <span class="label">工作区状态:</span>
+            <el-tag :type="singleRepo.has_changes ? 'warning' : 'success'" size="small">
+              {{ singleRepo.has_changes ? '有未提交更改' : '干净' }}
+            </el-tag>
+          </div>
+        </div>
+
+        <!-- 凭证配置 -->
+        <el-divider />
+        <div class="credential-section">
+          <p class="hint">配置认证凭证（可选，后续可在仓库详情中修改）</p>
+          <CredentialSelector
+            v-model="defaultCredentialId"
+            placeholder="选择认证凭证（可选）"
+            style="width: 100%; max-width: 400px"
+          />
+        </div>
+
+        <div class="action-buttons">
+          <el-button @click="router.push('/repos')">取消</el-button>
+          <el-button type="primary" size="large" @click="handleRegisterSingle" :loading="registering">
+            <el-icon><Check /></el-icon>
+            注册仓库
+          </el-button>
+        </div>
+      </div>
+    </el-card>
+
+    <!-- 批量模式：选择仓库列表 -->
+    <el-card class="step-card" v-if="importMode === 'batch' && scannedRepos.length > 0">
+      <template #header>
+        <div class="card-header">
+          <span>选择要注册的仓库 (共 {{ scannedRepos.length }} 个)</span>
           <div class="header-actions">
             <el-button size="small" @click="selectAll">全选</el-button>
             <el-button size="small" @click="selectNone">取消全选</el-button>
@@ -90,11 +187,11 @@
       </div>
     </el-card>
 
-    <!-- Step 3: 凭证配置（可选） -->
-    <el-card class="step-card" v-if="selectedRepos.length > 0">
+    <!-- 批量模式：凭证配置 -->
+    <el-card class="step-card" v-if="importMode === 'batch' && selectedRepos.length > 0">
       <template #header>
         <div class="card-header">
-          <span>3. 凭证配置（可选）</span>
+          <span>凭证配置（可选）</span>
         </div>
       </template>
 
@@ -118,8 +215,16 @@
 
     <!-- 空状态 -->
     <el-empty
-      v-if="!scanning && scannedRepos.length === 0 && selectedPath && hasScanned"
+      v-if="!scanning && scannedRepos.length === 0 && selectedPath && hasScanned && importMode === 'batch'"
       description="在该目录下未找到 Git 仓库"
+    >
+      <el-button @click="handleSelectDir">选择其他目录</el-button>
+    </el-empty>
+    
+    <!-- 单仓库模式：无效仓库 -->
+    <el-empty
+      v-if="!scanning && !singleRepo && selectedPath && hasScanned && importMode === 'single'"
+      description="选择的目录不是有效的 Git 仓库"
     >
       <el-button @click="handleSelectDir">选择其他目录</el-button>
     </el-empty>
@@ -137,7 +242,7 @@ import {
   Link,
   Check,
 } from '@element-plus/icons-vue'
-import { selectDirectory, scanDirectory, batchCreateRepos } from '@/api/modules/repo'
+import { selectDirectory, scanDirectory, batchCreateRepos, createRepo } from '@/api/modules/repo'
 import type { ScannedRepo } from '@/types/repo'
 import CredentialSelector from '@/components/credential/CredentialSelector.vue'
 import { useNotification } from '@/composables/useNotification'
@@ -145,32 +250,87 @@ import { useNotification } from '@/composables/useNotification'
 const router = useRouter()
 const { showSuccess, showError } = useNotification()
 
+const importMode = ref<'single' | 'batch'>('single')
 const selectedPath = ref('')
 const selectingDir = ref(false)
 const scanning = ref(false)
 const hasScanned = ref(false)
+
+// 单仓库模式
+const singleRepo = ref<ScannedRepo | null>(null)
+const singleRepoName = ref('')
+
+// 批量模式
 const scannedRepos = ref<ScannedRepo[]>([])
 const selectedRepos = ref<string[]>([])
+
 const defaultCredentialId = ref<number | undefined>()
 const registering = ref(false)
+
+function resetState() {
+  selectedPath.value = ''
+  singleRepo.value = null
+  singleRepoName.value = ''
+  scannedRepos.value = []
+  selectedRepos.value = []
+  hasScanned.value = false
+}
 
 // 选择目录
 async function handleSelectDir() {
   selectingDir.value = true
   try {
-    const res = await selectDirectory('选择 Git 仓库所在目录')
+    const res = await selectDirectory(
+      importMode.value === 'single' 
+        ? '选择 Git 仓库根目录' 
+        : '选择包含 Git 仓库的父目录'
+    )
     if (res.cancelled !== 'true' && res.path) {
       selectedPath.value = res.path
+      hasScanned.value = false
+      singleRepo.value = null
       scannedRepos.value = []
       selectedRepos.value = []
-      hasScanned.value = false
-      // 自动开始扫描
-      await handleScan()
+      
+      // 自动验证/扫描
+      if (importMode.value === 'single') {
+        await handleCheckSingleRepo()
+      } else {
+        await handleScan()
+      }
     }
   } catch (e: any) {
     showError('选择目录失败', e)
   } finally {
     selectingDir.value = false
+  }
+}
+
+// 验证单个仓库
+async function handleCheckSingleRepo() {
+  if (!selectedPath.value) return
+
+  scanning.value = true
+  try {
+    // 扫描深度为 0，只检查当前目录
+    const res = await scanDirectory(selectedPath.value, 0, false)
+    const repos = res.repos || []
+    
+    if (repos.length > 0) {
+      singleRepo.value = repos[0]!
+      singleRepoName.value = repos[0]!.name
+      showSuccess('检测到有效的 Git 仓库')
+    } else {
+      singleRepo.value = null
+      showError('该目录不是有效的 Git 仓库')
+    }
+    hasScanned.value = true
+  } catch (e: any) {
+    showError('验证失败', e)
+    singleRepo.value = null
+    hasScanned.value = true
+  } finally {
+    scanning.value = false
   }
 }
 
@@ -187,7 +347,7 @@ async function handleScan() {
     hasScanned.value = true
 
     if (res.total === 0) {
-      // 未找到仓库，提示用户
+      // 未找到仓库
     } else {
       showSuccess(`找到 ${res.total} 个 Git 仓库`)
     }
@@ -223,8 +383,12 @@ function getMainRemote(repo: ScannedRepo): string {
   const origin = repo.remotes.find(r => r.name === 'origin')
   const remote = origin || repo.remotes[0]
   if (!remote) return '无远程'
-  // 简化 URL 显示
-  const url = remote.fetch_url
+  return simplifyUrl(remote.fetch_url)
+}
+
+// 简化 URL 显示
+function simplifyUrl(url: string): string {
+  if (!url) return ''
   if (url.startsWith('https://github.com/')) {
     return url.replace('https://github.com/', 'github:')
   }
@@ -234,7 +398,33 @@ function getMainRemote(repo: ScannedRepo): string {
   return url
 }
 
-// 注册仓库
+// 注册单个仓库
+async function handleRegisterSingle() {
+  if (!singleRepo.value) return
+  
+  const name = singleRepoName.value.trim()
+  if (!name) {
+    showError('请输入仓库名称')
+    return
+  }
+
+  registering.value = true
+  try {
+    await createRepo({
+      name,
+      path: singleRepo.value.path,
+      default_credential_id: defaultCredentialId.value,
+    })
+    showSuccess(`仓库 "${name}" 注册成功`)
+    router.push('/repos')
+  } catch (e: any) {
+    showError('注册失败', e)
+  } finally {
+    registering.value = false
+  }
+}
+
+// 批量注册仓库
 async function handleRegister() {
   if (selectedRepos.value.length === 0) {
     showError('请至少选择一个仓库')
@@ -254,7 +444,6 @@ async function handleRegister() {
 
     const res = await batchCreateRepos({ repos })
 
-    // 处理失败项（可能为 null）
     const failedList = res.failed || []
     const successList = res.success || []
 
@@ -266,11 +455,6 @@ async function handleRegister() {
     if (successList.length > 0) {
       showSuccess(`成功注册 ${successList.length} 个仓库`)
       router.push('/repos')
-    }
-
-    // 如果全部失败，不跳转
-    if (failedList.length > 0 && successList.length === 0) {
-      // 保持在当前页面
     }
   } catch (e: any) {
     showError('注册失败', e)
@@ -317,6 +501,48 @@ async function handleRegister() {
 .btn-group {
   display: flex;
   gap: 12px;
+}
+
+/* 单仓库信息 */
+.single-repo-info {
+  padding: 8px 0;
+}
+
+.repo-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.detail-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.detail-row .label {
+  min-width: 100px;
+  color: var(--el-text-color-secondary);
+  font-size: 14px;
+}
+
+.detail-row .value {
+  font-size: 14px;
+}
+
+.detail-row .value.mono {
+  font-family: monospace;
+  color: var(--el-text-color-primary);
+}
+
+.remote-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.remote-tag {
+  font-family: monospace;
 }
 
 .repo-list {
@@ -419,12 +645,18 @@ async function handleRegister() {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
+  margin-top: 20px;
 }
 
 /* 响应式 */
 @media (max-width: 768px) {
   .register-page {
     padding: 16px;
+  }
+
+  .detail-row {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .repo-item {

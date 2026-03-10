@@ -78,9 +78,9 @@ jobs:
           GIT_COMMIT: ${{ github.sha }}
         run: |
           mkdir -p dist
-          go build -ldflags="-s -w -X main.Version=${VERSION} -X main.BuildTime=${BUILD_TIME} -X main.GitCommit=${GIT_COMMIT}" \
+          go build -ldflags="-s -w -X github.com/yi-nology/git-manage-service/pkg/appinfo.Version=${VERSION} -X github.com/yi-nology/git-manage-service/pkg/appinfo.BuildTime=${BUILD_TIME} -X github.com/yi-nology/git-manage-service/pkg/appinfo.GitCommit=${GIT_COMMIT}" \
             -o dist/${{ matrix.output }} \
-            .
+            ./cmd/server
 
       - name: Create archive
         run: |
