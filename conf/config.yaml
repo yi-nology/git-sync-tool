@@ -4,7 +4,7 @@
 server:
   # Service listening port
   # Default: 8080
-  port: 38080
+  port: 12345
 
 # 2. Database Configuration
 database:

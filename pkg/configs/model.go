@@ -11,11 +11,11 @@ type Config struct {
 }
 
 type ServerConfig struct {
-	Port int `mapstructure:"port"`
+	Port int `mapstructure:"port;default=12345"`
 }
 
 type RpcConfig struct {
-	Port int `mapstructure:"port"`
+	Port int `mapstructure:"port;default=12346"`
 }
 
 type DatabaseConfig struct {

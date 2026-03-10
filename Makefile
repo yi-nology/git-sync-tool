@@ -8,9 +8,9 @@ GIT_COMMIT := $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 # 编译参数
 # 重要: SQLite 驱动需要 CGO, 因此必须设置 CGO_ENABLED=1
 export CGO_ENABLED=1
-LDFLAGS := -X 'main.Version=$(VERSION)' \
-           -X 'main.BuildTime=$(BUILD_TIME)' \
-           -X 'main.GitCommit=$(GIT_COMMIT)'
+LDFLAGS := -X 'github.com/yi-nology/git-manage-service/pkg/appinfo.Version=$(VERSION)' \
+           -X 'github.com/yi-nology/git-manage-service/pkg/appinfo.BuildTime=$(BUILD_TIME)' \
+           -X 'github.com/yi-nology/git-manage-service/pkg/appinfo.GitCommit=$(GIT_COMMIT)'
 
 # 默认目标
 all: build-full
@@ -37,7 +37,7 @@ build-full:
 	@echo ""
 	@echo "[2/2] Building Backend..."
 	@mkdir -p output
-	@go build -ldflags "$(LDFLAGS)" -o output/git-manage-service .
+	@go build -ldflags "$(LDFLAGS)" -o output/git-manage-service ./cmd/server
 	@echo "✓ Backend build complete"
 	@echo ""
 	@echo "========================================"
@@ -58,17 +58,17 @@ build:
 	@echo "Build Time: $(BUILD_TIME)"
 	@echo "Git Commit: $(GIT_COMMIT)"
 	@mkdir -p output
-	go build -ldflags "$(LDFLAGS)" -o output/git-manage-service .
+	go build -ldflags "$(LDFLAGS)" -o output/git-manage-service ./cmd/server
 
 build-http:
 	@echo "Building HTTP-only service..."
 	@mkdir -p output
-	go build -ldflags "$(LDFLAGS)" -o output/git-manage-service-http .
+	go build -ldflags "$(LDFLAGS)" -o output/git-manage-service-http ./cmd/server
 
 build-rpc:
 	@echo "Building RPC-only service..."
 	@mkdir -p output
-	go build -ldflags "$(LDFLAGS)" -o output/git-manage-service-rpc .
+	go build -ldflags "$(LDFLAGS)" -o output/git-manage-service-rpc ./cmd/server
 
 # 多平台构建
 build-all:
@@ -80,9 +80,9 @@ build-all:
 			if [ "$$OS" = "windows" ]; then EXT=".exe"; fi; \
 			echo "Building $$OS/$$ARCH..."; \
 			GOOS=$$OS GOARCH=$$ARCH go build -ldflags "$(LDFLAGS)" \
-				-o output/git-manage-service-$$OS-$$ARCH$$EXT .; \
-		done; \
-	done
+				-o output/git-manage-service-$$OS-$$ARCH$$EXT ./cmd/server; \
+			done; \
+		done
 	@echo "Build complete. Binaries in output/"
 
 # 前端构建
@@ -120,13 +120,13 @@ preview-frontend:
 
 # 运行目标
 run:
-	go run main.go --mode=all
+	go run ./cmd/server --mode=all
 
 run-http:
-	go run main.go --mode=http
+	go run ./cmd/server --mode=http
 
 run-rpc:
-	go run main.go --mode=rpc
+	go run ./cmd/server --mode=rpc
 
 # 代码生成
 gen:
@@ -216,6 +216,7 @@ help:
 	@echo ""
 	@echo "Desktop Application (Wails):"
 	@echo "  make desktop      - 🖥️  Build desktop app for current platform"
+	@echo "  make desktop-dev  - 🔧 Run desktop app in development mode (debug)"
 	@echo "  make desktop-darwin  - Build macOS app (universal)"
 	@echo "  make desktop-windows - Build Windows exe + installer"
 	@echo "  make desktop-linux   - Build Linux deb/rpm/AppImage"
@@ -234,9 +235,9 @@ help:
 # ========================================
 
 desktop:
-	@echo "========================================"
+	@echo "======================================="
 	@echo "Building Desktop Application..."
-	@echo "========================================"
+	@echo "======================================="
 	@echo "Version: $(VERSION)"
 	@echo "Build Time: $(BUILD_TIME)"
 	@echo "Git Commit: $(GIT_COMMIT)"
@@ -252,12 +253,36 @@ desktop:
 	@echo "Building desktop application..."
 	@wails build -clean
 	@echo ""
-	@echo "========================================"
+	@echo "======================================="
 	@echo "✓ Desktop Build Complete!"
-	@echo "========================================"
+	@echo "======================================="
 	@echo ""
 	@echo "Check the build/bin directory for output"
 	@ls -lh build/bin/ 2>/dev/null || echo "Build output not found"
+
+# 本地调试 Wails 应用
+desktop-dev:
+	@echo "======================================="
+	@echo "Running Desktop Application in Development Mode..."
+	@echo "======================================="
+	@echo "Version: $(VERSION)"
+	@echo "Build Time: $(BUILD_TIME)"
+	@echo "Git Commit: $(GIT_COMMIT)"
+	@echo ""
+	@echo "Checking Wails installation..."
+	@if ! command -v wails &> /dev/null; then \
+		echo "❌ Wails not found. Please run:"; \
+		echo "   make setup-desktop"; \
+		exit 1; \
+	fi
+	@echo "✓ Wails installed"
+	@echo ""
+	@echo "Starting development mode..."
+	@wails dev
+	@echo ""
+	@echo "======================================="
+	@echo "Development mode exited"
+	@echo "======================================="
 
 setup-desktop:
 	@echo "Setting up desktop build environment..."
