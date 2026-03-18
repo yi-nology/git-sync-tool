@@ -95,7 +95,9 @@ func (s *RepoBackupService) BackupRepo(ctx context.Context, repoID uint) (*po.Ba
 		record.Status = "failed"
 		record.ErrorMsg = err.Error()
 		record.CompletedAt = time.Now()
-		s.backupDAO.Update(record)
+		if updateErr := s.backupDAO.Update(record); updateErr != nil {
+			log.Printf("Warning: Failed to update backup record: %v", updateErr)
+		}
 		return record, err
 	}
 

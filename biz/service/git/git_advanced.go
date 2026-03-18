@@ -32,7 +32,7 @@ func (s *GitService) GetAuthors(path string) ([]AuthorInfo, error) {
 	// 使用 map 去重
 	authorMap := make(map[string]AuthorInfo)
 
-	iter.ForEach(func(c *object.Commit) error {
+	err = iter.ForEach(func(c *object.Commit) error {
 		key := c.Author.Name + "|" + c.Author.Email
 		if _, exists := authorMap[key]; !exists {
 			authorMap[key] = AuthorInfo{
@@ -42,6 +42,9 @@ func (s *GitService) GetAuthors(path string) ([]AuthorInfo, error) {
 		}
 		return nil
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	// 转换为切片
 	authors := make([]AuthorInfo, 0, len(authorMap))

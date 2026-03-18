@@ -37,14 +37,18 @@ func TestBranchCRUD(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	w.Add(".")
-	w.Commit("initial", &git.CommitOptions{
+	if _, err := w.Add("."); err != nil {
+		t.Fatalf("w.Add failed: %v", err)
+	}
+	if _, err := w.Commit("initial", &git.CommitOptions{
 		Author: &object.Signature{
 			Name:  "Test",
 			Email: "test@example.com",
 			When:  time.Now(),
 		},
-	})
+	}); err != nil {
+		t.Fatalf("w.Commit failed: %v", err)
+	}
 
 	// Determine default branch name (master or main)
 	branches, err := s.ListBranchesWithInfo(tmpDir)
@@ -152,14 +156,18 @@ func TestGetBranchMetrics(t *testing.T) {
 		if err := os.WriteFile(filename, []byte("content"), 0644); err != nil {
 			t.Fatal(err)
 		}
-		w.Add(filepath.Base(filename))
-		w.Commit(fmt.Sprintf("commit %d", i), &git.CommitOptions{
+		if _, err := w.Add(filepath.Base(filename)); err != nil {
+			t.Fatalf("w.Add failed: %v", err)
+		}
+		if _, err := w.Commit(fmt.Sprintf("commit %d", i), &git.CommitOptions{
 			Author: &object.Signature{
 				Name:  "Test",
 				Email: "test@example.com",
 				When:  time.Now(),
 			},
-		})
+		}); err != nil {
+			t.Fatalf("w.Commit failed: %v", err)
+		}
 	}
 
 	// Test Metrics

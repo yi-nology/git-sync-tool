@@ -278,12 +278,15 @@ func (s *GitService) GetBranches(path string) ([]string, error) {
 		return nil, err
 	}
 	var branches []string
-	iter.ForEach(func(ref *plumbing.Reference) error {
+	err = iter.ForEach(func(ref *plumbing.Reference) error {
 		if ref.Name().IsBranch() || ref.Name().IsRemote() {
 			branches = append(branches, ref.Name().Short())
 		}
 		return nil
 	})
+	if err != nil {
+		return nil, err
+	}
 	return branches, nil
 }
 
@@ -306,7 +309,7 @@ func (s *GitService) GetCommits(path, branch, since, until string) (string, erro
 
 	var sb strings.Builder
 	// Format: %H|%an|%ae|%ad|%s (Hash|AuthorName|AuthorEmail|Date|Subject)
-	err = cIter.ForEach(func(c *object.Commit) error {
+	forEachErr := cIter.ForEach(func(c *object.Commit) error {
 		// Filter by since/until if needed (parsing dates is annoying)
 		// For now, skip date filtering or implement it.
 		// since/until are strings like "2023-01-01".
@@ -321,6 +324,9 @@ func (s *GitService) GetCommits(path, branch, since, until string) (string, erro
 		sb.WriteString(line)
 		return nil
 	})
+	if forEachErr != nil {
+		return "", forEachErr
+	}
 
 	return sb.String(), nil
 }
@@ -398,7 +404,7 @@ func (s *GitService) GetRepoFiles(path, branch string) ([]string, error) {
 	}
 
 	var files []string
-	tree.Files().ForEach(func(f *object.File) error {
+	_ = tree.Files().ForEach(func(f *object.File) error {
 		files = append(files, f.Name)
 		return nil
 	})

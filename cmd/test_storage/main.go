@@ -88,7 +88,10 @@ func testRedisLock(cfg configs.LockConfig) {
 	}
 
 	// 清理
-	lockSvc.Down(ctx, testKey)
+	err = lockSvc.Down(ctx, testKey)
+	if err != nil {
+		fmt.Printf("   清理锁失败: %v\n", err)
+	}
 	fmt.Println("\nRedis 锁测试通过!")
 }
 

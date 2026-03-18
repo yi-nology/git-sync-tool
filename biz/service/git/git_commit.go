@@ -263,7 +263,7 @@ func (s *GitService) GetCommitDetail(repoPath, hashStr string) (*CommitDetail, [
 		}
 	} else {
 		// 第一个commit，所有文件都是added
-		commitTree.Files().ForEach(func(f *object.File) error {
+		_ = commitTree.Files().ForEach(func(f *object.File) error {
 			lines, _ := f.Lines()
 			changes = append(changes, FileChange{
 				Path:      f.Name,

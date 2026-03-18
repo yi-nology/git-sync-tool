@@ -156,9 +156,7 @@ func (s *GitService) GetRepoConfig(path string) (*domain.GitRepoConfig, error) {
 			gitRemote.FetchURL = remote.URLs[0]
 			gitRemote.PushURL = remote.URLs[0]
 		}
-		for _, u := range remote.URLs {
-			gitRemote.FetchSpecs = append(gitRemote.FetchSpecs, u)
-		}
+		gitRemote.FetchSpecs = append(gitRemote.FetchSpecs, remote.URLs...)
 		for _, spec := range remote.Fetch {
 			gitRemote.FetchSpecs = append(gitRemote.FetchSpecs, spec.String())
 		}
@@ -200,7 +198,7 @@ func (s *GitService) ListRemoteBranches(path, remoteName string) ([]string, erro
 	}
 
 	var branches []string
-	iter.ForEach(func(ref *plumbing.Reference) error {
+	err = iter.ForEach(func(ref *plumbing.Reference) error {
 		name := ref.Name().String()
 		if strings.HasPrefix(name, prefix) {
 			branch := strings.TrimPrefix(name, prefix)
@@ -210,6 +208,9 @@ func (s *GitService) ListRemoteBranches(path, remoteName string) ([]string, erro
 		}
 		return nil
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	logger.Debug("Remote branches listed", logrus.Fields{"path": path, "remote": remoteName, "count": len(branches)})
 	return branches, nil

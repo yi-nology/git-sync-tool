@@ -17,6 +17,7 @@
         <el-menu-item index="/repos">仓库管理</el-menu-item>
         <el-menu-item index="/audit">审计日志</el-menu-item>
         <el-menu-item index="/settings">设置</el-menu-item>
+        <el-menu-item index="/mcp">MCP</el-menu-item>
       </el-menu>
       <div class="header-right">
         <ThemeSwitch />
@@ -51,6 +52,7 @@ const activeMenu = computed(() => {
   if (path.startsWith('/repos')) return '/repos'
   if (path.startsWith('/audit')) return '/audit'
   if (path.startsWith('/settings')) return '/settings'
+  if (path.startsWith('/mcp')) return '/mcp'
   return path
 })
 

@@ -56,13 +56,22 @@ func (s *GitService) GetNextVersions(path string) (*NextVersionInfo, error) {
 	major, minor, patch := 0, 0, 0
 
 	if len(parts) >= 1 {
-		fmt.Sscanf(parts[0], "%d", &major)
+		if _, err := fmt.Sscanf(parts[0], "%d", &major); err != nil {
+			// 解析失败，使用默认值 0
+			major = 0
+		}
 	}
 	if len(parts) >= 2 {
-		fmt.Sscanf(parts[1], "%d", &minor)
+		if _, err := fmt.Sscanf(parts[1], "%d", &minor); err != nil {
+			// 解析失败，使用默认值 0
+			minor = 0
+		}
 	}
 	if len(parts) >= 3 {
-		fmt.Sscanf(parts[2], "%d", &patch)
+		if _, err := fmt.Sscanf(parts[2], "%d", &patch); err != nil {
+			// 解析失败，使用默认值 0
+			patch = 0
+		}
 	}
 
 	// 计算下一版本

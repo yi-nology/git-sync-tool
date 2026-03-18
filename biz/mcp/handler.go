@@ -44,6 +44,18 @@ func (s *MCPServer) HandleRequest(request []byte) ([]byte, error) {
 		return s.handleSyncTask(toolReq.Parameters)
 	case "sync_run":
 		return s.handleSyncRun(toolReq.Parameters)
+	case "audit_log":
+		return s.auditHandler.handleAuditLog(toolReq.Parameters)
+	case "audit_query":
+		return s.auditHandler.handleAuditQuery(toolReq.Parameters)
+	case "stats_code":
+		return s.statsHandler.handleStatsCode(toolReq.Parameters)
+	case "stats_language":
+		return s.statsHandler.handleStatsLanguage(toolReq.Parameters)
+	case "storage_backup":
+		return s.storageHandler.handleStorageBackup(toolReq.Parameters)
+	case "storage_ssh":
+		return s.storageHandler.handleStorageSSH(toolReq.Parameters)
 	default:
 		return s.errorResponse("Tool not implemented")
 	}

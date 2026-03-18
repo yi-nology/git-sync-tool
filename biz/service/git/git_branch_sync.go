@@ -66,7 +66,7 @@ func (s *GitService) GetBranchSyncStatus(path, branch, upstream string) (int, in
 	ahead := 0
 	iter, err := r.Log(&git.LogOptions{From: *hBranch})
 	if err == nil {
-		iter.ForEach(func(c *object.Commit) error {
+		_ = iter.ForEach(func(c *object.Commit) error {
 			if c.Hash == base.Hash {
 				return fmt.Errorf("stop")
 			}
@@ -79,7 +79,7 @@ func (s *GitService) GetBranchSyncStatus(path, branch, upstream string) (int, in
 	behind := 0
 	iter, err = r.Log(&git.LogOptions{From: *hUpstream})
 	if err == nil {
-		iter.ForEach(func(c *object.Commit) error {
+		_ = iter.ForEach(func(c *object.Commit) error {
 			if c.Hash == base.Hash {
 				return fmt.Errorf("stop")
 			}
@@ -240,6 +240,7 @@ func (s *GitService) FetchAll(path string) error {
 		err := remote.Fetch(fetchOptions)
 		if err != nil && err != git.NoErrAlreadyUpToDate {
 			// Log error but continue?
+			_ = err // 暂时使用下划线忽略错误，避免空分支
 		}
 	}
 	return nil

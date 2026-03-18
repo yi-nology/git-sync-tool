@@ -189,10 +189,13 @@ func (s *GitService) GetTags(path string) ([]string, error) {
 	}
 
 	var tags []string
-	iter.ForEach(func(ref *plumbing.Reference) error {
+	err = iter.ForEach(func(ref *plumbing.Reference) error {
 		tags = append(tags, ref.Name().Short())
 		return nil
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	logger.Debug("Tags retrieved", logrus.Fields{"path": path, "count": len(tags)})
 	return tags, nil
@@ -211,9 +214,9 @@ func (s *GitService) GetTagList(path string) ([]TagInfo, error) {
 	}
 
 	var tags []TagInfo
-	iter.ForEach(func(ref *plumbing.Reference) error {
-		tagObj, err := r.TagObject(ref.Hash())
-		if err == nil {
+	err = iter.ForEach(func(ref *plumbing.Reference) error {
+		tagObj, tagErr := r.TagObject(ref.Hash())
+		if tagErr == nil {
 			// Annotated Tag
 			tags = append(tags, TagInfo{
 				Name:    ref.Name().Short(),
@@ -224,8 +227,8 @@ func (s *GitService) GetTagList(path string) ([]TagInfo, error) {
 			})
 		} else {
 			// Lightweight Tag (commit)
-			commit, err := r.CommitObject(ref.Hash())
-			if err == nil {
+			commit, commitErr := r.CommitObject(ref.Hash())
+			if commitErr == nil {
 				tags = append(tags, TagInfo{
 					Name:    ref.Name().Short(),
 					Hash:    ref.Hash().String(),
@@ -237,6 +240,9 @@ func (s *GitService) GetTagList(path string) ([]TagInfo, error) {
 		}
 		return nil
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	logger.Debug("Tag list retrieved", logrus.Fields{"path": path, "count": len(tags)})
 	return tags, nil
