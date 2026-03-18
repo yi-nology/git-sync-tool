@@ -153,6 +153,12 @@ const features = [
     icon: Setting,
     color: '#8B5CF6',
   },
+  {
+    title: '支持 MCP',
+    desc: '集成 MCP 多模型协作平台，支持多种 AI 模型对接与协作。',
+    icon: Connection,
+    color: '#67C23A',
+  },
 ]
 
 onMounted(async () => {

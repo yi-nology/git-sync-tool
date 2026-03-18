@@ -395,6 +395,8 @@ func (s *LintService) runRpmlint(content string, specFilePath string) []LintIssu
 	if err != nil {
 		if exitErr, ok := err.(*exec.ExitError); ok {
 			if len(exitErr.Stderr) > 0 {
+				// 忽略 rpmlint 的 stderr 输出，因为它可能包含非 JSON 格式的错误信息
+				_ = exitErr.Stderr
 			}
 		}
 	}

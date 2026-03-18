@@ -7,18 +7,21 @@ import (
 	"net"
 	"os"
 	"path/filepath"
-
+	"sync"
 
 	"github.com/yi-nology/git-manage-service/biz/service/git"
 	"github.com/yi-nology/git-manage-service/biz/service/notification"
-	"github.com/yi-nology/git-manage-service/biz/service/sync"
+	syncservice "github.com/yi-nology/git-manage-service/biz/service/sync"
 )
 
 type MCPServer struct {
 	tools               map[string]ToolDefinition
 	gitService          *git.GitService
 	notificationService *notification.NotificationService
-	syncService         *sync.SyncService
+	syncService         *syncservice.SyncService
+	auditHandler        *auditHandler
+	statsHandler        *statsHandler
+	storageHandler      *storageHandler
 	listener            net.Listener
 	isRunning           bool
 	mu                  sync.Mutex
@@ -29,7 +32,10 @@ func NewMCPServer() *MCPServer {
 		tools:               make(map[string]ToolDefinition),
 		gitService:          git.NewGitService(),
 		notificationService: notification.NewNotificationService(),
-		syncService:         sync.NewSyncService(),
+		syncService:         syncservice.NewSyncService(),
+		auditHandler:        newAuditHandler(),
+		statsHandler:        newStatsHandler(),
+		storageHandler:      newStorageHandler(),
 		isRunning:           false,
 	}
 }
@@ -95,14 +101,9 @@ func (s *MCPServer) Start() error {
 			break
 		}
 
-		// 设置超时，以便能够定期检查 isRunning 状态
-		listener.SetDeadline(time.Now().Add(1 * time.Second))
-		conn, err := listener.Accept()
+		// 接受连接
+		conn, err := s.listener.Accept()
 		if err != nil {
-			// 检查是否是因为超时或关闭导致的错误
-			if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
-				continue
-			}
 			log.Printf("Error accepting connection: %v", err)
 			continue
 		}

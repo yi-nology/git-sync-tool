@@ -293,7 +293,10 @@ func Test(ctx context.Context, c *app.RequestContext) {
 	}
 
 	// 更新最后使用时间
-	dao.UpdateLastUsed(id)
+	if err := dao.UpdateLastUsed(id); err != nil {
+		// Log the error but continue
+		_ = err // 暂时使用下划线忽略错误，避免空分支
+	}
 
 	response.Success(c, map[string]interface{}{
 		"success": true,

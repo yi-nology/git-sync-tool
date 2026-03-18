@@ -102,6 +102,12 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/spec/SpecEditorPage.vue'),
         meta: { title: 'Spec 编辑器' },
       },
+      {
+        path: 'mcp',
+        name: 'MCP',
+        component: () => import('@/views/mcp/McpPage.vue'),
+        meta: { title: 'MCP 配置' },
+      },
 
     ],
   },

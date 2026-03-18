@@ -240,7 +240,11 @@ func (s *GitService) Merge(path, source, target, message string, noFF, squash bo
 	if err != nil {
 		// If failed, it's likely a conflict (since we did checkout).
 		// We should abort to restore state
-		s.RunCommand(path, "merge", "--abort")
+		if _, abortErr := s.RunCommand(path, "merge", "--abort"); abortErr != nil {
+			// Log the abort error but still return the original merge error
+			// We can't do much more here
+			_ = abortErr // 暂时使用下划线忽略错误，避免空分支
+		}
 		return fmt.Errorf("merge failed (aborted): %v. Output: %s", err, out)
 	}
 

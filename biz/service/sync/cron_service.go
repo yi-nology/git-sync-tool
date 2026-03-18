@@ -112,7 +112,11 @@ func (s *CronService) addTask(task po.SyncTask) {
 				log.Printf("Cron Task %d (Key: %s) skipped: another instance is running", taskID, taskKey)
 				return
 			}
-			defer s.lockSvc.Down(ctx, lockKey)
+			defer func() {
+				if err := s.lockSvc.Down(ctx, lockKey); err != nil {
+					log.Printf("Failed to release lock for task %d: %v", taskID, err)
+				}
+			}()
 		}
 
 		log.Printf("Executing Cron Task %d (Key: %s)", taskID, taskKey)

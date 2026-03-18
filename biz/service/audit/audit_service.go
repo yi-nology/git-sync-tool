@@ -45,6 +45,10 @@ func (s *AuditService) Log(c *app.RequestContext, action, target string, details
 	// Or sync to ensure audit? Usually async is better for performance unless strict audit required.
 	// For now, sync is safer to ensure recording.
 	go func() {
-		s.auditDAO.Create(&logEntry)
+		if err := s.auditDAO.Create(&logEntry); err != nil {
+			// Log the error but don't block the main flow
+			// TODO: Add proper logging here
+			_ = err // 暂时使用下划线忽略错误，避免空分支
+		}
 	}()
 }

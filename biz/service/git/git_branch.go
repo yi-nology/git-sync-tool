@@ -67,8 +67,8 @@ func (s *GitService) ListBranchesWithInfo(path string) ([]domain.BranchInfo, err
 		}
 
 		// Commit Info
-		commit, err := r.CommitObject(hash)
-		if err == nil {
+		commit, commitErr := r.CommitObject(hash)
+		if commitErr == nil {
 			b.Author = commit.Author.Name
 			b.AuthorEmail = commit.Author.Email
 			b.Date = commit.Author.When
@@ -88,6 +88,9 @@ func (s *GitService) ListBranchesWithInfo(path string) ([]domain.BranchInfo, err
 		branches = append(branches, b)
 		return nil
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	return branches, nil
 }
@@ -189,10 +192,13 @@ func (s *GitService) GetBranchMetrics(path, branch string) (map[string]int, erro
 	}
 
 	count := 0
-	err = cIter.ForEach(func(c *object.Commit) error {
+	forEachErr := cIter.ForEach(func(c *object.Commit) error {
 		count++
 		return nil
 	})
+	if forEachErr != nil {
+		return nil, forEachErr
+	}
 
 	return map[string]int{
 		"commit_count": count,

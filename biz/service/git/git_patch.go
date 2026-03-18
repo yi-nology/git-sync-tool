@@ -195,7 +195,10 @@ func (s *GitService) parsePatchSequence(filename string) int {
 	matches := re.FindStringSubmatch(filename)
 	if len(matches) > 1 {
 		var seq int
-		fmt.Sscanf(matches[1], "%d", &seq)
+		if _, err := fmt.Sscanf(matches[1], "%d", &seq); err != nil {
+			// 解析失败，返回默认值
+			return 9999
+		}
 		return seq
 	}
 
