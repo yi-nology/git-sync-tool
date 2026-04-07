@@ -68,6 +68,13 @@ jobs:
       - name: Build frontend
         run: make build-frontend-integrate
 
+      - name: Sync frontend assets to embed directory
+        run: |
+          rm -rf pkg/embed/public/*
+          cp -r public/* pkg/embed/public/
+          rm -rf pkg/embed/docs/*
+          cp -r docs/* pkg/embed/docs/ 2>/dev/null || true
+
       - name: Build binary
         env:
           GOOS: ${{ matrix.goos }}

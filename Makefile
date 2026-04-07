@@ -33,6 +33,11 @@ build-full:
 	@echo "Copying frontend assets to public directory..."
 	@rm -rf public
 	@cp -r frontend/dist public
+	@echo "Copying frontend assets to embed directory..."
+	@rm -rf pkg/embed/public/*
+	@cp -r public/* pkg/embed/public/
+	@rm -rf pkg/embed/docs/*
+	@cp -r docs/* pkg/embed/docs/ 2>/dev/null || true
 	@echo "✓ Frontend build complete"
 	@echo ""
 	@echo "[2/2] Building Backend..."
@@ -106,6 +111,11 @@ build-frontend-integrate:
 	@echo "Copying frontend assets to public directory..."
 	@rm -rf public
 	@cp -r frontend/dist public
+	@echo "Copying frontend assets to embed directory..."
+	@rm -rf pkg/embed/public/*
+	@cp -r public/* pkg/embed/public/
+	@rm -rf pkg/embed/docs/*
+	@cp -r docs/* pkg/embed/docs/ 2>/dev/null || true
 	@echo "Frontend integrated successfully. Backend can now serve frontend from ./public/"
 
 # 前端开发服务器
