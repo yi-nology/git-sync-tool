@@ -97,14 +97,17 @@ jobs:
           cp ${{ github.workspace }}/README.md .
           cp ${{ github.workspace }}/LICENSE* . 2>/dev/null || true
           
+          # 创建数据目录
+          mkdir -p data
+          
           # 确保配置文件存在
           ls -la conf/
           
           if [[ "${{ matrix.goos }}" == "windows" ]]; then
-            zip -r ${{ matrix.output }}.zip ${{ matrix.output }} conf README.md LICENSE* 2>/dev/null || zip -r ${{ matrix.output }}.zip ${{ matrix.output }} conf README.md
+            zip -r ${{ matrix.output }}.zip ${{ matrix.output }} conf data README.md LICENSE* 2>/dev/null || zip -r ${{ matrix.output }}.zip ${{ matrix.output }} conf data README.md
             echo "ASSET=${{ matrix.output }}.zip" >> $GITHUB_ENV
           else
-            tar -czf ${{ matrix.output }}.tar.gz ${{ matrix.output }} conf README.md LICENSE* 2>/dev/null || tar -czf ${{ matrix.output }}.tar.gz ${{ matrix.output }} conf README.md
+            tar -czf ${{ matrix.output }}.tar.gz ${{ matrix.output }} conf data README.md LICENSE* 2>/dev/null || tar -czf ${{ matrix.output }}.tar.gz ${{ matrix.output }} conf data README.md
             echo "ASSET=${{ matrix.output }}.tar.gz" >> $GITHUB_ENV
           fi
 
