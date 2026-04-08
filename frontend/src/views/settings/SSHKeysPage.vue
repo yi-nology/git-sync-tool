@@ -77,7 +77,7 @@
 
     <!-- 编辑密钥对话框 -->
     <el-dialog v-model="editDialogVisible" title="编辑 SSH 密钥" width="600px" destroy-on-close>
-      <el-form :model="editForm" ref="editFormRef" label-width="100px">
+      <el-form :model="editForm" label-width="100px">
         <el-form-item label="名称">
           <el-input :model-value="editForm.name" disabled />
         </el-form-item>
@@ -202,7 +202,6 @@ const createRules: FormRules = {
 // 编辑表单
 const editDialogVisible = ref(false)
 const editing = ref(false)
-const editFormRef = ref<FormInstance>()
 const editingKeyId = ref<number>(0)
 const editForm = ref<UpdateDBSSHKeyReq & { name: string }>({
   name: '',
