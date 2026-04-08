@@ -32,6 +32,8 @@ type CredentialDTO struct {
 	Type        string     `json:"type"`
 	Description string     `json:"description"`
 	SSHKeyID    uint       `json:"ssh_key_id,omitempty"`
+	SSHKeyName  string     `json:"ssh_key_name,omitempty"`  // 关联 SSH 密钥名称
+	SSHKeyType  string     `json:"ssh_key_type,omitempty"`  // 关联 SSH 密钥算法类型
 	SSHKeyPath  string     `json:"ssh_key_path,omitempty"`
 	Username    string     `json:"username,omitempty"`
 	HasSecret   bool       `json:"has_secret"`

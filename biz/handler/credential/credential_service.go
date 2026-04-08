@@ -23,9 +23,11 @@ func List(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
+	sshKeyMap := buildSSHKeyMap(creds)
+
 	result := make([]api.CredentialDTO, 0, len(creds))
 	for _, cred := range creds {
-		result = append(result, toCredentialDTO(&cred))
+		result = append(result, toCredentialDTO(&cred, sshKeyMap))
 	}
 
 	response.Success(c, result)
@@ -99,7 +101,7 @@ func Create(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	response.Success(c, toCredentialDTO(cred))
+	response.Success(c, toCredentialDTO(cred, nil))
 }
 
 // Get 获取凭证详情
@@ -118,7 +120,7 @@ func Get(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	response.Success(c, toCredentialDTO(cred))
+	response.Success(c, toCredentialDTO(cred, nil))
 }
 
 // Update 更新凭证
@@ -187,7 +189,7 @@ func Update(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	response.Success(c, toCredentialDTO(cred))
+	response.Success(c, toCredentialDTO(cred, nil))
 }
 
 // Delete 删除凭证
@@ -329,17 +331,39 @@ func Match(ctx context.Context, c *app.RequestContext) {
 		Others:      make([]api.CredentialDTO, 0, len(others)),
 	}
 	for _, cred := range recommended {
-		resp.Recommended = append(resp.Recommended, toCredentialDTO(&cred))
+		resp.Recommended = append(resp.Recommended, toCredentialDTO(&cred, nil))
 	}
 	for _, cred := range others {
-		resp.Others = append(resp.Others, toCredentialDTO(&cred))
+		resp.Others = append(resp.Others, toCredentialDTO(&cred, nil))
 	}
 
 	response.Success(c, resp)
 }
 
-// toCredentialDTO 转换为 DTO（脱敏）
-func toCredentialDTO(cred *po.Credential) api.CredentialDTO {
+// sshKeyInfo 用于凭证 DTO 填充
+type sshKeyInfo struct {
+	Name    string
+	KeyType string
+}
+
+// buildSSHKeyMap 一次性加载所有被凭证引用的 SSH 密钥，返回 id→info 映射
+func buildSSHKeyMap(creds []po.Credential) map[uint]sshKeyInfo {
+	m := make(map[uint]sshKeyInfo)
+	sshKeyDAO := db.NewSSHKeyDAO()
+	for _, cred := range creds {
+		if cred.SSHKeyID > 0 {
+			if _, ok := m[cred.SSHKeyID]; !ok {
+				if key, err := sshKeyDAO.FindByID(cred.SSHKeyID); err == nil {
+					m[cred.SSHKeyID] = sshKeyInfo{Name: key.Name, KeyType: key.KeyType}
+				}
+			}
+		}
+	}
+	return m
+}
+
+// toCredentialDTO 转换为 DTO（脱敏）。sshKeyMap 可为 nil（单条查询场景）
+func toCredentialDTO(cred *po.Credential, sshKeyMap map[uint]sshKeyInfo) api.CredentialDTO {
 	dto := api.CredentialDTO{
 		ID:          cred.ID,
 		Name:        cred.Name,
@@ -353,6 +377,22 @@ func toCredentialDTO(cred *po.Credential) api.CredentialDTO {
 		LastUsedAt:  cred.LastUsedAt,
 		CreatedAt:   cred.CreatedAt,
 		UpdatedAt:   cred.UpdatedAt,
+	}
+	// 填充关联 SSH 密钥信息
+	if cred.SSHKeyID > 0 {
+		if sshKeyMap != nil {
+			if info, ok := sshKeyMap[cred.SSHKeyID]; ok {
+				dto.SSHKeyName = info.Name
+				dto.SSHKeyType = info.KeyType
+			}
+		} else {
+			// 单条查询：直接加载
+			sshKeyDAO := db.NewSSHKeyDAO()
+			if key, err := sshKeyDAO.FindByID(cred.SSHKeyID); err == nil {
+				dto.SSHKeyName = key.Name
+				dto.SSHKeyType = key.KeyType
+			}
+		}
 	}
 	// SSH 密钥路径脱敏：仅保留文件名
 	if dto.SSHKeyPath != "" {

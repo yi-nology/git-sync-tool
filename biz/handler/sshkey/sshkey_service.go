@@ -54,12 +54,27 @@ func CreateDBSSHKey(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	if req.PublicKey == "" {
-		response.BadRequest(c, "public_key is required")
+	sshKeyDAO := db.NewSSHKeyDAO()
+
+	helper := git.NewSSHKeyHelper()
+	publicKey := req.PublicKey
+	keyType := "unknown"
+
+	if req.PrivateKey != "" {
+		keyType = helper.DetectKeyType(req.PrivateKey, req.Passphrase)
+		if publicKey == "" {
+			extractedKey, err := helper.ExtractPublicKeyFromPrivateKey(req.PrivateKey, req.Passphrase)
+			if err != nil {
+				response.BadRequest(c, "failed to extract public key from private key: "+err.Error())
+				return
+			}
+			publicKey = extractedKey
+		}
+	} else if publicKey == "" {
+		response.BadRequest(c, "private_key is required when public_key is not provided")
 		return
 	}
 
-	sshKeyDAO := db.NewSSHKeyDAO()
 	exists, err := sshKeyDAO.ExistsByName(req.Name)
 	if err != nil {
 		response.InternalServerError(c, "Failed to check SSH key name: "+err.Error())
@@ -75,9 +90,9 @@ func CreateDBSSHKey(ctx context.Context, c *app.RequestContext) {
 		Name:        req.Name,
 		Description: req.Description,
 		PrivateKey:  req.PrivateKey,
-		PublicKey:   req.PublicKey,
+		PublicKey:   publicKey,
 		Passphrase:  req.Passphrase,
-		KeyType:     "rsa",
+		KeyType:     keyType,
 	}
 
 	if err := sshKeyDAO.Create(sshKey); err != nil {
@@ -145,8 +160,21 @@ func UpdateDBSSHKey(ctx context.Context, c *app.RequestContext) {
 		key.Description = req.Description
 	}
 
+	// When the private key is changed, re-derive public key and key type
 	if req.PrivateKey != "" {
+		passphrase := req.Passphrase
+		if passphrase == "" {
+			passphrase = key.Passphrase
+		}
+		helper := git.NewSSHKeyHelper()
+		newPublicKey, err := helper.ExtractPublicKeyFromPrivateKey(req.PrivateKey, passphrase)
+		if err != nil {
+			response.BadRequest(c, "failed to extract public key from new private key: "+err.Error())
+			return
+		}
 		key.PrivateKey = req.PrivateKey
+		key.PublicKey = newPublicKey
+		key.KeyType = helper.DetectKeyType(req.PrivateKey, passphrase)
 	}
 
 	if req.Passphrase != "" {

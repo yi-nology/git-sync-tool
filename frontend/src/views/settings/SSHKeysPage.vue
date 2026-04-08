@@ -12,9 +12,11 @@
       <el-table :data="sshKeys" stripe>
         <el-table-column prop="name" label="名称" width="180" />
         <el-table-column prop="description" label="描述" min-width="150" show-overflow-tooltip />
-        <el-table-column prop="key_type" label="类型" width="100">
+        <el-table-column prop="key_type" label="类型" width="120">
           <template #default="{ row }">
-            <el-tag size="small">{{ row.key_type.toUpperCase() }}</el-tag>
+            <el-tag :type="keyTypeTagColor(row.key_type)" size="small">
+              {{ keyTypeLabel(row.key_type) }}
+            </el-tag>
           </template>
         </el-table-column>
         <el-table-column label="密码保护" width="100" align="center">
@@ -28,9 +30,10 @@
             {{ formatDate(row.created_at) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column label="操作" width="240" fixed="right">
           <template #default="{ row }">
             <el-button size="small" @click="showDetailDialog(row)">查看</el-button>
+            <el-button size="small" type="primary" @click="showEditDialog(row)">编辑</el-button>
             <el-button size="small" type="success" @click="showTestDialog(row)">测试</el-button>
             <el-button size="small" type="danger" @click="handleDelete(row)">删除</el-button>
           </template>
@@ -50,17 +53,17 @@
           <el-input v-model="createForm.description" placeholder="可选，用于备注密钥用途" />
         </el-form-item>
         <el-form-item label="私钥" prop="private_key">
-          <el-input 
-            v-model="createForm.private_key" 
-            type="textarea" 
-            :rows="8" 
+          <el-input
+            v-model="createForm.private_key"
+            type="textarea"
+            :rows="8"
             placeholder="粘贴 SSH 私钥内容（以 -----BEGIN 开头）"
           />
         </el-form-item>
         <el-form-item label="密码短语" prop="passphrase">
-          <el-input 
-            v-model="createForm.passphrase" 
-            type="password" 
+          <el-input
+            v-model="createForm.passphrase"
+            type="password"
             show-password
             placeholder="如果私钥有密码保护，请输入"
           />
@@ -72,22 +75,56 @@
       </template>
     </el-dialog>
 
+    <!-- 编辑密钥对话框 -->
+    <el-dialog v-model="editDialogVisible" title="编辑 SSH 密钥" width="600px" destroy-on-close>
+      <el-form :model="editForm" ref="editFormRef" label-width="100px">
+        <el-form-item label="名称">
+          <el-input :model-value="editForm.name" disabled />
+        </el-form-item>
+        <el-form-item label="描述">
+          <el-input v-model="editForm.description" placeholder="可选，用于备注密钥用途" />
+        </el-form-item>
+        <el-form-item label="更换私钥">
+          <el-input
+            v-model="editForm.private_key"
+            type="textarea"
+            :rows="6"
+            placeholder="留空则不修改私钥；填入新私钥将自动重新提取公钥和密钥类型"
+          />
+        </el-form-item>
+        <el-form-item label="密码短语">
+          <el-input
+            v-model="editForm.passphrase"
+            type="password"
+            show-password
+            placeholder="留空则不修改密码短语"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="editDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleEdit" :loading="editing">保存</el-button>
+      </template>
+    </el-dialog>
+
     <!-- 查看密钥详情对话框 -->
     <el-dialog v-model="detailDialogVisible" title="密钥详情" width="600px">
       <el-descriptions :column="1" border v-if="currentKey">
         <el-descriptions-item label="名称">{{ currentKey.name }}</el-descriptions-item>
         <el-descriptions-item label="描述">{{ currentKey.description || '-' }}</el-descriptions-item>
         <el-descriptions-item label="类型">
-          <el-tag>{{ currentKey.key_type.toUpperCase() }}</el-tag>
+          <el-tag :type="keyTypeTagColor(currentKey.key_type)">
+            {{ keyTypeLabel(currentKey.key_type) }}
+          </el-tag>
         </el-descriptions-item>
         <el-descriptions-item label="密码保护">
           {{ currentKey.has_passphrase ? '是' : '否' }}
         </el-descriptions-item>
         <el-descriptions-item label="公钥">
-          <el-input 
-            :model-value="currentKey.public_key" 
-            type="textarea" 
-            :rows="4" 
+          <el-input
+            :model-value="currentKey.public_key"
+            type="textarea"
+            :rows="4"
             readonly
           />
           <el-button size="small" @click="copyPublicKey" style="margin-top: 8px;">
@@ -107,8 +144,8 @@
     <el-dialog v-model="testDialogVisible" title="测试 SSH 连接" width="500px">
       <el-form :model="testForm" label-width="80px">
         <el-form-item label="Git URL">
-          <el-input 
-            v-model="testForm.url" 
+          <el-input
+            v-model="testForm.url"
             placeholder="例如: git@github.com:user/repo.git"
           />
         </el-form-item>
@@ -131,13 +168,15 @@ import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import { Plus, Lock, Unlock, CopyDocument, CircleCheck, CircleClose } from '@element-plus/icons-vue'
-import { 
-  listDBSSHKeys, 
-  createDBSSHKey, 
-  deleteDBSSHKey, 
+import {
+  listDBSSHKeys,
+  createDBSSHKey,
+  updateDBSSHKey,
+  deleteDBSSHKey,
   testDBSSHKey,
   type DBSSHKey,
   type CreateDBSSHKeyReq,
+  type UpdateDBSSHKeyReq,
   type TestDBSSHKeyResp
 } from '@/api/modules/sshkey'
 
@@ -160,6 +199,18 @@ const createRules: FormRules = {
   private_key: [{ required: true, message: '请输入私钥内容', trigger: 'blur' }],
 }
 
+// 编辑表单
+const editDialogVisible = ref(false)
+const editing = ref(false)
+const editFormRef = ref<FormInstance>()
+const editingKeyId = ref<number>(0)
+const editForm = ref<UpdateDBSSHKeyReq & { name: string }>({
+  name: '',
+  description: '',
+  private_key: '',
+  passphrase: '',
+})
+
 // 详情对话框
 const detailDialogVisible = ref(false)
 const currentKey = ref<DBSSHKey | null>(null)
@@ -171,6 +222,31 @@ const testForm = ref({ url: '' })
 const testResult = ref<TestDBSSHKeyResp | null>(null)
 const testKeyId = ref<number>(0)
 
+// 密钥类型展示辅助
+const KEY_TYPE_LABELS: Record<string, string> = {
+  rsa: 'RSA',
+  ed25519: 'Ed25519',
+  ecdsa: 'ECDSA',
+  dsa: 'DSA',
+  unknown: '未知',
+}
+const KEY_TYPE_COLORS: Record<string, string> = {
+  rsa: 'warning',
+  ed25519: 'success',
+  ecdsa: '',
+  dsa: 'info',
+  unknown: 'info',
+}
+
+function keyTypeLabel(t: string): string {
+  if (!t) return '未知'
+  return KEY_TYPE_LABELS[t.toLowerCase()] ?? t.toUpperCase()
+}
+function keyTypeTagColor(t: string): string {
+  if (!t) return 'info'
+  return KEY_TYPE_COLORS[t.toLowerCase()] ?? ''
+}
+
 onMounted(() => {
   fetchSSHKeys()
 })
@@ -179,7 +255,7 @@ async function fetchSSHKeys() {
   loading.value = true
   try {
     sshKeys.value = await listDBSSHKeys() || []
-  } catch (e) {
+  } catch {
     ElMessage.error('获取 SSH 密钥列表失败')
     sshKeys.value = []
   } finally {
@@ -188,19 +264,14 @@ async function fetchSSHKeys() {
 }
 
 function showCreateDialog() {
-  createForm.value = {
-    name: '',
-    description: '',
-    private_key: '',
-    passphrase: '',
-  }
+  createForm.value = { name: '', description: '', private_key: '', passphrase: '' }
   createDialogVisible.value = true
 }
 
 async function handleCreate() {
   if (!createFormRef.value) return
   await createFormRef.value.validate()
-  
+
   creating.value = true
   try {
     await createDBSSHKey(createForm.value)
@@ -211,6 +282,37 @@ async function handleCreate() {
     ElMessage.error(e?.response?.data?.msg || '创建失败')
   } finally {
     creating.value = false
+  }
+}
+
+function showEditDialog(key: DBSSHKey) {
+  editingKeyId.value = key.id
+  editForm.value = {
+    name: key.name,
+    description: key.description || '',
+    private_key: '',
+    passphrase: '',
+  }
+  editDialogVisible.value = true
+}
+
+async function handleEdit() {
+  editing.value = true
+  try {
+    const payload: UpdateDBSSHKeyReq = {
+      description: editForm.value.description,
+    }
+    if (editForm.value.private_key) payload.private_key = editForm.value.private_key
+    if (editForm.value.passphrase) payload.passphrase = editForm.value.passphrase
+
+    await updateDBSSHKey(editingKeyId.value, payload)
+    ElMessage.success('SSH 密钥已更新')
+    editDialogVisible.value = false
+    fetchSSHKeys()
+  } catch (e: any) {
+    ElMessage.error(e?.response?.data?.msg || '更新失败')
+  } finally {
+    editing.value = false
   }
 }
 
@@ -231,7 +333,7 @@ async function handleTest() {
     ElMessage.warning('请输入 Git URL')
     return
   }
-  
+
   testing.value = true
   testResult.value = null
   try {
@@ -250,12 +352,12 @@ async function handleDelete(key: DBSSHKey) {
   await ElMessageBox.confirm(`确定要删除密钥 "${key.name}" 吗？此操作不可恢复。`, '确认删除', {
     type: 'warning',
   })
-  
+
   try {
     await deleteDBSSHKey(key.id)
     ElMessage.success('删除成功')
     fetchSSHKeys()
-  } catch (e) {
+  } catch {
     ElMessage.error('删除失败')
   }
 }
@@ -267,6 +369,7 @@ function copyPublicKey() {
 }
 
 function formatDate(dateStr: string) {
+  if (!dateStr) return '-'
   return new Date(dateStr).toLocaleString('zh-CN')
 }
 </script>

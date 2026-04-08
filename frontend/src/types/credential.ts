@@ -8,6 +8,8 @@ export interface CredentialDTO {
   type: CredentialType
   description: string
   ssh_key_id?: number
+  ssh_key_name?: string   // 关联 SSH 密钥名称
+  ssh_key_type?: string   // 关联 SSH 密钥算法类型 (rsa/ed25519/ecdsa/dsa)
   ssh_key_path?: string
   username?: string
   has_secret: boolean

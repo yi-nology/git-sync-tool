@@ -38,7 +38,9 @@
             :value="key.id"
           >
             <span>{{ key.name }}</span>
-            <el-tag v-if="key.key_type" size="small" type="info" style="margin-left: 8px">{{ key.key_type }}</el-tag>
+            <el-tag v-if="key.key_type" size="small" :type="sshKeyTypeColor(key.key_type)" style="margin-left: 8px">
+              {{ sshKeyTypeLabel(key.key_type) }}
+            </el-tag>
           </el-option>
         </el-select>
       </el-form-item>
@@ -181,6 +183,19 @@ async function handleSubmit() {
   } finally {
     submitting.value = false
   }
+}
+
+const SSH_KEY_TYPE_LABELS: Record<string, string> = {
+  rsa: 'RSA', ed25519: 'Ed25519', ecdsa: 'ECDSA', dsa: 'DSA', unknown: '未知',
+}
+const SSH_KEY_TYPE_COLORS: Record<string, string> = {
+  rsa: 'warning', ed25519: 'success', ecdsa: '', dsa: 'info', unknown: 'info',
+}
+function sshKeyTypeLabel(t: string): string {
+  return SSH_KEY_TYPE_LABELS[t?.toLowerCase()] ?? t?.toUpperCase() ?? ''
+}
+function sshKeyTypeColor(t: string): string {
+  return SSH_KEY_TYPE_COLORS[t?.toLowerCase()] ?? ''
 }
 
 onMounted(async () => {

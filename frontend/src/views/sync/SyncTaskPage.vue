@@ -147,13 +147,21 @@
         <el-row :gutter="16">
           <el-col :span="12">
             <el-form-item label="源 (Source)">
-              <el-select v-model="taskForm.source_remote" style="width: 100%">
+              <el-select v-model="taskForm.source_remote" style="width: 100%" @change="onSourceRemoteChange">
                 <el-option label="Local (本地)" value="local" />
                 <el-option v-for="r in remoteNames" :key="r" :label="r" :value="r" />
               </el-select>
             </el-form-item>
             <el-form-item v-if="taskForm.sync_mode !== 'all-branch'" label="源分支">
-              <el-input v-model="taskForm.source_branch" placeholder="main" />
+              <el-select
+                v-model="taskForm.source_branch"
+                filterable
+                style="width: 100%"
+                placeholder="选择源分支"
+                :loading="branchLoading"
+              >
+                <el-option v-for="b in sourceBranches" :key="b" :label="b" :value="b" />
+              </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -163,7 +171,17 @@
               </el-select>
             </el-form-item>
             <el-form-item v-if="taskForm.sync_mode !== 'all-branch'" label="目标分支">
-              <el-input v-model="taskForm.target_branch" placeholder="main" />
+              <el-select
+                v-model="taskForm.target_branch"
+                filterable
+                allow-create
+                default-first-option
+                style="width: 100%"
+                placeholder="选择或输入目标分支（回车新建）"
+                :loading="branchLoading"
+              >
+                <el-option v-for="b in targetBranches" :key="b" :label="b" :value="b" />
+              </el-select>
             </el-form-item>
           </el-col>
         </el-row>
@@ -251,18 +269,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { 
-  ArrowLeft, Plus, Setting, Refresh, Close, Right, CaretRight, Clock, 
-  AlarmClock, More 
+import {
+  ArrowLeft, Plus, Setting, Refresh, Close, Right, CaretRight, Clock,
+  AlarmClock, More
 } from '@element-plus/icons-vue'
-import { 
-  getSyncTasks, createSyncTask, updateSyncTask, deleteSyncTask, 
-  runSyncTask, getSyncHistory, previewSync, batchSync 
+import {
+  getSyncTasks, createSyncTask, updateSyncTask, deleteSyncTask,
+  runSyncTask, getSyncHistory, previewSync, batchSync
 } from '@/api/modules/sync'
 import { getRepoDetail, scanRepo } from '@/api/modules/repo'
+import { getBranchList } from '@/api/modules/branch'
+import type { BranchInfo } from '@/types/branch'
 import type { SyncTaskDTO, SyncRunDTO, PreviewSyncResponse } from '@/types/sync'
 import { formatDate, getStatusColor } from '@/utils/format'
 
@@ -273,9 +293,28 @@ const loading = ref(false)
 const saving = ref(false)
 const syncing = ref(false)
 const previewing = ref(false)
+const branchLoading = ref(false)
 const tasks = ref<SyncTaskDTO[]>([])
 const remoteNames = ref<string[]>([])
+const allBranches = ref<BranchInfo[]>([])
 const selectedTasks = ref<string[]>([])
+
+// Branches available for the currently selected source remote
+const sourceBranches = computed(() => {
+  const remote = taskForm.value.source_remote
+  if (remote === 'local') {
+    return allBranches.value.filter(b => b.type === 'local').map(b => b.name)
+  }
+  const prefix = remote + '/'
+  return allBranches.value
+    .filter(b => b.type === 'remote' && b.name.startsWith(prefix))
+    .map(b => b.name.slice(prefix.length))
+})
+
+// Target branch options: local branches (user can also type custom)
+const targetBranches = computed(() => {
+  return allBranches.value.filter(b => b.type === 'local').map(b => b.name)
+})
 
 // Quick sync
 const showQuickPanel = ref(false)
@@ -331,6 +370,11 @@ function getTriggerLabel(source: string) {
   }
 }
 
+function onSourceRemoteChange() {
+  // Reset source branch when remote changes (old value may not exist in new list)
+  taskForm.value.source_branch = ''
+}
+
 onMounted(async () => {
   await loadTasks()
   try {
@@ -342,6 +386,14 @@ onMounted(async () => {
       taskForm.value.target_remote = remoteNames.value[0] || ''
     }
   } catch { /* ignore */ }
+  // Load branches for dropdown
+  branchLoading.value = true
+  try {
+    const result = await getBranchList(repoKey, { page_size: 500 })
+    allBranches.value = result?.list || []
+  } catch { /* ignore */ } finally {
+    branchLoading.value = false
+  }
 })
 
 async function loadTasks() {

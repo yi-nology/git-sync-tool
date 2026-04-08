@@ -29,8 +29,11 @@
         <el-tag v-else type="info" size="small">未配置</el-tag>
       </el-descriptions-item>
 
-      <el-descriptions-item v-if="credential.ssh_key_id" label="SSH 密钥 ID">
-        #{{ credential.ssh_key_id }}
+      <el-descriptions-item v-if="credential.ssh_key_id" label="SSH 密钥">
+        <span>{{ credential.ssh_key_name || `#${credential.ssh_key_id}` }}</span>
+        <el-tag v-if="credential.ssh_key_type" size="small" :type="sshKeyTypeColor(credential.ssh_key_type)" style="margin-left: 6px">
+          {{ sshKeyTypeLabel(credential.ssh_key_type) }}
+        </el-tag>
       </el-descriptions-item>
       <el-descriptions-item v-if="credential.ssh_key_path" label="密钥路径">
         {{ credential.ssh_key_path }}
@@ -84,6 +87,19 @@ const typeTagColor = computed(() => {
 function formatTime(t: string) {
   if (!t) return '-'
   return new Date(t).toLocaleString()
+}
+
+const SSH_KEY_TYPE_LABELS: Record<string, string> = {
+  rsa: 'RSA', ed25519: 'Ed25519', ecdsa: 'ECDSA', dsa: 'DSA', unknown: '未知',
+}
+const SSH_KEY_TYPE_COLORS: Record<string, string> = {
+  rsa: 'warning', ed25519: 'success', ecdsa: '', dsa: 'info', unknown: 'info',
+}
+function sshKeyTypeLabel(t: string): string {
+  return SSH_KEY_TYPE_LABELS[t?.toLowerCase()] ?? t?.toUpperCase() ?? ''
+}
+function sshKeyTypeColor(t: string): string {
+  return SSH_KEY_TYPE_COLORS[t?.toLowerCase()] ?? ''
 }
 </script>
 

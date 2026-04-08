@@ -2,12 +2,16 @@ package git
 
 import (
 	"bytes"
+	"crypto/ecdsa"
+	"crypto/ed25519"
+	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
 	"log"
 	"net"
 	"os"
+	"os/exec"
 	"strings"
 
 	ssh2 "golang.org/x/crypto/ssh"
@@ -123,4 +127,112 @@ func (h *SSHKeyHelper) BuildSecureSSHCommand(keyPath string) string {
 	// 这里使用 StrictHostKeyChecking=ask，会在遇到新主机时提示
 	// 在生产环境中，应该使用 StrictHostKeyChecking=yes 并预先配置 known_hosts
 	return fmt.Sprintf("ssh -i %s -o StrictHostKeyChecking=ask -o UserKnownHostsFile=~/.ssh/known_hosts", keyPath)
+}
+
+// DetectKeyType 检测 SSH 私钥的算法类型，返回 rsa / ecdsa / ed25519 / dsa / unknown
+func (h *SSHKeyHelper) DetectKeyType(privateKey, passphrase string) string {
+	keyContent := strings.ReplaceAll(privateKey, "\r\n", "\n")
+	keyContent = strings.ReplaceAll(keyContent, "\r", "\n")
+	keyContent = strings.TrimSpace(keyContent)
+	if !strings.HasSuffix(keyContent, "\n") {
+		keyContent += "\n"
+	}
+
+	var rawKey interface{}
+	var err error
+	if passphrase != "" {
+		rawKey, err = ssh2.ParseRawPrivateKeyWithPassphrase([]byte(keyContent), []byte(passphrase))
+	} else {
+		rawKey, err = ssh2.ParseRawPrivateKey([]byte(keyContent))
+	}
+	if err == nil {
+		switch rawKey.(type) {
+		case *rsa.PrivateKey:
+			return "rsa"
+		case *ecdsa.PrivateKey:
+			return "ecdsa"
+		case ed25519.PrivateKey, *ed25519.PrivateKey:
+			return "ed25519"
+		default:
+			// DSA or other
+			typeName := fmt.Sprintf("%T", rawKey)
+			if strings.Contains(strings.ToLower(typeName), "dsa") {
+				return "dsa"
+			}
+			return "unknown"
+		}
+	}
+
+	// Fallback: inspect PEM header
+	block, _ := pem.Decode([]byte(keyContent))
+	if block != nil {
+		t := strings.ToLower(block.Type)
+		switch {
+		case strings.Contains(t, "rsa"):
+			return "rsa"
+		case strings.Contains(t, "ec"):
+			return "ecdsa"
+		case strings.Contains(t, "dsa"):
+			return "dsa"
+		case strings.Contains(t, "openssh"):
+			// OpenSSH format — look at the key type comment in the public key
+			if pub, extractErr := h.ExtractPublicKeyFromPrivateKey(privateKey, passphrase); extractErr == nil {
+				parts := strings.Fields(pub)
+				if len(parts) > 0 {
+					switch parts[0] {
+					case "ssh-rsa":
+						return "rsa"
+					case "ssh-ed25519":
+						return "ed25519"
+					case "ecdsa-sha2-nistp256", "ecdsa-sha2-nistp384", "ecdsa-sha2-nistp521":
+						return "ecdsa"
+					case "ssh-dss":
+						return "dsa"
+					}
+				}
+			}
+		}
+	}
+
+	return "unknown"
+}
+
+// ExtractPublicKeyFromPrivateKey 从私钥中提取公钥
+func (h *SSHKeyHelper) ExtractPublicKeyFromPrivateKey(privateKey, passphrase string) (string, error) {
+	keyContent := strings.ReplaceAll(privateKey, "\r\n", "\n")
+	keyContent = strings.ReplaceAll(keyContent, "\r", "\n")
+	keyContent = strings.TrimSpace(keyContent)
+	if !strings.HasSuffix(keyContent, "\n") {
+		keyContent += "\n"
+	}
+
+	var signer ssh2.Signer
+	var err error
+
+	if passphrase != "" {
+		signer, err = ssh2.ParsePrivateKeyWithPassphrase([]byte(keyContent), []byte(passphrase))
+	} else {
+		signer, err = ssh2.ParsePrivateKey([]byte(keyContent))
+	}
+
+	if err == nil {
+		return strings.TrimSpace(string(ssh2.MarshalAuthorizedKey(signer.PublicKey()))), nil
+	}
+
+	tmpFile, tmpErr := h.CreateTempKeyFile(keyContent)
+	if tmpErr != nil {
+		return "", fmt.Errorf("failed to parse private key: %v", err)
+	}
+	defer h.CleanupTempFile(tmpFile)
+
+	args := []string{"-y", "-f", tmpFile}
+	if passphrase != "" {
+		args = []string{"-y", "-P", passphrase, "-f", tmpFile}
+	}
+	output, execErr := exec.Command("ssh-keygen", args...).Output()
+	if execErr != nil {
+		return "", fmt.Errorf("failed to parse private key: %v", err)
+	}
+
+	return strings.TrimSpace(string(output)), nil
 }
