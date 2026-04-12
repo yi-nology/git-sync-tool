@@ -524,8 +524,8 @@ const remoteNames = ref<string[]>([])
 
 // 合并分支和 tags 供文件浏览和 commit 搜索使用
 const allRefs = computed(() => {
-  const tags = versionList.value.map(v => v.name)
-  return [...statsBranches.value, ...tags]
+  const tags = (versionList.value || []).map(v => v.name)
+  return [...(statsBranches.value || []), ...tags]
 })
 
 // Create Tag
@@ -596,7 +596,7 @@ onMounted(async () => {
 
 // Load versions when tab switches
 watch(activeTab, (val) => {
-  if (val === 'versions' && versionList.value.length === 0) {
+  if (val === 'versions' && (versionList.value || []).length === 0) {
     loadVersions()
   }
   // 切换到 spec tab 时刷新文件树（分支可能已切换）

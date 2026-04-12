@@ -57,16 +57,12 @@ RUN go mod download
 # Copy source code
 COPY . .
 
-# Copy frontend build output to public directory
+# Copy frontend build output to public directories
 COPY --from=frontend-builder /app/frontend/dist ./public
-
-# Build arguments for version injection
-ARG VERSION=dev
-ARG BUILD_TIME=unknown
-ARG GIT_COMMIT=unknown
+RUN mkdir -p pkg/embed/public && cp -r public/* pkg/embed/public/ 2>/dev/null || true
+RUN mkdir -p pkg/embed/docs && echo "ok" > pkg/embed/docs/.gitkeep
 
 # Build the application with version info (server mode, not desktop)
-RUN mkdir -p frontend/dist && touch frontend/dist/.gitkeep
 RUN go build -tags '!desktop' -ldflags "-X 'main.Version=${VERSION}' -X 'main.BuildTime=${BUILD_TIME}' -X 'main.GitCommit=${GIT_COMMIT}'" \
     -o git-manage-service ./cmd/server/
 
