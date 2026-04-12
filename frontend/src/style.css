@@ -5,20 +5,19 @@
 }
 
 :root {
-  /* CSS 变量，用于自定义深色模式颜色 */
-  --app-bg-color: #f5f7fa;
-  --app-text-color: #303133;
-  --app-border-color: #dcdfe6;
+  --app-bg-color: #F8F9FC;
+  --app-text-color: #1E293B;
+  --app-border-color: #E2E8F0;
 }
 
 .dark {
-  --app-bg-color: #1a1a1a;
-  --app-text-color: #e5eaf3;
-  --app-border-color: #4c4d4f;
+  --app-bg-color: #0F172A;
+  --app-text-color: #F1F5F9;
+  --app-border-color: #334155;
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   color: var(--app-text-color);
@@ -27,7 +26,7 @@ body {
 }
 
 a {
-  color: #409eff;
+  color: #6366F1;
   text-decoration: none;
 }
 
@@ -43,7 +42,6 @@ pre {
   min-height: 100vh;
 }
 
-/* 滚动条样式 */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -59,14 +57,13 @@ pre {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #909399;
+  background: #94A3B8;
 }
 
-/* 深色模式滚动条 */
 .dark ::-webkit-scrollbar-thumb {
-  background: #4c4d4f;
+  background: #334155;
 }
 
 .dark ::-webkit-scrollbar-thumb:hover {
-  background: #606266;
+  background: #475569;
 }

@@ -387,25 +387,27 @@ function formatDate(dateStr: string) {
 
 .page-header h2 {
   margin: 0;
-  font-size: 20px;
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  color: var(--text-color-primary);
 }
 
 .test-result {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--spacing-sm);
   padding: 12px;
-  border-radius: 4px;
-  margin-top: 16px;
+  border-radius: var(--border-radius-sm);
+  margin-top: var(--spacing-md);
 }
 
 .test-result.success {
-  background-color: #f0f9eb;
-  color: #67c23a;
+  background-color: #ECFDF5;
+  color: var(--success-color);
 }
 
 .test-result.error {
-  background-color: #fef0f0;
-  color: #f56c6c;
+  background-color: #FEF2F2;
+  color: var(--danger-color);
 }
 </style>

@@ -188,7 +188,7 @@ async function handleClearAll() {
 }
 .form-help {
   margin-left: 12px;
-  color: #909399;
-  font-size: 12px;
+  color: var(--text-color-secondary);
+  font-size: var(--font-size-xs);
 }
 </style>

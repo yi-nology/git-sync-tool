@@ -1,69 +1,40 @@
 <template>
   <div class="repo-detail-page" v-loading="loading">
-    <!-- 页面标题 -->
     <div class="page-header">
       <div class="header-left">
-        <el-button @click="$router.push('/repos')" :icon="ArrowLeft" text>返回</el-button>
+        <button class="back-btn" @click="$router.push('/repos')">
+          <el-icon><ArrowLeft /></el-icon> 返回
+        </button>
         <h2>{{ repo?.name || '仓库详情' }}</h2>
-        <el-tag v-if="currentVersion" size="small" type="success">{{ currentVersion }}</el-tag>
+        <span v-if="currentVersion" class="version-tag">{{ currentVersion }}</span>
       </div>
       <div class="header-actions">
-        <el-button type="success" @click="$router.push(`/repos/${repoKey}/branches`)" :icon="Share">分支管理</el-button>
-        <el-button type="primary" @click="$router.push(`/repos/${repoKey}/compare`)" :icon="Switch">分支对比</el-button>
-        <el-button type="warning" @click="$router.push(`/repos/${repoKey}/sync`)" :icon="Refresh">同步任务</el-button>
+        <button class="action-pill action-pill--green" @click="$router.push(`/repos/${repoKey}/branches`)">
+          <el-icon><Share /></el-icon> 分支管理
+        </button>
+        <button class="action-pill action-pill--primary" @click="$router.push(`/repos/${repoKey}/compare`)">
+          <el-icon><Switch /></el-icon> 分支对比
+        </button>
+        <button class="action-pill action-pill--amber" @click="$router.push(`/repos/${repoKey}/sync`)">
+          <el-icon><Refresh /></el-icon> 同步任务
+        </button>
       </div>
     </div>
 
-    <!-- 双栏布局 -->
     <div class="layout-container">
-      <!-- 左侧导航栏 -->
       <div class="left-nav">
-        <el-menu
-          :default-active="activeTab"
-          class="repo-sidebar"
-          @select="handleNavSelect"
-        >
-          <el-menu-item index="info">
-            <el-icon><InfoFilled /></el-icon>
-            <span>基本信息</span>
-          </el-menu-item>
-          <el-menu-item index="spec">
-            <el-icon><Document /></el-icon>
-            <span>Spec 编辑器</span>
-          </el-menu-item>
-          <el-menu-item index="stats">
-            <el-icon><DataAnalysis /></el-icon>
-            <span>Git有效提交度量</span>
-          </el-menu-item>
-          <el-menu-item index="lines">
-            <el-icon><Files /></el-icon>
-            <span>真实工程代码度量</span>
-          </el-menu-item>
-          <el-menu-item index="versions">
-            <el-icon><Timer /></el-icon>
-            <span>版本历史</span>
-          </el-menu-item>
-          <el-menu-item index="files">
-            <el-icon><Folder /></el-icon>
-            <span>文件浏览</span>
-          </el-menu-item>
-          <el-menu-item index="commits">
-            <el-icon><Search /></el-icon>
-            <span>Commit 搜索</span>
-          </el-menu-item>
-          <el-menu-item index="stash">
-            <el-icon><Box /></el-icon>
-            <span>Stash 管理</span>
-          </el-menu-item>
-          <el-menu-item index="submodules">
-            <el-icon><Link /></el-icon>
-            <span>Submodule</span>
-          </el-menu-item>
-          <el-menu-item index="patches">
-            <el-icon><DocumentCopy /></el-icon>
-            <span>Patch 管理</span>
-          </el-menu-item>
-        </el-menu>
+        <div class="sidebar-card">
+          <div
+            v-for="item in sidebarItems"
+            :key="item.key"
+            class="sidebar-item"
+            :class="{ active: activeTab === item.key }"
+            @click="handleNavSelect(item.key)"
+          >
+            <el-icon><component :is="item.icon" /></el-icon>
+            <span>{{ item.label }}</span>
+          </div>
+        </div>
       </div>
 
       <!-- 右侧内容区域 -->
@@ -521,6 +492,19 @@ const scanData = ref<ScanResult | null>(null)
 const activeTab = ref('info')
 const currentVersion = ref('')
 const specEditorRef = ref<{ refresh: () => void; clearEditor: () => void } | null>(null)
+
+const sidebarItems = [
+  { key: 'info', label: '基本信息', icon: InfoFilled },
+  { key: 'spec', label: 'Spec 编辑器', icon: Document },
+  { key: 'stats', label: 'Git 有效提交度量', icon: DataAnalysis },
+  { key: 'lines', label: '真实工程代码度量', icon: Files },
+  { key: 'versions', label: '版本历史', icon: Timer },
+  { key: 'files', label: '文件浏览', icon: Folder },
+  { key: 'commits', label: 'Commit 搜索', icon: Search },
+  { key: 'stash', label: 'Stash 管理', icon: Box },
+  { key: 'submodules', label: 'Submodule', icon: Link },
+  { key: 'patches', label: 'Patch 管理', icon: DocumentCopy },
+]
 
 // Stats
 const statsFilter = ref({ branch: '', author: '', since: '', until: '' })
@@ -1084,14 +1068,12 @@ function handleNavSelect(key: string) {
 </script>
 
 <style scoped>
-/* 页面标题 */
 .page-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #e4e7ed;
+  padding: 16px 32px;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .header-left {
@@ -1102,7 +1084,39 @@ function handleNavSelect(key: string) {
 
 .header-left h2 {
   margin: 0;
-  font-size: 20px;
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  color: var(--text-color-primary);
+}
+
+.version-tag {
+  display: inline-flex;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--success-color);
+  background: #ECFDF5;
+  padding: 4px 10px;
+  border-radius: var(--border-radius-sm);
+}
+
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-size-sm);
+  color: var(--text-color-secondary);
+  background: none;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.back-btn:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
 }
 
 .header-actions {
@@ -1110,31 +1124,101 @@ function handleNavSelect(key: string) {
   gap: 8px;
 }
 
-/* 双栏布局 */
+.action-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-size-sm);
+  padding: 8px 16px;
+  border-radius: var(--border-radius-md);
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-family: var(--font-family);
+}
+
+.action-pill--green {
+  background: #ECFDF5;
+  color: var(--success-color);
+}
+.action-pill--green:hover {
+  background: #D1FAE5;
+}
+
+.action-pill--primary {
+  background: var(--primary-color);
+  color: #FFFFFF;
+}
+.action-pill--primary:hover {
+  background: var(--primary-color-hover);
+}
+
+.action-pill--amber {
+  background: #FFFBEB;
+  color: var(--warning-color);
+}
+.action-pill--amber:hover {
+  background: #FEF3C7;
+}
+
 .layout-container {
   display: flex;
   gap: 20px;
+  padding: 20px;
 }
 
-/* 左侧导航栏 */
 .left-nav {
-  width: 240px;
+  width: 220px;
   flex-shrink: 0;
 }
 
-.repo-sidebar {
+.sidebar-card {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--bg-color-page);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+  padding: 8px;
   height: calc(100vh - 180px);
-  border-radius: 8px;
   overflow-y: auto;
 }
 
-/* 右侧内容区域 */
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: var(--border-radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  color: var(--text-color-primary);
+  font-size: var(--font-size-sm);
+}
+
+.sidebar-item:hover {
+  background: var(--border-color-extra-light);
+}
+
+.sidebar-item.active {
+  background: var(--primary-color);
+  color: #FFFFFF;
+}
+
+.sidebar-item.active .el-icon {
+  color: #FFFFFF;
+}
+
+.sidebar-item .el-icon {
+  color: var(--text-color-secondary);
+  font-size: 16px;
+}
+
 .content-area {
   flex: 1;
   min-height: calc(100vh - 180px);
 }
 
-/* 原有样式 */
 .card-header-row {
   display: flex;
   justify-content: space-between;
@@ -1142,7 +1226,7 @@ function handleNavSelect(key: string) {
 }
 
 .filter-form {
-  margin-bottom: 16px;
+  margin-bottom: var(--spacing-md);
 }
 
 .mono-text {
@@ -1154,23 +1238,23 @@ function handleNavSelect(key: string) {
 }
 
 .mt-4 {
-  margin-top: 16px;
+  margin-top: var(--spacing-md);
 }
 
 .mb-4 {
-  margin-bottom: 16px;
+  margin-bottom: var(--spacing-md);
 }
 
 .ml-1 {
-  margin-left: 4px;
+  margin-left: var(--spacing-xs);
 }
 
 .mt-1 {
-  margin-top: 4px;
+  margin-top: var(--spacing-xs);
 }
 
 .version-timeline {
-  padding: 16px 0;
+  padding: var(--spacing-md) 0;
 }
 
 .version-card {
@@ -1178,31 +1262,31 @@ function handleNavSelect(key: string) {
 }
 
 .version-header {
-  margin-bottom: 8px;
+  margin-bottom: var(--spacing-sm);
 }
 
 .version-info {
-  font-size: 14px;
+  font-size: var(--font-size-md);
   line-height: 1.8;
-  color: #606266;
+  color: var(--text-color-regular);
 }
 
 .edit-remote-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
 }
 
 .edit-remote-cred {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--spacing-sm);
 }
 
 .edit-remote-cred .cred-label {
-  font-size: 13px;
-  color: #606266;
+  font-size: var(--font-size-sm);
+  color: var(--text-color-regular);
   flex-shrink: 0;
 }
 
@@ -1215,29 +1299,29 @@ function handleNavSelect(key: string) {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 12px;
-  font-size: 14px;
-  color: #606266;
+  font-size: var(--font-size-md);
+  color: var(--text-color-regular);
 }
 
 .tracking-branches {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: var(--spacing-xs);
 }
 
 .field-error {
-  color: #f56c6c;
-  font-size: 12px;
-  margin-top: 4px;
+  color: var(--danger-color);
+  font-size: var(--font-size-xs);
+  margin-top: var(--spacing-xs);
 }
 
 .is-error-input :deep(.el-input__wrapper) {
-  box-shadow: 0 0 0 1px #f56c6c inset;
+  box-shadow: 0 0 0 1px var(--danger-color) inset;
 }
 
 .url-input-group {
   display: flex;
-  gap: 8px;
+  gap: var(--spacing-sm);
   width: 100%;
 }
 
@@ -1253,7 +1337,6 @@ function handleNavSelect(key: string) {
   flex: 1;
 }
 
-/* 响应式布局 */
 @media (max-width: 1024px) {
   .left-nav {
     width: 200px;
@@ -1263,17 +1346,20 @@ function handleNavSelect(key: string) {
 @media (max-width: 768px) {
   .layout-container {
     flex-direction: column;
+    padding: var(--spacing-md);
   }
-  
+
   .left-nav {
     width: 100%;
   }
-  
-  .repo-sidebar {
+
+  .sidebar-card {
     height: auto;
     max-height: 300px;
+    flex-direction: row;
+    flex-wrap: wrap;
   }
-  
+
   .content-area {
     min-height: auto;
   }

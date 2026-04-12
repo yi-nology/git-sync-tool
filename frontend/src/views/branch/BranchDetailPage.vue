@@ -2,105 +2,78 @@
   <div class="branch-detail-page" v-loading="loading">
     <div class="page-header">
       <div class="header-left">
-        <el-button @click="$router.push(`/repos/${repoKey}/branches`)" :icon="ArrowLeft" text>返回</el-button>
+        <button class="back-btn" @click="$router.push(`/repos/${repoKey}/branches`)">
+          <el-icon><ArrowLeft /></el-icon> 返回
+        </button>
         <h2>{{ branchName }}</h2>
-        <el-tag v-if="isCurrent" type="success" size="small">当前分支</el-tag>
+        <span v-if="isCurrent" class="current-tag">当前分支</span>
       </div>
       <div class="header-actions">
-        <el-button type="primary" @click="$router.push(`/repos/${repoKey}/compare`)">
+        <button class="action-pill action-pill--primary" @click="$router.push(`/repos/${repoKey}/compare`)">
           <el-icon><Switch /></el-icon> 对比/合并
-        </el-button>
-        <el-button type="success" @click="handlePush">
+        </button>
+        <button class="action-pill action-pill--green" @click="handlePush">
           <el-icon><Top /></el-icon> 推送远端
-        </el-button>
-        <el-button v-if="hasUncommitted" type="warning" @click="showSubmitDialog = true">
+        </button>
+        <button v-if="hasUncommitted" class="action-pill action-pill--amber" @click="showSubmitDialog = true">
           <el-icon><Upload /></el-icon> 提交变更
-        </el-button>
-        <el-button @click="loadData">
+        </button>
+        <button class="action-pill action-pill--outline" @click="loadData">
           <el-icon><Refresh /></el-icon> 刷新
-        </el-button>
-        <el-button v-if="!isCurrent" type="danger" @click="handleDelete">
+        </button>
+        <button v-if="!isCurrent" class="action-pill action-pill--danger" @click="handleDelete">
           <el-icon><Delete /></el-icon> 删除分支
-        </el-button>
+        </button>
       </div>
     </div>
 
-    <!-- Uncommitted changes alert -->
-    <el-alert
-      v-if="hasUncommitted"
-      title="检测到未提交的变更"
-      type="warning"
-      :closable="false"
-      show-icon
-      class="mb-4"
-    >
+    <div v-if="hasUncommitted" class="uncommitted-alert">
+      <span class="alert-title">检测到未提交的变更</span>
       <pre class="status-text">{{ repoStatus }}</pre>
-    </el-alert>
+    </div>
 
-    <!-- Stats Cards -->
-    <el-row :gutter="16" class="mb-4">
-      <el-col :span="6">
-        <el-card shadow="hover">
-          <el-statistic title="总代码行数" :value="statsData?.total_lines || 0" />
-        </el-card>
-      </el-col>
-      <el-col :span="6">
-        <el-card shadow="hover">
-          <el-statistic title="提交总数" :value="commits.length" />
-        </el-card>
-      </el-col>
-      <el-col :span="6">
-        <el-card shadow="hover">
-          <el-statistic title="贡献者数" :value="statsData?.authors?.length || 0" />
-        </el-card>
-      </el-col>
-      <el-col :span="6">
-        <el-card shadow="hover">
-          <el-statistic title="文件类型" :value="fileTypeCount" />
-        </el-card>
-      </el-col>
-    </el-row>
+    <div class="stats-row">
+      <div class="stat-card">
+        <span class="stat-value">{{ statsData?.total_lines || 0 }}</span>
+        <span class="stat-label">总代码行数</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value">{{ commits.length }}</span>
+        <span class="stat-label">提交总数</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value">{{ statsData?.authors?.length || 0 }}</span>
+        <span class="stat-label">贡献者数</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value">{{ fileTypeCount }}</span>
+        <span class="stat-label">文件类型</span>
+      </div>
+    </div>
 
-    <!-- Main Content: Commits + Contributors -->
-    <el-row :gutter="16">
-      <el-col :span="16">
-        <el-card header="最近提交">
-          <div v-if="commits.length === 0">
-            <el-empty description="暂无提交记录" />
-          </div>
-          <div v-else class="commit-list">
-            <div v-for="c in commits" :key="c.hash" class="commit-item">
-              <div class="commit-main">
-                <el-text class="commit-message" truncated>{{ c.message }}</el-text>
-                <div class="commit-meta">
-                  <el-text type="info" size="small">
-                    <el-icon><User /></el-icon> {{ c.author }}
-                  </el-text>
-                  <el-text type="info" size="small">{{ formatRelativeTime(c.date) }}</el-text>
-                  <el-text class="mono-text" size="small" type="info">{{ c.hash?.substring(0, 8) }}</el-text>
-                </div>
-              </div>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :span="8">
-        <el-card header="贡献者排行">
-          <div v-if="!statsData?.authors?.length">
-            <el-empty description="暂无贡献者数据" />
-          </div>
-          <div v-else class="author-list">
-            <div v-for="a in statsData.authors" :key="a.email" class="author-item">
-              <div class="author-info">
-                <el-text class="author-name">{{ a.name }}</el-text>
-                <el-text type="info" size="small">{{ a.email }}</el-text>
-              </div>
-              <el-tag size="small" type="success">{{ a.total_lines }} 行</el-tag>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-    </el-row>
+    <h3 class="section-title">最近提交</h3>
+
+    <div class="commit-table-card" v-if="commits.length > 0">
+      <div class="table-header">
+        <span class="th" style="width:100px">Hash</span>
+        <span class="th" style="flex:1">信息</span>
+        <span class="th" style="width:120px">作者</span>
+        <span class="th" style="width:140px">时间</span>
+      </div>
+      <div v-for="c in commits" :key="c.hash" class="table-row">
+        <span class="td" style="width:100px">
+          <span class="hash-text">{{ c.hash?.substring(0, 8) }}</span>
+        </span>
+        <span class="td td-message" style="flex:1">{{ c.message }}</span>
+        <span class="td" style="width:120px">
+          <span class="author-name">{{ c.author }}</span>
+        </span>
+        <span class="td" style="width:140px">{{ formatRelativeTime(c.date) }}</span>
+      </div>
+    </div>
+    <div v-else class="empty-table">
+      <span class="text-muted">暂无提交记录</span>
+    </div>
 
     <!-- Push Dialog -->
     <el-dialog v-model="showPushDialog" :title="`推送分支: ${branchName}`" width="480px" destroy-on-close>
@@ -145,7 +118,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ArrowLeft, Switch, Top, Upload, Refresh, Delete, User } from '@element-plus/icons-vue'
+import { ArrowLeft, Switch, Top, Upload, Refresh, Delete } from '@element-plus/icons-vue'
 import { pushBranch, deleteBranch, getBranchList } from '@/api/modules/branch'
 import { getRepoDetail, scanRepo } from '@/api/modules/repo'
 import { getStatsAnalyze, getStatsCommits } from '@/api/modules/stats'
@@ -297,81 +270,141 @@ async function handleSubmitChanges() {
 </script>
 
 <style scoped>
+.branch-detail-page {
+  padding: var(--spacing-xl);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-height: 100vh;
+  background: var(--bg-color);
+}
+
 .page-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  justify-content: space-between;
   flex-wrap: wrap;
   gap: 12px;
 }
+
 .header-left {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
 }
+
 .header-left h2 {
   margin: 0;
-  font-size: 20px;
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text-color-primary);
 }
+
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-color-secondary);
+  background: none;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.back-btn:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.current-tag {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  color: var(--success-color);
+  background: #ECFDF5;
+  padding: 2px 8px;
+  border-radius: var(--border-radius-sm);
+}
+
 .header-actions {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
 }
-.mb-4 {
-  margin-bottom: 16px;
-}
-.commit-list {
-  max-height: 600px;
-  overflow-y: auto;
-}
-.commit-item {
-  padding: 10px 0;
-  border-bottom: 1px solid #f0f0f0;
-}
-.commit-item:last-child {
-  border-bottom: none;
-}
-.commit-main {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.commit-message {
-  font-weight: 500;
-  font-size: 14px;
-}
-.commit-meta {
-  display: flex;
-  gap: 16px;
+
+.action-pill {
+  display: inline-flex;
   align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  padding: 8px 16px;
+  border-radius: var(--border-radius-md);
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-family: var(--font-family);
 }
-.mono-text {
-  font-family: monospace;
+
+.action-pill--primary {
+  background: var(--primary-color);
+  color: #FFFFFF;
 }
-.author-list {
-  max-height: 500px;
-  overflow-y: auto;
+.action-pill--primary:hover {
+  background: var(--primary-color-hover);
 }
-.author-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 0;
-  border-bottom: 1px solid #f0f0f0;
+
+.action-pill--green {
+  background: #ECFDF5;
+  color: var(--success-color);
 }
-.author-item:last-child {
-  border-bottom: none;
+.action-pill--green:hover {
+  background: #D1FAE5;
 }
-.author-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+
+.action-pill--amber {
+  background: #FFFBEB;
+  color: var(--warning-color);
 }
-.author-name {
-  font-weight: 500;
+.action-pill--amber:hover {
+  background: #FEF3C7;
 }
+
+.action-pill--outline {
+  background: transparent;
+  color: var(--text-color-primary);
+  border: 1px solid var(--border-color);
+}
+.action-pill--outline:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.action-pill--danger {
+  background: #FEF2F2;
+  color: var(--danger-color);
+}
+.action-pill--danger:hover {
+  background: #FEE2E2;
+}
+
+.uncommitted-alert {
+  background: #FFFBEB;
+  border: 1px solid var(--warning-color);
+  border-radius: var(--border-radius-lg);
+  padding: 12px 16px;
+}
+
+.alert-title {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--warning-color);
+  display: block;
+  margin-bottom: 8px;
+}
+
 .status-text {
   margin: 0;
   white-space: pre-wrap;
@@ -379,5 +412,137 @@ async function handleSubmitChanges() {
   font-size: 12px;
   max-height: 200px;
   overflow-y: auto;
+  color: var(--text-color-secondary);
+}
+
+.stats-row {
+  display: flex;
+  gap: 16px;
+}
+
+.stat-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 20px;
+  background: var(--bg-color-page);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text-color-primary);
+}
+
+.stat-label {
+  font-size: 12px;
+  color: var(--text-color-secondary);
+}
+
+.section-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-color-primary);
+}
+
+.commit-table-card {
+  border-radius: var(--border-radius-lg);
+  border: 1px solid var(--border-color);
+  background: var(--bg-color-page);
+  overflow: hidden;
+}
+
+.table-header {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  background: var(--accent-bg);
+}
+
+.th {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-color-secondary);
+}
+
+.table-row {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border-color);
+  transition: background var(--transition-fast);
+}
+
+.table-row:last-child {
+  border-bottom: none;
+}
+
+.table-row:hover {
+  background: var(--border-color-extra-light);
+}
+
+.td {
+  font-size: 13px;
+  color: var(--text-color-secondary);
+}
+
+.hash-text {
+  font-family: 'SF Mono', 'Monaco', 'Menlo', 'Consolas', monospace;
+  font-size: 12px;
+  color: var(--primary-color);
+}
+
+.td-message {
+  color: var(--text-color-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.author-name {
+  color: var(--text-color-primary);
+  font-size: 13px;
+}
+
+.empty-table {
+  padding: 40px;
+  text-align: center;
+}
+
+.text-muted {
+  font-size: 13px;
+  color: var(--text-color-placeholder);
+}
+
+@media (max-width: 768px) {
+  .branch-detail-page {
+    padding: var(--spacing-md);
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .stats-row {
+    flex-wrap: wrap;
+  }
+
+  .stat-card {
+    min-width: calc(50% - 12px);
+  }
+
+  .commit-table-card {
+    overflow-x: auto;
+  }
+
+  .table-header,
+  .table-row {
+    min-width: 600px;
+  }
 }
 </style>

@@ -1,236 +1,353 @@
 <template>
   <div class="home-page">
-    <div class="home-header">
-      <h1 class="home-title">Git Manage Service</h1>
-      <p class="home-desc">
+    <section class="hero">
+      <div class="hero-icon">
+        <el-icon :size="32"><Connection /></el-icon>
+      </div>
+      <h1 class="hero-title">Git Manage Service</h1>
+      <p class="hero-desc">
         一个轻量级的多仓库、多分支自动化同步管理系统。<br />
         提供友好的 Web 界面，支持定时任务、Webhook 触发、多渠道消息通知以及详细的同步日志记录。
       </p>
-      <div class="home-actions">
+      <div class="hero-actions">
         <el-button type="primary" size="large" @click="$router.push('/repos')">
-          开始使用
+          开始使用<el-icon class="el-icon--right"><ArrowRight /></el-icon>
         </el-button>
-        <el-button size="large" tag="a" href="https://github.com/yi-nology/git-manage-service" target="_blank">
-          <el-icon><Link /></el-icon>&nbsp;GitHub
+        <el-button size="large" @click="openGitHub">
+          <el-icon><Link /></el-icon>GitHub
         </el-button>
       </div>
-    </div>
+    </section>
 
-    <el-divider />
+    <div class="section-divider" />
 
-    <h2 class="section-title">功能特性</h2>
-    <el-row :gutter="16" class="feature-cards">
-      <el-col :xs="24" :sm="12" :md="8" v-for="feat in features" :key="feat.title">
-        <el-card shadow="hover" class="feature-card">
-          <div class="feature-icon">
-            <el-icon :size="32" :color="feat.color"><component :is="feat.icon" /></el-icon>
+    <section class="features-section">
+      <h2 class="section-title">功能特性</h2>
+      <div class="features-grid">
+        <div v-for="feat in features" :key="feat.title" class="feature-card">
+          <div class="feature-icon" :style="{ background: feat.bg }">
+            <el-icon :size="24" :color="feat.color"><component :is="feat.icon" /></el-icon>
           </div>
           <h3>{{ feat.title }}</h3>
           <p>{{ feat.desc }}</p>
-        </el-card>
-      </el-col>
-    </el-row>
+        </div>
+      </div>
+    </section>
 
-    <el-divider />
+    <div class="section-divider" />
 
-    <h2 class="section-title">技术栈</h2>
-    <el-row :gutter="20" class="tech-section">
-      <el-col :xs="24" :sm="12">
-        <el-card shadow="hover">
-          <template #header><strong>后端</strong></template>
-          <el-descriptions :column="1" border size="small">
-            <el-descriptions-item label="语言">Go 1.24</el-descriptions-item>
-            <el-descriptions-item label="HTTP 框架">Hertz (CloudWeGo)</el-descriptions-item>
-            <el-descriptions-item label="RPC 框架">Kitex (CloudWeGo)</el-descriptions-item>
-            <el-descriptions-item label="ORM">GORM</el-descriptions-item>
-            <el-descriptions-item label="Git 引擎">go-git</el-descriptions-item>
-            <el-descriptions-item label="数据库">SQLite / MySQL / PostgreSQL</el-descriptions-item>
-          </el-descriptions>
-        </el-card>
-      </el-col>
-      <el-col :xs="24" :sm="12">
-        <el-card shadow="hover">
-          <template #header><strong>前端</strong></template>
-          <el-descriptions :column="1" border size="small">
-            <el-descriptions-item label="框架">Vue 3 (Composition API)</el-descriptions-item>
-            <el-descriptions-item label="语言">TypeScript</el-descriptions-item>
-            <el-descriptions-item label="UI 组件库">Element Plus</el-descriptions-item>
-            <el-descriptions-item label="构建工具">Vite</el-descriptions-item>
-            <el-descriptions-item label="状态管理">Pinia</el-descriptions-item>
-            <el-descriptions-item label="图表库">ECharts</el-descriptions-item>
-          </el-descriptions>
-        </el-card>
-      </el-col>
-    </el-row>
+    <section class="tech-section">
+      <h2 class="section-title">技术栈</h2>
+      <div class="tech-grid">
+        <div class="tech-card">
+          <h3>后端</h3>
+          <div class="tech-list">
+            <div v-for="item in backendTech" :key="item.label" class="tech-row">
+              <span class="tech-label">{{ item.label }}</span>
+              <span class="tech-value">{{ item.value }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="tech-card">
+          <h3>前端</h3>
+          <div class="tech-list">
+            <div v-for="item in frontendTech" :key="item.label" class="tech-row">
+              <span class="tech-label">{{ item.label }}</span>
+              <span class="tech-value">{{ item.value }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
 
-    <el-divider />
+    <div class="section-divider" />
 
-    <h2 class="section-title">版本信息</h2>
-    <el-card shadow="hover" class="version-card">
-      <el-descriptions :column="2" border v-if="appInfo">
-        <el-descriptions-item label="应用名称">{{ appInfo.app_name }}</el-descriptions-item>
-        <el-descriptions-item label="版本号">{{ appInfo.version }}</el-descriptions-item>
-        <el-descriptions-item label="构建时间">{{ appInfo.build_time }}</el-descriptions-item>
-        <el-descriptions-item label="Git Commit">
-          <el-text type="info" size="small" style="font-family: monospace;">{{ appInfo.git_commit }}</el-text>
-        </el-descriptions-item>
-      </el-descriptions>
-      <el-skeleton :rows="2" animated v-else />
-    </el-card>
+    <section class="version-section">
+      <h2 class="section-title">版本信息</h2>
+      <div class="version-card" v-if="appInfo">
+        <div class="version-item">
+          <span class="version-label">应用名称</span>
+          <span class="version-value">{{ appInfo.app_name }}</span>
+        </div>
+        <div class="version-item">
+          <span class="version-label">版本号</span>
+          <span class="version-value highlight">{{ appInfo.version }}</span>
+        </div>
+        <div class="version-item">
+          <span class="version-label">构建时间</span>
+          <span class="version-value">{{ appInfo.build_time }}</span>
+        </div>
+        <div class="version-item">
+          <span class="version-label">Git Commit</span>
+          <span class="version-value mono">{{ appInfo.git_commit }}</span>
+        </div>
+      </div>
+      <el-skeleton v-else :rows="2" animated />
+    </section>
 
-    <div class="home-footer">
-      <el-text type="info" size="small">
-        Licensed under Apache 2.0
-      </el-text>
-    </div>
+    <footer class="home-footer">
+      Licensed under Apache 2.0
+    </footer>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, type Component } from 'vue'
 import {
-  Connection,
-  Refresh,
-  Bell,
-  Key,
-  Coin,
-  Setting,
-  Link,
-  Edit,
-  Stamp,
+  Connection, Refresh, Bell, Key, Coin, Setting, Link, Edit, Stamp,
+  ArrowRight,
 } from '@element-plus/icons-vue'
 import { getAppInfo } from '@/api/modules/system'
 import type { AppInfo } from '@/api/modules/system'
 
 const appInfo = ref<AppInfo | null>(null)
 
-const features = [
-  {
-    title: '多仓库管理',
-    desc: '统一注册和管理本地 Git 仓库，支持本地扫描与远程克隆。',
-    icon: Connection,
-    color: '#409EFF',
-  },
-  {
-    title: '自动同步',
-    desc: '支持单分支和全分支同步模式，Cron 定时调度与 Webhook 触发。',
-    icon: Refresh,
-    color: '#67C23A',
-  },
-  {
-    title: '多渠道通知',
-    desc: '支持钉钉、企业微信、飞书、蓝信、邮件、自定义 Webhook，按事件类型发送。',
-    icon: Bell,
-    color: '#E6A23C',
-  },
-  {
-    title: 'SSH 密钥管理',
-    desc: '支持数据库统一管理 SSH 密钥，灵活配置仓库认证方式。',
-    icon: Key,
-    color: '#F56C6C',
-  },
-  {
-    title: 'Spec 编辑器',
-    desc: '集成 Monaco Editor 的 RPM Spec 文件编辑器，支持实时语法检查和智能补全。',
-    icon: Edit,
-    color: '#06B6D4',
-  },
-  {
-    title: 'Patch 管理',
-    desc: '生成、管理和应用 Git Patch 文件，支持批量操作和自动化工作流。',
-    icon: Stamp,
-    color: '#8B5CF6',
-  },
-  {
-    title: '多数据库支持',
-    desc: '支持 SQLite、MySQL、PostgreSQL，可选 MinIO 对象存储和 Redis 分布式锁。',
-    icon: Coin,
-    color: '#909399',
-  },
-  {
-    title: '安全可靠',
-    desc: '冲突检测、Fast-Forward 检查及 Force Push 保护，审计日志全程记录。',
-    icon: Setting,
-    color: '#8B5CF6',
-  },
-  {
-    title: '支持 MCP',
-    desc: '集成 MCP 多模型协作平台，支持多种 AI 模型对接与协作。',
-    icon: Connection,
-    color: '#67C23A',
-  },
+function openGitHub() {
+  window.open('https://github.com/yi-nology/git-manage-service', '_blank')
+}
+
+interface Feature {
+  title: string
+  desc: string
+  icon: Component
+  color: string
+  bg: string
+}
+
+const features: Feature[] = [
+  { title: '多仓库管理', desc: '统一注册和管理本地 Git 仓库，支持本地扫描与远程克隆。', icon: Connection, color: '#6366F1', bg: '#EEF2FF' },
+  { title: '自动同步', desc: '支持单分支和全分支同步模式，Cron 定时调度与 Webhook 触发。', icon: Refresh, color: '#10B981', bg: '#ECFDF5' },
+  { title: '多渠道通知', desc: '支持钉钉、企业微信、飞书、蓝信、邮件、自定义 Webhook。', icon: Bell, color: '#F59E0B', bg: '#FFFBEB' },
+  { title: 'SSH 密钥管理', desc: '支持数据库统一管理 SSH 密钥，灵活配置仓库认证方式。', icon: Key, color: '#EF4444', bg: '#FEF2F2' },
+  { title: 'Spec 编辑器', desc: '集成 Monaco Editor 的 RPM Spec 文件编辑器，支持实时语法检查。', icon: Edit, color: '#06B6D4', bg: '#ECFEFF' },
+  { title: 'Patch 管理', desc: '生成、管理和应用 Git Patch 文件，支持批量操作和自动化工作流。', icon: Stamp, color: '#8B5CF6', bg: '#F5F3FF' },
+  { title: '多数据库支持', desc: '支持 SQLite、MySQL、PostgreSQL，可选 MinIO 对象存储。', icon: Coin, color: '#64748B', bg: '#F1F5F9' },
+  { title: '安全可靠', desc: '冲突检测、Fast-Forward 检查及 Force Push 保护，审计日志全程记录。', icon: Setting, color: '#8B5CF6', bg: '#F5F3FF' },
+  { title: '支持 MCP', desc: '集成 MCP 多模型协作平台，支持多种 AI 模型对接与协作。', icon: Connection, color: '#10B981', bg: '#ECFDF5' },
+]
+
+const backendTech = [
+  { label: '语言', value: 'Go 1.24' },
+  { label: 'HTTP 框架', value: 'Hertz (CloudWeGo)' },
+  { label: 'RPC 框架', value: 'Kitex (CloudWeGo)' },
+  { label: 'ORM', value: 'GORM' },
+  { label: 'Git 引擎', value: 'go-git' },
+  { label: '数据库', value: 'SQLite / MySQL / PostgreSQL' },
+]
+
+const frontendTech = [
+  { label: '框架', value: 'Vue 3 (Composition API)' },
+  { label: '语言', value: 'TypeScript' },
+  { label: 'UI 组件库', value: 'Element Plus' },
+  { label: '构建工具', value: 'Vite' },
+  { label: '状态管理', value: 'Pinia' },
+  { label: '图表库', value: 'ECharts' },
 ]
 
 onMounted(async () => {
   try {
     appInfo.value = await getAppInfo()
-  } catch {
-    // 版本信息加载失败不影响页面展示
-  }
+  } catch { /* ignore */ }
 })
 </script>
 
 <style scoped>
 .home-page {
-  max-width: 1000px;
+  max-width: 960px;
   margin: 0 auto;
+  padding: 0 20px;
 }
-.home-header {
+
+.hero {
   text-align: center;
-  padding: 40px 0 20px;
-}
-.home-title {
-  font-size: 32px;
-  font-weight: 700;
-  margin-bottom: 12px;
-  color: #303133;
-}
-.home-desc {
-  font-size: 15px;
-  color: #909399;
-  line-height: 1.8;
-  margin-bottom: 20px;
-}
-.home-actions {
+  padding: 48px 0 32px;
   display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.hero-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--border-radius-xl);
+  background: var(--accent-bg);
+  display: flex;
+  align-items: center;
   justify-content: center;
+  color: var(--primary-color);
+}
+
+.hero-title {
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--text-color-primary);
+  font-family: 'Inter', -apple-system, sans-serif;
+}
+
+.hero-desc {
+  font-size: 15px;
+  color: var(--text-color-secondary);
+  line-height: 1.8;
+  max-width: 560px;
+}
+
+.hero-actions {
+  display: flex;
   gap: 12px;
+  margin-top: 4px;
 }
+
+.section-divider {
+  height: 1px;
+  background: var(--border-color);
+  margin: 8px 0 32px;
+}
+
 .section-title {
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 600;
-  color: #303133;
-  margin-bottom: 16px;
+  color: var(--text-color-primary);
+  margin-bottom: 20px;
+  font-family: 'Inter', -apple-system, sans-serif;
 }
-.feature-cards {
-  margin-bottom: 8px;
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
 }
+
 .feature-card {
   text-align: center;
-  padding: 12px 8px;
-  margin-bottom: 16px;
-  height: calc(100% - 16px);
+  padding: 24px 16px;
+  border-radius: var(--border-radius-lg);
+  background: var(--bg-color-page);
+  border: 1px solid var(--border-color);
+  transition: all var(--transition-normal);
 }
+
+.feature-card:hover {
+  box-shadow: var(--box-shadow-md);
+  transform: translateY(-2px);
+}
+
+.feature-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--border-radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 12px;
+}
+
 .feature-card h3 {
-  margin: 12px 0 6px;
-  font-size: 16px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-color-primary);
+  margin-bottom: 6px;
 }
+
 .feature-card p {
-  color: #909399;
   font-size: 13px;
+  color: var(--text-color-secondary);
   line-height: 1.6;
 }
-.feature-icon {
-  margin-bottom: 4px;
+
+.tech-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
 }
-.tech-section .el-col {
+
+.tech-card {
+  padding: 24px;
+  border-radius: var(--border-radius-lg);
+  background: var(--bg-color-page);
+  border: 1px solid var(--border-color);
+}
+
+.tech-card h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-color-primary);
   margin-bottom: 16px;
 }
-.version-card {
-  margin-bottom: 24px;
+
+.tech-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
+
+.tech-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+}
+
+.tech-label {
+  color: var(--text-color-secondary);
+}
+
+.tech-value {
+  color: var(--text-color-primary);
+  font-weight: 500;
+}
+
+.version-card {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  padding: 24px;
+  border-radius: var(--border-radius-lg);
+  background: var(--bg-color-page);
+  border: 1px solid var(--border-color);
+}
+
+.version-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.version-label {
+  font-size: 12px;
+  color: var(--text-color-secondary);
+}
+
+.version-value {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-color-primary);
+}
+
+.version-value.highlight {
+  color: var(--primary-color);
+}
+
+.version-value.mono {
+  font-family: 'SF Mono', 'Monaco', 'Menlo', 'Consolas', monospace;
+}
+
 .home-footer {
   text-align: center;
-  padding: 16px 0 32px;
+  padding: 24px 0 32px;
+  font-size: 12px;
+  color: var(--text-color-secondary);
+}
+
+@media (max-width: 768px) {
+  .features-grid {
+    grid-template-columns: 1fr;
+  }
+  .tech-grid {
+    grid-template-columns: 1fr;
+  }
+  .version-card {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 </style>

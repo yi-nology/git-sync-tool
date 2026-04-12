@@ -212,25 +212,25 @@ function formatSize(bytes: number): string {
   gap: 8px;
 }
 .name-text {
-  color: #303133;
+  color: var(--text-color-primary);
 }
 .file-content {
   max-height: 70vh;
   overflow: auto;
 }
 .code-block {
-  background: #f5f7fa;
-  padding: 16px;
-  border-radius: 4px;
+  background: var(--bg-color);
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius-sm);
   overflow-x: auto;
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   line-height: 1.5;
   margin: 0;
 }
 .binary-notice {
   text-align: center;
   padding: 40px;
-  color: #909399;
+  color: var(--text-color-secondary);
 }
 .mono-text {
   font-family: monospace;

@@ -473,8 +473,9 @@ async function handleRegister() {
 
 .register-page h2 {
   margin-bottom: 24px;
-  font-size: 20px;
+  font-size: var(--font-size-xl);
   font-weight: 600;
+  color: var(--text-color-primary);
 }
 
 .step-card {
@@ -489,13 +490,13 @@ async function handleRegister() {
 
 .header-actions {
   display: flex;
-  gap: 8px;
+  gap: var(--spacing-sm);
 }
 
 .path-section {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--spacing-md);
 }
 
 .btn-group {
@@ -503,15 +504,14 @@ async function handleRegister() {
   gap: 12px;
 }
 
-/* 单仓库信息 */
 .single-repo-info {
-  padding: 8px 0;
+  padding: var(--spacing-sm) 0;
 }
 
 .repo-detail {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--spacing-md);
 }
 
 .detail-row {
@@ -522,23 +522,23 @@ async function handleRegister() {
 
 .detail-row .label {
   min-width: 100px;
-  color: var(--el-text-color-secondary);
-  font-size: 14px;
+  color: var(--text-color-secondary);
+  font-size: var(--font-size-md);
 }
 
 .detail-row .value {
-  font-size: 14px;
+  font-size: var(--font-size-md);
 }
 
 .detail-row .value.mono {
   font-family: monospace;
-  color: var(--el-text-color-primary);
+  color: var(--text-color-primary);
 }
 
 .remote-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--spacing-sm);
 }
 
 .remote-tag {
@@ -556,22 +556,22 @@ async function handleRegister() {
 .repo-item {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 16px;
-  border: 1px solid var(--el-border-color);
-  border-radius: 8px;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-md);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--transition-fast);
 }
 
 .repo-item:hover {
-  border-color: var(--el-color-primary-light-5);
-  background-color: var(--el-fill-color-light);
+  border-color: var(--primary-color);
+  background-color: var(--accent-bg);
 }
 
 .repo-item.selected {
-  border-color: var(--el-color-primary);
-  background-color: var(--el-color-primary-light-9);
+  border-color: var(--primary-color);
+  background-color: var(--accent-bg);
 }
 
 .repo-info {
@@ -582,7 +582,7 @@ async function handleRegister() {
 .repo-name {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--spacing-sm);
   font-weight: 600;
   font-size: 15px;
   margin-bottom: 6px;
@@ -596,8 +596,8 @@ async function handleRegister() {
 }
 
 .repo-path {
-  color: var(--el-text-color-secondary);
-  font-size: 12px;
+  color: var(--text-color-secondary);
+  font-size: var(--font-size-xs);
   font-family: monospace;
 }
 
@@ -605,8 +605,8 @@ async function handleRegister() {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 13px;
-  color: var(--el-text-color-regular);
+  font-size: var(--font-size-sm);
+  color: var(--text-color-regular);
 }
 
 .repo-status {
@@ -618,17 +618,17 @@ async function handleRegister() {
 
 .commit-hash {
   font-family: monospace;
-  font-size: 12px;
-  color: var(--el-text-color-secondary);
+  font-size: var(--font-size-xs);
+  color: var(--text-color-secondary);
 }
 
 .selection-info {
-  margin-top: 16px;
+  margin-top: var(--spacing-md);
   padding: 12px;
-  background-color: var(--el-fill-color-light);
-  border-radius: 6px;
+  background-color: var(--accent-bg);
+  border-radius: var(--border-radius-sm);
   text-align: center;
-  color: var(--el-text-color-regular);
+  color: var(--text-color-regular);
 }
 
 .credential-section {
@@ -636,8 +636,8 @@ async function handleRegister() {
 }
 
 .hint {
-  color: var(--el-text-color-secondary);
-  font-size: 13px;
+  color: var(--text-color-secondary);
+  font-size: var(--font-size-sm);
   margin-bottom: 12px;
 }
 
@@ -648,10 +648,9 @@ async function handleRegister() {
   margin-top: 20px;
 }
 
-/* 响应式 */
 @media (max-width: 768px) {
   .register-page {
-    padding: 16px;
+    padding: var(--spacing-md);
   }
 
   .detail-row {
@@ -669,9 +668,9 @@ async function handleRegister() {
     width: 100%;
     justify-content: space-between;
     align-items: center;
-    margin-top: 8px;
-    padding-top: 8px;
-    border-top: 1px solid var(--el-border-color-lighter);
+    margin-top: var(--spacing-sm);
+    padding-top: var(--spacing-sm);
+    border-top: 1px solid var(--border-color-light);
   }
 }
 </style>

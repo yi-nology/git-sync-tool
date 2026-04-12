@@ -148,19 +148,21 @@ onMounted(() => {
 <style scoped>
 .credential-page h2 {
   margin: 0;
-  font-size: 20px;
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  color: var(--text-color-primary);
 }
 .page-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: var(--spacing-md);
 }
 .mb-4 {
-  margin-bottom: 16px;
+  margin-bottom: var(--spacing-md);
 }
 .mt-4 {
-  margin-top: 16px;
+  margin-top: var(--spacing-md);
 }
 .empty-state {
   padding: 40px 0;

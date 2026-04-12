@@ -116,9 +116,9 @@ async function handleSave() {
 <style scoped>
 .settings-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-  gap: var(--spacing-md);
-  margin-top: var(--spacing-md);
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  margin-top: 20px;
 }
 
 .settings-card-content {
@@ -128,8 +128,9 @@ async function handleSave() {
 }
 
 .settings-description {
-  color: var(--text-color-regular);
-  line-height: 1.5;
+  color: var(--text-color-secondary);
+  font-size: 13px;
+  line-height: 1.6;
   margin: 0;
 }
 
@@ -146,13 +147,13 @@ async function handleSave() {
 }
 
 .form-label {
-  font-size: var(--font-size-sm);
+  font-size: 13px;
   font-weight: 500;
   color: var(--text-color-primary);
 }
 
 .form-tip {
-  font-size: var(--font-size-xs);
+  font-size: 12px;
   color: var(--text-color-secondary);
   margin-top: 4px;
 }
@@ -164,24 +165,15 @@ async function handleSave() {
 }
 
 .settings-info {
-  font-size: var(--font-size-xs);
+  font-size: 12px;
   color: var(--text-color-secondary);
   margin-top: var(--spacing-sm);
   line-height: 1.4;
 }
 
-/* 响应式设计 */
 @media (max-width: 768px) {
   .settings-grid {
     grid-template-columns: 1fr;
-  }
-  
-  .settings-card-content {
-    gap: var(--spacing-sm);
-  }
-  
-  .form-actions {
-    justify-content: flex-start;
   }
 }
 </style>

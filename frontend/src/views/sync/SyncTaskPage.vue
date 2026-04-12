@@ -1,74 +1,78 @@
 <template>
   <div class="sync-page">
-    <!-- Header -->
     <div class="page-header">
       <div class="header-left">
-        <el-button @click="$router.push(`/repos/${repoKey}`)" :icon="ArrowLeft" text>返回</el-button>
+        <button class="back-btn" @click="$router.push(`/repos/${repoKey}`)">
+          <el-icon><ArrowLeft /></el-icon> 返回
+        </button>
         <h2>Git 同步管理</h2>
       </div>
-      <div class="header-right">
-        <el-button type="success" @click="handleBatchSync" :disabled="selectedTasks.length === 0">
+      <div class="header-actions">
+        <button class="action-pill action-pill--green" @click="handleBatchSync" :disabled="selectedTasks.length === 0">
           <el-icon><Refresh /></el-icon> 同步选中 ({{ selectedTasks.length }})
-        </el-button>
-        <el-button type="primary" @click="openQuickSync">
+        </button>
+        <button class="action-pill action-pill--primary" @click="openQuickSync">
           <el-icon><Plus /></el-icon> 快速同步
-        </el-button>
-        <el-button @click="openAddTask">
+        </button>
+        <button class="action-pill action-pill--outline" @click="openAddTask">
           <el-icon><Setting /></el-icon> 新建规则
-        </el-button>
+        </button>
       </div>
     </div>
 
-    <!-- Quick Sync Panel -->
-    <el-card v-if="showQuickPanel" class="quick-panel">
-      <template #header>
-        <div class="panel-header">
-          <span>⚡ 快速同步</span>
-          <el-button text @click="showQuickPanel = false"><el-icon><Close /></el-icon></el-button>
+    <div v-if="showQuickPanel" class="quick-sync-panel">
+      <div class="qp-title">
+        <span class="qp-icon">⚡</span>
+        <span class="qp-title-text">快速同步</span>
+        <button class="qp-close" @click="showQuickPanel = false"><el-icon><Close /></el-icon></button>
+      </div>
+      <div class="qp-body">
+        <div class="qp-field">
+          <span class="qp-label">源</span>
+          <div class="qp-row">
+            <el-select v-model="quickForm.sourceRemote" style="width: 120px">
+              <el-option label="Local" value="local" />
+              <el-option v-for="r in remoteNames" :key="r" :label="r" :value="r" />
+            </el-select>
+            <el-input v-model="quickForm.sourceBranch" placeholder="分支" style="width: 120px" />
+          </div>
         </div>
-      </template>
-      <el-form :model="quickForm" inline class="quick-form">
-        <el-form-item label="源">
-          <el-select v-model="quickForm.sourceRemote" style="width: 100px">
-            <el-option label="Local" value="local" />
-            <el-option v-for="r in remoteNames" :key="r" :label="r" :value="r" />
-          </el-select>
-          <el-input v-model="quickForm.sourceBranch" placeholder="分支" style="width: 100px; margin-left: 8px" />
-        </el-form-item>
-        
-        <el-icon class="arrow-icon"><Right /></el-icon>
-        
-        <el-form-item label="目标">
-          <el-select v-model="quickForm.targetRemote" style="width: 100px">
-            <el-option v-for="r in remoteNames" :key="r" :label="r" :value="r" />
-          </el-select>
-          <el-input v-model="quickForm.targetBranch" placeholder="分支" style="width: 100px; margin-left: 8px" />
-        </el-form-item>
-
-        <el-form-item>
+        <div class="qp-arrow">
+          <el-icon :size="20" color="#64748B"><Right /></el-icon>
+        </div>
+        <div class="qp-field">
+          <span class="qp-label">目标</span>
+          <div class="qp-row">
+            <el-select v-model="quickForm.targetRemote" style="width: 120px">
+              <el-option v-for="r in remoteNames" :key="r" :label="r" :value="r" />
+            </el-select>
+            <el-input v-model="quickForm.targetBranch" placeholder="分支" style="width: 120px" />
+          </div>
+        </div>
+        <div class="qp-options">
           <el-checkbox v-model="quickForm.gitTags">--tags</el-checkbox>
           <el-checkbox v-model="quickForm.gitForce">--force</el-checkbox>
           <el-checkbox v-model="quickForm.gitPrune">--prune</el-checkbox>
-        </el-form-item>
-
-        <el-form-item>
-          <el-button @click="handlePreview" :loading="previewing">预览</el-button>
-          <el-button type="primary" @click="handleQuickSync" :loading="syncing">执行</el-button>
-        </el-form-item>
-      </el-form>
-      
-      <el-alert v-if="previewResult" :title="previewResult.command" type="info" :closable="false" class="preview-result">
-        <div v-if="previewResult.commits_to_push">
-          <strong>Commits:</strong> {{ Array.isArray(previewResult.commits_to_push) ? previewResult.commits_to_push.length : previewResult.commits_to_push }}
         </div>
-        <div v-if="previewResult.tags_to_push">
-          <strong>Tags:</strong> {{ Array.isArray(previewResult.tags_to_push) ? previewResult.tags_to_push.length : previewResult.tags_to_push }}
+        <div class="qp-actions">
+          <button class="action-pill action-pill--outline" @click="handlePreview" :disabled="previewing">预览</button>
+          <button class="action-pill action-pill--primary" @click="handleQuickSync" :disabled="syncing">执行</button>
         </div>
-        <div v-if="previewResult.warning" style="color: #e6a23c">{{ previewResult.warning }}</div>
-      </el-alert>
-    </el-card>
+      </div>
+      <div v-if="previewResult" class="qp-preview">
+        <el-alert :title="previewResult.command" type="info" :closable="false">
+          <div v-if="previewResult.commits_to_push">
+            <strong>Commits:</strong> {{ Array.isArray(previewResult.commits_to_push) ? previewResult.commits_to_push.length : previewResult.commits_to_push }}
+          </div>
+          <div v-if="previewResult.tags_to_push">
+            <strong>Tags:</strong> {{ Array.isArray(previewResult.tags_to_push) ? previewResult.tags_to_push.length : previewResult.tags_to_push }}
+          </div>
+          <div v-if="previewResult.warning" style="color: #F59E0B">{{ previewResult.warning }}</div>
+        </el-alert>
+      </div>
+    </div>
 
-    <!-- Task List -->
+    <h3 class="section-title">同步任务列表</h3>
     <div v-loading="loading" class="task-list">
       <el-empty v-if="tasks.length === 0 && !loading" description="暂无同步规则">
         <el-button type="primary" @click="openAddTask">创建第一条规则</el-button>
@@ -603,22 +607,24 @@ function showLog(details: string) {
 .header-left {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--spacing-sm);
 }
 
 .header-left h2 {
   margin: 0;
-  font-size: 20px;
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  color: var(--text-color-primary);
 }
 
 .header-right {
   display: flex;
-  gap: 8px;
+  gap: var(--spacing-sm);
 }
 
-/* Quick Panel */
 .quick-panel {
   margin-bottom: 20px;
+  border-left: 4px solid var(--primary-color);
 }
 
 .panel-header {
@@ -636,15 +642,14 @@ function showLog(details: string) {
 
 .arrow-icon {
   font-size: 20px;
-  color: #409eff;
-  margin: 0 8px;
+  color: var(--primary-color);
+  margin: 0 var(--spacing-sm);
 }
 
 .preview-result {
-  margin-top: 16px;
+  margin-top: var(--spacing-md);
 }
 
-/* Task List */
 .task-list {
   display: flex;
   flex-direction: column;
@@ -652,20 +657,21 @@ function showLog(details: string) {
 }
 
 .task-card {
-  transition: all 0.3s;
-  border-left: 4px solid #409eff;
+  transition: all var(--transition-normal);
+  border-left: 4px solid var(--primary-color);
+  border-radius: var(--border-radius-md);
 }
 
 .task-card.disabled {
   opacity: 0.6;
-  border-left-color: #c0c4cc;
+  border-left-color: var(--text-color-secondary);
 }
 
 .task-content {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 8px 0;
+  gap: var(--spacing-md);
+  padding: var(--spacing-sm) 0;
 }
 
 .task-checkbox {
@@ -682,65 +688,65 @@ function showLog(details: string) {
 .endpoint {
   display: flex;
   flex-direction: column;
-  padding: 8px 16px;
-  border-radius: 6px;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--border-radius-sm);
   min-width: 100px;
 }
 
 .endpoint.source {
-  background: #f0f9eb;
-  border: 1px solid #e1f3d8;
+  background: #ECFDF5;
+  border: 1px solid #A7F3D0;
 }
 
 .endpoint.target {
-  background: #fdf6ec;
-  border: 1px solid #faecd8;
+  background: #FFFBEB;
+  border: 1px solid #FDE68A;
 }
 
 .endpoint .label {
   font-weight: 600;
-  font-size: 14px;
-  color: #303133;
+  font-size: var(--font-size-md);
+  color: var(--text-color-primary);
 }
 
 .endpoint .branch {
-  font-size: 12px;
-  color: #909399;
+  font-size: var(--font-size-xs);
+  color: var(--text-color-secondary);
   font-family: monospace;
 }
 
 .flow-arrow {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--spacing-sm);
   font-size: 18px;
-  color: #409eff;
+  color: var(--primary-color);
 }
 
 .task-status {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--spacing-xs);
   align-items: flex-end;
 }
 
 .cron {
   display: flex;
   align-items: center;
-  gap: 4px;
-  font-size: 12px;
-  color: #909399;
+  gap: var(--spacing-xs);
+  font-size: var(--font-size-xs);
+  color: var(--text-color-secondary);
 }
 
 .git-options {
   display: flex;
-  gap: 4px;
+  gap: var(--spacing-xs);
   flex-wrap: wrap;
 }
 
 .task-actions {
   display: flex;
-  gap: 8px;
+  gap: var(--spacing-sm);
 }
 
 .text-center {
@@ -753,19 +759,19 @@ function showLog(details: string) {
 }
 
 .log-content {
-  background: #f5f7fa;
+  background: var(--bg-color);
   padding: 12px;
-  border-radius: 4px;
+  border-radius: var(--border-radius-sm);
   max-height: 400px;
   overflow-y: auto;
   white-space: pre-wrap;
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   font-family: monospace;
 }
 
 .error-msg {
-  color: #f56c6c;
-  font-size: 12px;
-  margin-left: 8px;
+  color: var(--danger-color);
+  font-size: var(--font-size-xs);
+  margin-left: var(--spacing-sm);
 }
 </style>

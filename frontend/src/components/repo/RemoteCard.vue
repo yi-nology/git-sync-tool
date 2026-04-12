@@ -74,20 +74,20 @@ function handleCredentialChange(val: number | undefined) {
   gap: 8px;
 }
 .mirror-badge {
-  font-size: 12px;
-  color: #909399;
+  font-size: var(--font-size-xs);
+  color: var(--text-color-secondary);
 }
 .remote-urls {
-  font-size: 13px;
+  font-size: var(--font-size-sm);
 }
 .url-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 4px;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-xs);
 }
 .url-label {
-  color: #909399;
+  color: var(--text-color-secondary);
   flex-shrink: 0;
   width: 40px;
 }
@@ -101,8 +101,8 @@ function handleCredentialChange(val: number | undefined) {
   gap: 12px;
 }
 .section-label {
-  font-size: 13px;
-  color: #606266;
+  font-size: var(--font-size-sm);
+  color: var(--text-color-regular);
   flex-shrink: 0;
 }
 </style>

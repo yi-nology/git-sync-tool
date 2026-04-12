@@ -207,32 +207,34 @@ function showDetail(details: string) {
 }
 .page-header h2 {
   margin: 0;
-  font-size: 20px;
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  color: var(--text-color-primary);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--spacing-sm);
 }
 .pagination-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 16px;
+  margin-top: var(--spacing-md);
 }
 .filter-bar {
   display: flex;
   gap: 10px;
-  margin-bottom: 16px;
+  margin-bottom: var(--spacing-md);
   flex-wrap: wrap;
   align-items: center;
 }
 .detail-content {
-  background: #f5f7fa;
+  background: var(--bg-color);
   padding: 12px;
-  border-radius: 4px;
+  border-radius: var(--border-radius-sm);
   max-height: 500px;
   overflow: auto;
   white-space: pre-wrap;
   font-family: monospace;
-  font-size: 13px;
+  font-size: var(--font-size-sm);
 }
 </style>

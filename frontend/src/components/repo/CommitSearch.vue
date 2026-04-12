@@ -214,14 +214,14 @@ function copyText(text: string) {
   font-family: monospace;
 }
 .additions {
-  color: #67c23a;
-  margin-right: 8px;
+  color: var(--success-color);
+  margin-right: var(--spacing-sm);
 }
 .deletions {
-  color: #f56c6c;
+  color: var(--danger-color);
 }
 .pagination {
-  margin-top: 16px;
+  margin-top: var(--spacing-md);
   display: flex;
   justify-content: flex-end;
 }
@@ -233,8 +233,8 @@ function copyText(text: string) {
 .diff-container {
   max-height: 300px;
   overflow: auto;
-  background: #f5f7fa;
-  border-radius: 4px;
+  background: var(--bg-color);
+  border-radius: var(--border-radius-sm);
 }
 .diff-content {
   margin: 0;

@@ -273,55 +273,57 @@ onUnmounted(() => {
 <style scoped>
 .clone-page h2 {
   margin-bottom: 20px;
-  font-size: 20px;
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  color: var(--text-color-primary);
 }
 .mb-6 {
   margin-bottom: 24px;
 }
 .mb-2 {
-  margin-bottom: 8px;
+  margin-bottom: var(--spacing-sm);
 }
 .mt-4 {
-  margin-top: 16px;
+  margin-top: var(--spacing-md);
 }
 .url-prefix-tag {
-  margin-right: 4px;
+  margin-right: var(--spacing-xs);
 }
 .url-format-hint {
-  font-size: 12px;
-  color: #909399;
-  margin-top: 4px;
+  font-size: var(--font-size-xs);
+  color: var(--text-color-secondary);
+  margin-top: var(--spacing-xs);
 }
 .url-format-hint code {
-  background: #f5f7fa;
+  background: var(--bg-color);
   padding: 1px 4px;
   border-radius: 2px;
   font-family: monospace;
-  font-size: 12px;
+  font-size: var(--font-size-xs);
 }
 .progress-area {
-  padding: 8px 0;
+  padding: var(--spacing-sm) 0;
 }
 .progress-logs {
-  background: #f5f7fa;
-  border-radius: 4px;
+  background: var(--bg-color);
+  border-radius: var(--border-radius-sm);
   padding: 12px;
-  margin: 8px 0 16px;
+  margin: var(--spacing-sm) 0 var(--spacing-md);
   max-height: 300px;
   overflow-y: auto;
   font-family: monospace;
-  font-size: 13px;
+  font-size: var(--font-size-sm);
 }
 .log-line {
   line-height: 1.6;
-  color: #303133;
+  color: var(--text-color-primary);
 }
 .field-error {
-  color: #f56c6c;
-  font-size: 12px;
-  margin-top: 4px;
+  color: var(--danger-color);
+  font-size: var(--font-size-xs);
+  margin-top: var(--spacing-xs);
 }
 .is-error-input :deep(.el-input__wrapper) {
-  box-shadow: 0 0 0 1px #f56c6c inset;
+  box-shadow: 0 0 0 1px var(--danger-color) inset;
 }
 </style>

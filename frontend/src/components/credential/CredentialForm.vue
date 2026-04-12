@@ -209,9 +209,9 @@ onMounted(async () => {
 
 <style scoped>
 .form-tip {
-  font-size: 12px;
-  color: #909399;
-  margin-top: 4px;
+  font-size: var(--font-size-xs);
+  color: var(--text-color-secondary);
+  margin-top: var(--spacing-xs);
   line-height: 1.5;
 }
 </style>

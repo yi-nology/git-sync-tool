@@ -1,10 +1,14 @@
 <template>
-  <AppPage title="仓库列表">
-    <template #actions>
+  <div class="repo-list-page">
+    <div class="title-row">
+      <div class="title-left">
+        <h2 class="page-title">仓库列表</h2>
+        <p class="page-subtitle">管理和监控所有 Git 仓库</p>
+      </div>
       <el-dropdown @command="handleAddCommand">
-        <AppButton type="primary" icon="Plus">
-          添加仓库
-        </AppButton>
+        <button class="add-btn">
+          <el-icon><Plus /></el-icon> 添加仓库
+        </button>
         <template #dropdown>
           <el-dropdown-menu>
             <el-dropdown-item command="register">
@@ -16,21 +20,18 @@
           </el-dropdown-menu>
         </template>
       </el-dropdown>
-    </template>
+    </div>
 
-    <!-- 搜索和筛选 -->
-    <AppCard v-if="repoStore.repoList.length > 0 || searchText">
-      <div class="filter-section">
-        <AppInput
-          v-model="searchText"
-          placeholder="搜索仓库名称或路径..."
-          prefixIcon="Search"
-          showClear
-        />
-      </div>
-    </AppCard>
+    <div class="search-card" v-if="repoStore.repoList.length > 0 || searchText">
+      <el-icon class="search-icon"><SearchIcon /></el-icon>
+      <input
+        v-model="searchText"
+        placeholder="搜索仓库名称或路径..."
+        class="search-input"
+      />
+      <el-icon v-if="searchText" class="clear-icon" @click="searchText = ''"><Close /></el-icon>
+    </div>
 
-    <!-- 骨架屏 -->
     <TableSkeleton
       v-if="repoStore.loading"
       :rows="5"
@@ -38,85 +39,50 @@
       :column-widths="['60px', '150px', '250px', '200px', '120px']"
     />
 
-    <!-- 表格 -->
-    <AppCard v-else>
-      <el-table
-        :data="paginatedData"
-        stripe
-        @sort-change="handleSortChange"
-        :default-sort="{ prop: 'id', order: 'ascending' }"
+    <div class="repo-table-card" v-else-if="filteredRepos.length > 0">
+      <div class="table-header">
+        <span class="th" style="width:60px">ID</span>
+        <span class="th" style="width:150px">名称</span>
+        <span class="th" style="width:280px">路径</span>
+        <span class="th" style="width:250px">远程地址</span>
+        <span class="th" style="flex:1">操作</span>
+      </div>
+      <div
+        v-for="row in paginatedData"
+        :key="row.key"
+        class="table-row"
       >
-        <el-table-column prop="id" label="ID" width="60" sortable />
-        <el-table-column prop="name" label="名称" min-width="150" sortable>
-          <template #default="{ row }">
-            <el-text tag="b">{{ row.name }}</el-text>
-          </template>
-        </el-table-column>
-        <el-table-column prop="path" label="路径" min-width="250" show-overflow-tooltip>
-          <template #default="{ row }">
-            <el-text type="info" size="small" class="mono-text">{{ row.path }}</el-text>
-          </template>
-        </el-table-column>
-        <el-table-column prop="remote_url" label="远程地址" min-width="200" show-overflow-tooltip>
-          <template #default="{ row }">
-            <el-text size="small" truncated v-if="row.remote_url">{{ row.remote_url }}</el-text>
-            <el-text size="small" type="info" v-else>无远程仓库</el-text>
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" width="120" fixed="right">
-          <template #default="{ row }">
-            <el-dropdown @command="(cmd: string) => handleCommand(cmd, row)">
-              <AppButton type="secondary">
-                操作
-              </AppButton>
-              <template #dropdown>
-                <el-dropdown-menu>
-                  <el-dropdown-item command="detail">
-                    <el-icon><View /></el-icon> 查看详情
-                  </el-dropdown-item>
-                  <el-dropdown-item command="branches">
-                    <el-icon><Share /></el-icon> 分支管理
-                  </el-dropdown-item>
-                  <el-dropdown-item command="sync">
-                    <el-icon><Refresh /></el-icon> 同步任务
-                  </el-dropdown-item>
-                  <el-dropdown-item command="delete" divided>
-                    <el-text type="danger">
-                      <el-icon><Delete /></el-icon> 删除仓库
-                    </el-text>
-                  </el-dropdown-item>
-                </el-dropdown-menu>
-              </template>
-            </el-dropdown>
-          </template>
-        </el-table-column>
-
-        <!-- 空状态 -->
-        <template #empty>
-          <div class="app-empty">
-            <el-icon class="app-empty-icon"><Folder /></el-icon>
-            <h3 class="app-empty-title">暂无仓库</h3>
-            <p class="app-empty-description">添加您的第一个仓库开始管理</p>
-            <AppButton type="primary" @click="router.push('/repos/register')">
-              添加第一个仓库
-            </AppButton>
-          </div>
-        </template>
-      </el-table>
-    </AppCard>
-
-    <!-- 分页 -->
-    <div class="pagination-section" v-if="filteredRepos.length > 0">
-      <el-pagination
-        v-model:current-page="currentPage"
-        v-model:page-size="pageSize"
-        :page-sizes="[10, 20, 50, 100]"
-        :total="filteredRepos.length"
-        layout="total, sizes, prev, pager, next, jumper"
-        background
-      />
+        <span class="td" style="width:60px">{{ row.id }}</span>
+        <span class="td td-name" style="width:150px" @click="router.push(`/repos/${row.key}`)">{{ row.name }}</span>
+        <span class="td td-mono" style="width:280px" :title="row.path">{{ row.path }}</span>
+        <span class="td td-mono" style="width:250px">{{ row.remote_url || '无远程仓库' }}</span>
+        <span class="td" style="flex:1">
+          <el-dropdown @command="(cmd: string) => handleCommand(cmd, row)">
+            <button class="row-action-btn">操作</button>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item command="detail"><el-icon><View /></el-icon> 查看详情</el-dropdown-item>
+                <el-dropdown-item command="branches"><el-icon><Share /></el-icon> 分支管理</el-dropdown-item>
+                <el-dropdown-item command="sync"><el-icon><Refresh /></el-icon> 同步任务</el-dropdown-item>
+                <el-dropdown-item command="delete" divided><el-text type="danger"><el-icon><Delete /></el-icon> 删除仓库</el-text></el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+        </span>
+      </div>
     </div>
-  </AppPage>
+
+    <div v-else class="empty-state">
+      <el-icon class="empty-icon"><Folder /></el-icon>
+      <h3>暂无仓库</h3>
+      <p>添加您的第一个仓库开始管理</p>
+      <button class="add-btn" @click="router.push('/repos/register')">添加第一个仓库</button>
+    </div>
+
+    <div class="pagination-row" v-if="filteredRepos.length > 0">
+      <span class="pag-info">共 {{ filteredRepos.length }} 条</span>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -131,15 +97,14 @@ import {
   FolderOpened,
   Download,
   Folder,
+  Plus,
+  Search as SearchIcon,
+  Close,
 } from '@element-plus/icons-vue'
 import { useRepoStore } from '@/stores/useRepoStore'
 import { deleteRepo } from '@/api/modules/repo'
 import { useNotification } from '@/composables/useNotification'
 import TableSkeleton from '@/components/common/TableSkeleton.vue'
-import AppPage from '@/components/layout/AppPage.vue'
-import AppCard from '@/components/common/AppCard.vue'
-import AppButton from '@/components/common/AppButton.vue'
-import AppInput from '@/components/common/AppInput.vue'
 
 const router = useRouter()
 const repoStore = useRepoStore()
@@ -155,6 +120,12 @@ const pageSize = ref(10)
 // 排序
 const sortProp = ref('id')
 const sortOrder = ref<'ascending' | 'descending' | null>('ascending')
+
+// @ts-ignore
+const handleSortChange = ({ prop, order }: { prop: string; order: string | null }) => {
+  sortProp.value = prop
+  sortOrder.value = order as 'ascending' | 'descending' | null
+}
 
 onMounted(async () => {
   await repoStore.fetchRepoList()
@@ -199,12 +170,6 @@ const paginatedData = computed(() => {
   const end = start + pageSize.value
   return filteredRepos.value.slice(start, end)
 })
-
-// 排序变化
-const handleSortChange = ({ prop, order }: { prop: string; order: string | null }) => {
-  sortProp.value = prop
-  sortOrder.value = order as 'ascending' | 'descending' | null
-}
 
 // 添加命令
 function handleAddCommand(command: string) {
@@ -263,42 +228,236 @@ async function handleDelete(key: string, name: string) {
 </script>
 
 <style scoped>
-.filter-section {
+.repo-list-page {
+  padding: var(--spacing-xl);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-height: 100vh;
+  background: var(--bg-color);
+}
+
+.title-row {
   display: flex;
   align-items: center;
+  justify-content: space-between;
 }
 
-.pagination-section {
+.title-left {
   display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.page-title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text-color-primary);
+}
+
+.page-subtitle {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-color-secondary);
+}
+
+.add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--primary-color);
+  color: #FFFFFF;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 10px 20px;
+  border-radius: var(--border-radius-md);
+  border: none;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.add-btn:hover {
+  background: var(--primary-color-hover);
+}
+
+.search-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-color-page);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+  padding: 12px 16px;
+}
+
+.search-icon {
+  color: var(--text-color-secondary);
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 13px;
+  color: var(--text-color-primary);
+  font-family: var(--font-family);
+}
+
+.search-input::placeholder {
+  color: var(--text-color-placeholder);
+}
+
+.clear-icon {
+  color: var(--text-color-secondary);
+  font-size: 16px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: color var(--transition-fast);
+}
+
+.clear-icon:hover {
+  color: var(--text-color-primary);
+}
+
+.repo-table-card {
+  border-radius: var(--border-radius-lg);
+  border: 1px solid var(--border-color);
+  background: var(--bg-color-page);
+  overflow: hidden;
+}
+
+.table-header {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  background: var(--accent-bg);
+}
+
+.th {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-color-secondary);
+}
+
+.table-row {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border-color);
+  transition: background var(--transition-fast);
+}
+
+.table-row:last-child {
+  border-bottom: none;
+}
+
+.table-row:hover {
+  background: var(--border-color-extra-light);
+}
+
+.td {
+  font-size: 13px;
+  color: var(--text-color-secondary);
+}
+
+.td-name {
+  color: var(--primary-color);
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity var(--transition-fast);
+}
+
+.td-name:hover {
+  opacity: 0.8;
+}
+
+.td-mono {
+  font-family: 'SF Mono', 'Monaco', 'Menlo', 'Consolas', monospace;
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.row-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: var(--border-radius-sm);
+  border: 1px solid var(--border-color);
+  background: transparent;
+  font-size: 13px;
+  color: var(--text-color-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.row-action-btn:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 0;
+  gap: 12px;
+}
+
+.empty-icon {
+  font-size: 48px;
+  color: var(--text-color-placeholder);
+}
+
+.empty-state h3 {
+  margin: 0;
+  font-size: 16px;
+  color: var(--text-color-primary);
+}
+
+.empty-state p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-color-secondary);
+}
+
+.pagination-row {
+  display: flex;
+  align-items: center;
   justify-content: flex-end;
-  margin-top: var(--spacing-md);
-  padding: var(--spacing-md) 0;
+  padding: 8px 0;
 }
 
-.mono-text {
-  font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+.pag-info {
+  font-size: 12px;
+  color: var(--text-color-secondary);
 }
 
-/* 响应式 */
 @media (max-width: 768px) {
-  .filter-section {
+  .repo-list-page {
+    padding: var(--spacing-md);
+  }
+
+  .title-row {
     flex-direction: column;
     align-items: flex-start;
-    gap: var(--spacing-sm);
+    gap: var(--spacing-md);
   }
 
-  .pagination-section {
-    justify-content: center;
+  .repo-table-card {
+    overflow-x: auto;
   }
 
-  :deep(.el-pagination) {
-    flex-wrap: wrap;
-    justify-content: center;
+  .table-header,
+  .table-row {
+    min-width: 700px;
   }
-}
-
-/* 深色模式 */
-:global(.dark) .mono-text {
-  color: var(--text-color-regular);
 }
 </style>

@@ -3,8 +3,8 @@
 /* 卡片组件 */
 .app-card {
   background: var(--bg-color-page);
-  border-radius: var(--border-radius-md);
-  box-shadow: var(--box-shadow-sm);
+  border-radius: var(--border-radius-lg);
+  box-shadow: none;
   border: 1px solid var(--border-color);
   transition: all var(--transition-normal);
   overflow: hidden;
@@ -12,7 +12,6 @@
 
 .app-card:hover {
   box-shadow: var(--box-shadow-md);
-  transform: translateY(-2px);
 }
 
 .app-card-header {

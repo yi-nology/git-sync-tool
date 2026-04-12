@@ -93,17 +93,17 @@ const testConnection = () => {
 }
 
 .page-title {
-  font-size: 24px;
+  font-size: var(--font-size-2xl);
   font-weight: 700;
   margin-bottom: 20px;
-  color: #303133;
+  color: var(--text-color-primary);
 }
 
 .section-title {
-  font-size: 20px;
+  font-size: var(--font-size-xl);
   font-weight: 600;
-  margin: 30px 0 16px;
-  color: #303133;
+  margin: 30px 0 var(--spacing-md);
+  color: var(--text-color-primary);
 }
 
 .mcp-intro-card {
@@ -119,7 +119,7 @@ const testConnection = () => {
 
 .intro-text {
   line-height: 1.8;
-  color: #606266;
+  color: var(--text-color-regular);
 }
 
 .config-card {

@@ -136,7 +136,7 @@ onMounted(() => {
 .empty-hint {
   padding: 10px;
   text-align: center;
-  color: #909399;
-  font-size: 13px;
+  color: var(--text-color-secondary);
+  font-size: var(--font-size-sm);
 }
 </style>

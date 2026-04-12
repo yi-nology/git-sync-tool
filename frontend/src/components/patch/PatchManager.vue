@@ -774,22 +774,22 @@ function formatSize(bytes: number): string {
 }
 
 .path-hint {
-  font-size: 12px;
-  color: #909399;
-  margin-top: 4px;
+  font-size: var(--font-size-xs);
+  color: var(--text-color-secondary);
+  margin-top: var(--spacing-xs);
 }
 
 .path-hint code {
   padding: 2px 6px;
-  background: #f0f0f0;
+  background: var(--border-color-light);
   border-radius: 3px;
   font-family: 'Monaco', 'Menlo', monospace;
 }
 
 .hint {
-  font-size: 12px;
-  color: #909399;
-  margin-top: 4px;
+  font-size: var(--font-size-xs);
+  color: var(--text-color-secondary);
+  margin-top: var(--spacing-xs);
 }
 
 .patch-content :deep(textarea) {
@@ -808,11 +808,11 @@ function formatSize(bytes: number): string {
 }
 
 .stat-output {
-  margin-top: 8px;
-  padding: 8px;
-  background: #f5f5f5;
-  border-radius: 4px;
-  font-size: 12px;
+  margin-top: var(--spacing-sm);
+  padding: var(--spacing-sm);
+  background: var(--bg-color);
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-xs);
   max-height: 200px;
   overflow: auto;
 }
@@ -828,10 +828,10 @@ function formatSize(bytes: number): string {
 }
 
 .progress-section {
-  margin-bottom: 16px;
+  margin-bottom: var(--spacing-md);
   padding: 12px;
-  background: #f5f7fa;
-  border-radius: 4px;
+  background: var(--bg-color);
+  border-radius: var(--border-radius-sm);
 }
 
 .progress-text {

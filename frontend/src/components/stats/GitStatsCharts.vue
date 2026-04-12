@@ -279,18 +279,18 @@ watch(() => props.statsData, () => updateCharts(), { deep: true })
   transition: background 0.2s;
 }
 .contributor-item:hover {
-  background: #f5f7fa;
+  background: var(--bg-color);
 }
 .contributor-rank {
   width: 28px;
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   font-weight: 700;
-  color: #909399;
+  color: var(--text-color-secondary);
   text-align: center;
   flex-shrink: 0;
 }
-.contributor-item:nth-child(1) .contributor-rank { color: #E6A23C; }
-.contributor-item:nth-child(2) .contributor-rank { color: #909399; }
+.contributor-item:nth-child(1) .contributor-rank { color: var(--warning-color); }
+.contributor-item:nth-child(2) .contributor-rank { color: var(--text-color-secondary); }
 .contributor-item:nth-child(3) .contributor-rank { color: #B87333; }
 
 .contributor-avatar {
@@ -317,8 +317,8 @@ watch(() => props.statsData, () => updateCharts(), { deep: true })
 }
 .contributor-name {
   font-weight: 600;
-  font-size: 14px;
-  color: #303133;
+  font-size: var(--font-size-md);
+  color: var(--text-color-primary);
 }
 .contributor-bar-row {
   margin-bottom: 4px;
@@ -330,13 +330,13 @@ watch(() => props.statsData, () => updateCharts(), { deep: true })
   flex-wrap: wrap;
 }
 .contributor-lines {
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   font-weight: 600;
-  color: #303133;
+  color: var(--text-color-primary);
 }
 .contributor-percent {
-  font-size: 12px;
-  color: #909399;
+  font-size: var(--font-size-xs);
+  color: var(--text-color-secondary);
 }
 .contributor-tags {
   display: flex;

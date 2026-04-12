@@ -31,7 +31,7 @@ COPY frontend/ ./
 RUN npm run build
 
 # Backend Build Stage
-FROM golang:1.24-alpine AS backend-builder
+FROM golang:1.26-alpine AS backend-builder
 
 # Set environment variables with China Proxy
 ENV GO111MODULE=on \

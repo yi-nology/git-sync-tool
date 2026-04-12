@@ -2,157 +2,167 @@
   <div class="branch-list-page">
     <div class="page-header">
       <div class="header-left">
-        <el-button @click="$router.push(`/repos/${repoKey}`)" :icon="ArrowLeft" text>返回</el-button>
+        <button class="back-btn" @click="$router.push(`/repos/${repoKey}`)">
+          <el-icon><ArrowLeft /></el-icon> 返回
+        </button>
         <h2>分支管理</h2>
       </div>
       <div class="header-actions">
-        <el-button type="success" @click="$router.push(`/repos/${repoKey}/compare`)">
+        <button class="action-pill action-pill--green" @click="$router.push(`/repos/${repoKey}/compare`)">
           <el-icon><Switch /></el-icon> 分支对比 & 合并
-        </el-button>
-        <el-button @click="handleFetchAll" :loading="fetchLoading">
+        </button>
+        <button class="action-pill action-pill--outline" @click="handleFetchAll" :disabled="fetchLoading">
           <el-icon><Download /></el-icon> 刷新远端 (Fetch)
-        </el-button>
-        <el-button type="primary" @click="showCreateDialog = true">
+        </button>
+        <button class="action-pill action-pill--primary" @click="showCreateDialog = true">
           <el-icon><Plus /></el-icon> 新建分支
-        </el-button>
+        </button>
       </div>
     </div>
 
-    <el-tabs v-model="activeTab" @tab-change="handleTabChange">
-      <el-tab-pane label="Local (本地分支)" name="local" />
-      <el-tab-pane v-for="remoteName in remoteNames" :key="remoteName" :label="`Remote (远端分支)-${remoteName}`" :name="`remote-${remoteName}`" />
-    </el-tabs>
+    <div class="tab-bar">
+      <div
+        class="tab-item"
+        :class="{ active: activeTab === 'local' }"
+        @click="handleTabChange('local')"
+      >Local (本地分支)</div>
+      <div
+        v-for="remoteName in remoteNames"
+        :key="remoteName"
+        class="tab-item"
+        :class="{ active: activeTab === `remote-${remoteName}` }"
+        @click="handleTabChange(`remote-${remoteName}`)"
+      >Remote (远端分支) - {{ remoteName }}</div>
+    </div>
 
-    <el-card class="mb-3">
-      <el-row :gutter="16">
-        <el-col :span="8">
-          <el-input v-model="searchQuery" placeholder="搜索分支名/作者..." @keyup.enter="loadBranches" clearable />
-        </el-col>
-        <el-col :span="4">
-          <el-button @click="loadBranches">搜索</el-button>
-        </el-col>
-      </el-row>
-    </el-card>
+    <div class="search-card">
+      <el-icon class="search-icon"><Search /></el-icon>
+      <input
+        v-model="searchQuery"
+        placeholder="搜索分支名/作者..."
+        class="search-input"
+        @keyup.enter="loadBranches"
+      />
+      <el-icon v-if="searchQuery" class="clear-icon" @click="searchQuery = ''; loadBranches()"><Close /></el-icon>
+    </div>
 
-    <el-card>
-      <el-table :data="branches" v-loading="loading" stripe style="width: 100%">
-        <el-table-column prop="name" label="分支名称" min-width="180">
-          <template #default="{ row }">
-            <template v-if="activeTab === 'local'">
-              <span :class="{ 'branch-current': row.is_current }">
-                <el-icon v-if="row.is_current" color="#67c23a"><CircleCheck /></el-icon>
-                {{ row.name }}
-              </span>
-            </template>
-            <template v-else>
-              {{ row.name.replace(`${activeTab.replace('remote-', '')}/`, '') }}
-            </template>
-          </template>
-        </el-table-column>
-        <el-table-column prop="hash" label="最新提交" min-width="200">
-          <template #default="{ row }">
-            <el-text class="mono-text" size="small">{{ row.hash ? row.hash.substring(0, 8) : '-' }}</el-text>
-            <el-text v-if="row.message" size="small" type="info" class="commit-msg" truncated> {{ row.message }}</el-text>
-          </template>
-        </el-table-column>
-        <el-table-column prop="author" label="提交人" width="140">
-          <template #default="{ row }">
-            <div>{{ row.author }}</div>
-            <el-text v-if="row.author_email" size="small" type="info">{{ row.author_email }}</el-text>
-          </template>
-        </el-table-column>
-        <el-table-column prop="date" label="提交时间" width="160">
-          <template #default="{ row }">
-            {{ formatRelativeTime(row.date) }}
-          </template>
-        </el-table-column>
-        <el-table-column v-if="activeTab === 'local'" label="上游分支" width="180">
-          <template #default="{ row }">
-            <el-tag v-if="row.upstream" size="small" type="info">{{ row.upstream }}</el-tag>
-            <el-text v-else type="info" size="small">无上游</el-text>
-          </template>
-        </el-table-column>
-        <el-table-column v-if="activeTab === 'local'" label="状态" width="140">
-          <template #default="{ row }">
-            <template v-if="row.upstream">
-              <el-tag v-if="row.ahead > 0" size="small" type="success">{{ row.ahead }}↑</el-tag>
-              <el-tag v-if="row.behind > 0" size="small" type="warning">{{ row.behind }}↓</el-tag>
-              <el-tag v-if="row.ahead === 0 && row.behind === 0" size="small" type="success">已同步</el-tag>
-            </template>
-            <el-text v-else type="info" size="small">无上游</el-text>
-          </template>
-        </el-table-column>
-        <el-table-column v-else label="本地关联" width="160">
-          <template #default="{ row }">
-            <el-tag v-if="getLocalBranch(row.name)" size="small" type="success">
-              {{ getLocalBranch(row.name) }}
-            </el-tag>
-            <el-text v-else type="info" size="small">无关联</el-text>
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" width="280" fixed="right">
-          <template #default="{ row }">
-            <template v-if="activeTab === 'local'">
-              <el-dropdown @command="(cmd: string) => handleBranchCommand(cmd, row)">
-                <el-button size="small" type="primary">
-                  操作 <el-icon class="el-icon--right"><ArrowDown /></el-icon>
-                </el-button>
-                <template #dropdown>
-                  <el-dropdown-menu>
-                    <el-dropdown-item v-if="!row.is_current" command="checkout">
-                      <el-icon><Select /></el-icon> 切换
-                    </el-dropdown-item>
-                    <el-dropdown-item command="push">
-                      <el-icon><Top /></el-icon> 推送
-                    </el-dropdown-item>
-                    <el-dropdown-item command="pull">
-                      <el-icon><Bottom /></el-icon> 拉取
-                    </el-dropdown-item>
-                    <el-dropdown-item command="tag" type="warning">
-                      <el-icon><PriceTag /></el-icon> 打标签
-                    </el-dropdown-item>
-                    <el-dropdown-item command="detail" type="primary">
-                      <el-icon><View /></el-icon> 详情
-                    </el-dropdown-item>
-                    <el-dropdown-item command="rename">
-                      <el-icon><Edit /></el-icon> 重命名
-                    </el-dropdown-item>
-                    <el-dropdown-item v-if="!row.is_current" command="delete" divided type="danger">
-                      <el-icon><Delete /></el-icon> 删除
-                    </el-dropdown-item>
-                  </el-dropdown-menu>
-                </template>
-              </el-dropdown>
-            </template>
-            <template v-else>
-              <el-dropdown @command="(cmd: string) => handleRemoteBranchCommand(cmd, row)">
-                <el-button size="small" type="primary">
-                  操作 <el-icon class="el-icon--right"><ArrowDown /></el-icon>
-                </el-button>
-                <template #dropdown>
-                  <el-dropdown-menu>
-                    <el-dropdown-item v-if="!getLocalBranch(row.name)" command="checkout">
-                      <el-icon><Download /></el-icon> 检出为本地
-                    </el-dropdown-item>
-                    <el-dropdown-item v-if="getLocalBranch(row.name)" command="update">
-                      <el-icon><Bottom /></el-icon> 更新本地
-                    </el-dropdown-item>
-                    <el-dropdown-item v-if="getLocalBranch(row.name)" command="sync">
-                      <el-icon><RefreshRight /></el-icon> 同步本地
-                    </el-dropdown-item>
-                  </el-dropdown-menu>
-                </template>
-              </el-dropdown>
-            </template>
-          </template>
-        </el-table-column>
-      </el-table>
-      <div class="table-footer">
-        <el-text type="info" size="small">
-          {{ activeTab === 'local' ? `共 ${total} 个本地分支` : `共 ${total} 个远端分支 (${activeTab.replace('remote-', '')})` }}
-        </el-text>
+    <div class="branch-table-card" v-loading="loading">
+      <div class="table-header">
+        <span class="th" style="width:180px">分支名称</span>
+        <span class="th" style="width:200px">最新提交</span>
+        <span class="th" style="width:140px">提交人</span>
+        <span class="th" style="width:140px">提交时间</span>
+        <span v-if="activeTab === 'local'" class="th" style="width:160px">上游分支</span>
+        <span v-if="activeTab === 'local'" class="th" style="width:120px">状态</span>
+        <span v-else class="th" style="width:120px">本地关联</span>
+        <span class="th" style="flex:1">操作</span>
       </div>
-    </el-card>
+      <div
+        v-for="row in branches"
+        :key="row.name"
+        class="table-row"
+      >
+        <span class="td" style="width:180px">
+          <template v-if="activeTab === 'local'">
+            <span class="branch-name-cell" :class="{ 'branch-current': row.is_current }">
+              <el-icon v-if="row.is_current" class="current-icon"><CircleCheck /></el-icon>
+              {{ row.name }}
+            </span>
+          </template>
+          <template v-else>
+            <span class="branch-name-cell">{{ row.name.replace(`${activeTab.replace('remote-', '')}/`, '') }}</span>
+          </template>
+        </span>
+        <span class="td td-mono" style="width:200px">
+          <span class="hash-text">{{ row.hash ? row.hash.substring(0, 8) : '-' }}</span>
+          <span v-if="row.message" class="commit-msg">{{ row.message }}</span>
+        </span>
+        <span class="td" style="width:140px">
+          <span class="author-name">{{ row.author }}</span>
+          <span v-if="row.author_email" class="author-email">{{ row.author_email }}</span>
+        </span>
+        <span class="td" style="width:140px">{{ formatRelativeTime(row.date) }}</span>
+        <template v-if="activeTab === 'local'">
+          <span class="td" style="width:160px">
+            <span v-if="row.upstream" class="tag tag--info">{{ row.upstream }}</span>
+            <span v-else class="text-muted">无上游</span>
+          </span>
+          <span class="td" style="width:120px">
+            <template v-if="row.upstream">
+              <span v-if="row.ahead > 0" class="tag tag--success">{{ row.ahead }}↑</span>
+              <span v-if="row.behind > 0" class="tag tag--warning">{{ row.behind }}↓</span>
+              <span v-if="row.ahead === 0 && row.behind === 0" class="tag tag--success">已同步</span>
+            </template>
+            <span v-else class="text-muted">无上游</span>
+          </span>
+        </template>
+        <template v-else>
+          <span class="td" style="width:120px">
+            <span v-if="getLocalBranch(row.name)" class="tag tag--success">{{ getLocalBranch(row.name) }}</span>
+            <span v-else class="text-muted">无关联</span>
+          </span>
+        </template>
+        <span class="td" style="flex:1">
+          <template v-if="activeTab === 'local'">
+            <el-dropdown @command="(cmd: string) => handleBranchCommand(cmd, row)">
+              <button class="row-action-btn row-action-btn--primary">操作</button>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item v-if="!row.is_current" command="checkout">
+                    <el-icon><Select /></el-icon> 切换
+                  </el-dropdown-item>
+                  <el-dropdown-item command="push">
+                    <el-icon><Top /></el-icon> 推送
+                  </el-dropdown-item>
+                  <el-dropdown-item command="pull">
+                    <el-icon><Bottom /></el-icon> 拉取
+                  </el-dropdown-item>
+                  <el-dropdown-item command="tag">
+                    <el-icon><PriceTag /></el-icon> 打标签
+                  </el-dropdown-item>
+                  <el-dropdown-item command="detail">
+                    <el-icon><View /></el-icon> 详情
+                  </el-dropdown-item>
+                  <el-dropdown-item command="rename">
+                    <el-icon><Edit /></el-icon> 重命名
+                  </el-dropdown-item>
+                  <el-dropdown-item v-if="!row.is_current" command="delete" divided>
+                    <el-text type="danger"><el-icon><Delete /></el-icon> 删除</el-text>
+                  </el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+          </template>
+          <template v-else>
+            <el-dropdown @command="(cmd: string) => handleRemoteBranchCommand(cmd, row)">
+              <button class="row-action-btn row-action-btn--primary">操作</button>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item v-if="!getLocalBranch(row.name)" command="checkout">
+                    <el-icon><Download /></el-icon> 检出为本地
+                  </el-dropdown-item>
+                  <el-dropdown-item v-if="getLocalBranch(row.name)" command="update">
+                    <el-icon><Bottom /></el-icon> 更新本地
+                  </el-dropdown-item>
+                  <el-dropdown-item v-if="getLocalBranch(row.name)" command="sync">
+                    <el-icon><RefreshRight /></el-icon> 同步本地
+                  </el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+          </template>
+        </span>
+      </div>
+      <div v-if="branches.length === 0 && !loading" class="empty-table">
+        <span class="text-muted">{{ activeTab === 'local' ? '暂无本地分支' : '暂无远端分支' }}</span>
+      </div>
+    </div>
+
+    <div class="table-footer">
+      <span class="pag-info">
+        {{ activeTab === 'local' ? `共 ${total} 个本地分支` : `共 ${total} 个远端分支 (${activeTab.replace('remote-', '')})` }}
+      </span>
+    </div>
 
     <!-- Create Branch Dialog -->
     <el-dialog v-model="showCreateDialog" title="新建分支" width="480px" destroy-on-close>
@@ -246,7 +256,7 @@
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ArrowLeft, Plus, Delete, Edit, Select, Top, Bottom, Switch, Download, CircleCheck, PriceTag, View, RefreshRight } from '@element-plus/icons-vue'
+import { ArrowLeft, Plus, Delete, Edit, Select, Top, Bottom, Switch, Download, CircleCheck, PriceTag, View, RefreshRight, Search, Close } from '@element-plus/icons-vue'
 import { getBranchList, createBranch, deleteBranch, updateBranch, checkoutBranch, pushBranch, pullBranch, createTag } from '@/api/modules/branch'
 import { fetchRepo, scanRepo } from '@/api/modules/repo'
 import { getRepoDetail } from '@/api/modules/repo'
@@ -568,47 +578,346 @@ function handleRemoteBranchCommand(command: string, row: BranchInfo) {
 </script>
 
 <style scoped>
+.branch-list-page {
+  padding: var(--spacing-xl);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-height: 100vh;
+  background: var(--bg-color);
+}
+
 .page-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  justify-content: space-between;
   flex-wrap: wrap;
   gap: 12px;
 }
+
 .header-left {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
 }
+
 .header-left h2 {
   margin: 0;
-  font-size: 20px;
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text-color-primary);
 }
+
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-color-secondary);
+  background: none;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.back-btn:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
 .header-actions {
   display: flex;
   gap: 8px;
 }
-.mb-3 {
-  margin-bottom: 12px;
+
+.action-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  padding: 8px 16px;
+  border-radius: var(--border-radius-md);
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-family: var(--font-family);
 }
+
+.action-pill--green {
+  background: #ECFDF5;
+  color: var(--success-color);
+}
+.action-pill--green:hover {
+  background: #D1FAE5;
+}
+
+.action-pill--primary {
+  background: var(--primary-color);
+  color: #FFFFFF;
+}
+.action-pill--primary:hover {
+  background: var(--primary-color-hover);
+}
+
+.action-pill--outline {
+  background: transparent;
+  color: var(--text-color-primary);
+  border: 1px solid var(--border-color);
+}
+.action-pill--outline:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.tab-bar {
+  display: flex;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.tab-item {
+  padding: 10px 20px;
+  font-size: 14px;
+  color: var(--text-color-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  border-bottom: 2px solid transparent;
+}
+
+.tab-item:hover {
+  color: var(--primary-color);
+}
+
+.tab-item.active {
+  color: var(--primary-color);
+  font-weight: 500;
+  border-bottom-color: var(--primary-color);
+}
+
+.search-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-color-page);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+  padding: 12px 16px;
+}
+
+.search-icon {
+  color: var(--text-color-secondary);
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 13px;
+  color: var(--text-color-primary);
+  font-family: var(--font-family);
+}
+
+.search-input::placeholder {
+  color: var(--text-color-placeholder);
+}
+
+.clear-icon {
+  color: var(--text-color-secondary);
+  font-size: 16px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: color var(--transition-fast);
+}
+
+.clear-icon:hover {
+  color: var(--text-color-primary);
+}
+
+.branch-table-card {
+  border-radius: var(--border-radius-lg);
+  border: 1px solid var(--border-color);
+  background: var(--bg-color-page);
+  overflow: hidden;
+}
+
+.table-header {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  background: var(--accent-bg);
+}
+
+.th {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-color-secondary);
+}
+
+.table-row {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border-color);
+  transition: background var(--transition-fast);
+}
+
+.table-row:last-child {
+  border-bottom: none;
+}
+
+.table-row:hover {
+  background: var(--border-color-extra-light);
+}
+
+.td {
+  font-size: 13px;
+  color: var(--text-color-secondary);
+}
+
+.branch-name-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+  color: var(--text-color-primary);
+}
+
 .branch-current {
-  font-weight: bold;
-  color: #67c23a;
+  color: var(--success-color);
 }
-.mono-text {
-  font-family: monospace;
+
+.current-icon {
+  color: var(--success-color);
 }
-.commit-msg {
-  margin-left: 8px;
-}
-.form-tip {
+
+.td-mono {
   font-size: 12px;
-  color: #909399;
-  margin-top: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
+
+.hash-text {
+  font-family: 'SF Mono', 'Monaco', 'Menlo', 'Consolas', monospace;
+  color: var(--primary-color);
+}
+
+.commit-msg {
+  margin-left: 6px;
+  color: var(--text-color-secondary);
+  font-size: 12px;
+}
+
+.author-name {
+  display: block;
+  color: var(--text-color-primary);
+  font-size: 13px;
+}
+
+.author-email {
+  display: block;
+  font-size: 12px;
+  color: var(--text-color-secondary);
+}
+
+.tag {
+  display: inline-block;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: var(--border-radius-sm);
+}
+
+.tag--success {
+  background: #ECFDF5;
+  color: var(--success-color);
+}
+
+.tag--info {
+  background: var(--accent-bg);
+  color: var(--primary-color);
+}
+
+.tag--warning {
+  background: #FFFBEB;
+  color: var(--warning-color);
+}
+
+.text-muted {
+  font-size: 12px;
+  color: var(--text-color-placeholder);
+}
+
+.row-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: var(--border-radius-sm);
+  border: 1px solid var(--border-color);
+  background: transparent;
+  font-size: 13px;
+  color: var(--text-color-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.row-action-btn:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.row-action-btn--primary {
+  background: var(--primary-color);
+  color: #FFFFFF;
+  border: none;
+}
+
+.row-action-btn--primary:hover {
+  background: var(--primary-color-hover);
+}
+
+.empty-table {
+  padding: 32px;
+  text-align: center;
+}
+
 .table-footer {
-  padding: 12px 0;
+  padding: 8px 0;
   text-align: left;
+}
+
+.pag-info {
+  font-size: 12px;
+  color: var(--text-color-secondary);
+}
+
+.form-tip {
+  font-size: var(--font-size-xs);
+  color: var(--text-color-secondary);
+  margin-top: var(--spacing-xs);
+}
+
+@media (max-width: 768px) {
+  .branch-list-page {
+    padding: var(--spacing-md);
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .branch-table-card {
+    overflow-x: auto;
+  }
+
+  .table-header,
+  .table-row {
+    min-width: 900px;
+  }
 }
 </style>

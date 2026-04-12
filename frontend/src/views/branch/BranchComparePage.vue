@@ -2,17 +2,18 @@
   <div class="compare-page">
     <div class="page-header">
       <div class="header-left">
-        <el-button @click="$router.push(`/repos/${repoKey}/branches`)" :icon="ArrowLeft" text>返回</el-button>
+        <button class="back-btn" @click="$router.push(`/repos/${repoKey}/branches`)">
+          <el-icon><ArrowLeft /></el-icon> 返回
+        </button>
         <h2>分支对比 & 合并</h2>
       </div>
     </div>
 
-    <!-- Control Panel -->
-    <el-card class="mb-4">
-      <el-row :gutter="16" align="middle">
-        <el-col :span="8">
-          <div class="form-label">源分支 (Source/Feature)</div>
-          <el-select v-model="sourceBranch" placeholder="选择源分支" filterable style="width: 100%">
+    <div class="control-panel">
+      <div class="branch-select-group">
+        <div class="branch-box">
+          <div class="branch-label">源分支 (Source/Feature)</div>
+          <el-select v-model="sourceBranch" placeholder="选择源分支" filterable>
             <el-option-group label="本地分支">
               <el-option v-for="b in localBranches" :key="b" :label="b" :value="b" />
             </el-option-group>
@@ -20,102 +21,97 @@
               <el-option v-for="b in remoteBranches" :key="b" :label="b" :value="b" />
             </el-option-group>
           </el-select>
-        </el-col>
-        <el-col :span="2" class="text-center">
-          <el-icon :size="24" color="#909399"><Right /></el-icon>
-        </el-col>
-        <el-col :span="8">
-          <div class="form-label">目标分支 (Target/Base) <el-text type="info" size="small">仅本地分支</el-text></div>
-          <el-select v-model="targetBranch" placeholder="选择目标分支" filterable style="width: 100%">
+        </div>
+        <div class="arrow-box">
+          <el-icon :size="20" color="#64748B"><Right /></el-icon>
+        </div>
+        <div class="branch-box">
+          <div class="branch-label">目标分支 (Target/Base)</div>
+          <el-select v-model="targetBranch" placeholder="选择目标分支" filterable>
             <el-option v-for="b in localBranches" :key="b" :label="b" :value="b" />
           </el-select>
-        </el-col>
-        <el-col :span="6" class="text-right">
-          <el-button-group>
-            <el-button type="primary" @click="handleCompare" :loading="comparing">
-              <el-icon><Switch /></el-icon> 对比
-            </el-button>
-            <el-button type="success" @click="openMergeDialog" :disabled="!compareResult || !canMerge">
-              <el-icon><Connection /></el-icon> 合并
-            </el-button>
-          </el-button-group>
-        </el-col>
-      </el-row>
-      <!-- 合并提示 -->
-      <el-alert
-        v-if="targetBranch && isRemoteBranch(targetBranch)"
-        title="目标分支不能是远程分支"
-        type="warning"
-        :closable="false"
-        show-icon
-        class="mt-3"
-        description="Git 合并只能在本地分支上执行，请选择本地分支作为目标分支。"
-      />
-    </el-card>
+        </div>
+      </div>
+      <div class="control-actions">
+        <button class="action-pill action-pill--primary" @click="handleCompare" :disabled="comparing">
+          <el-icon><Switch /></el-icon> 对比
+        </button>
+        <button class="action-pill action-pill--green" @click="openMergeDialog" :disabled="!compareResult || !canMerge">
+          <el-icon><Connection /></el-icon> 合并
+        </button>
+      </div>
+    </div>
 
-    <!-- Summary Stats -->
-    <el-row v-if="compareResult" :gutter="16" class="mb-4">
-      <el-col :span="6">
-        <el-card shadow="hover">
-          <el-statistic title="变更文件" :value="compareResult.stat.FilesChanged" />
-        </el-card>
-      </el-col>
-      <el-col :span="6">
-        <el-card shadow="hover">
-          <el-statistic title="新增行数" :value="compareResult.stat.Insertions" :value-style="{ color: '#67c23a' }" />
-        </el-card>
-      </el-col>
-      <el-col :span="6">
-        <el-card shadow="hover">
-          <el-statistic title="删除行数" :value="compareResult.stat.Deletions" :value-style="{ color: '#f56c6c' }" />
-        </el-card>
-      </el-col>
-      <el-col :span="6">
-        <el-card shadow="hover" class="download-card">
-          <el-button type="info" @click="handleDownloadPatch">
-            <el-icon><Download /></el-icon> 导出 Patch
-          </el-button>
-        </el-card>
-      </el-col>
-    </el-row>
+    <el-alert
+      v-if="targetBranch && isRemoteBranch(targetBranch)"
+      title="目标分支不能是远程分支"
+      type="warning"
+      :closable="false"
+      show-icon
+      description="Git 合并只能在本地分支上执行，请选择本地分支作为目标分支。"
+    />
 
-    <!-- File List & Diff Viewer -->
-    <el-row v-if="compareResult" :gutter="16">
-      <el-col :span="6">
-        <el-card header="变更文件列表">
-          <div class="file-list">
-            <div
-              v-for="f in compareResult.files"
-              :key="f.path"
-              class="file-item"
-              :class="{ active: f.path === currentFile }"
-              @click="selectFile(f.path)"
-            >
-              <el-text size="small" truncated>{{ f.path }}</el-text>
-              <div class="file-stat">
-                <el-tag size="small" :type="getFileStatusType(f.status)">{{ f.status }}</el-tag>
-              </div>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :span="18">
-        <el-card>
-          <template #header>
-            <div class="diff-header">
-              <el-text>{{ currentFile || '选择文件查看差异' }}</el-text>
-              <el-radio-group v-model="diffViewMode" size="small">
-                <el-radio-button value="line-by-line">Line</el-radio-button>
-                <el-radio-button value="side-by-side">Side</el-radio-button>
-              </el-radio-group>
-            </div>
-          </template>
-          <div id="diff-viewer" v-html="diffHtml" class="diff-content"></div>
-        </el-card>
-      </el-col>
-    </el-row>
+    <div v-if="compareResult" class="stats-row">
+      <div class="stat-card">
+        <span class="stat-value">{{ compareResult.stat.FilesChanged }}</span>
+        <span class="stat-label">变更文件</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value stat-value--green">+{{ compareResult.stat.Insertions }}</span>
+        <span class="stat-label">新增行数</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value stat-value--red">-{{ compareResult.stat.Deletions }}</span>
+        <span class="stat-label">删除行数</span>
+      </div>
+      <div class="stat-card stat-card--action">
+        <button class="action-pill action-pill--outline" @click="handleDownloadPatch">
+          <el-icon><Download /></el-icon> 导出 Patch
+        </button>
+      </div>
+    </div>
 
-    <el-empty v-if="!compareResult && !comparing" description="请选择分支进行对比" />
+    <template v-if="compareResult">
+      <h3 class="section-title">变更文件列表</h3>
+
+      <div class="file-table-card">
+        <div class="table-header">
+          <span class="th" style="width:80px">状态</span>
+          <span class="th" style="flex:1">文件路径</span>
+          <span class="th" style="width:120px">变更</span>
+        </div>
+        <div
+          v-for="f in compareResult.files"
+          :key="f.path"
+          class="table-row"
+          :class="{ active: f.path === currentFile }"
+          @click="selectFile(f.path)"
+        >
+          <span class="td" style="width:80px">
+            <span class="status-tag" :class="`status-tag--${getFileStatusClass(f.status)}`">{{ f.status }}</span>
+          </span>
+          <span class="td td-path" style="flex:1">{{ f.path }}</span>
+          <span class="td" style="width:120px">
+            <span class="status-tag" :class="`status-tag--${getFileStatusClass(f.status)}`">{{ f.status === 'A' ? 'Added' : f.status === 'D' ? 'Deleted' : f.status === 'M' ? 'Modified' : f.status }}</span>
+          </span>
+        </div>
+      </div>
+
+      <div v-if="currentFile" class="diff-section">
+        <div class="diff-header">
+          <span class="diff-title">{{ currentFile }}</span>
+          <el-radio-group v-model="diffViewMode" size="small">
+            <el-radio-button value="line-by-line">Line</el-radio-button>
+            <el-radio-button value="side-by-side">Side</el-radio-button>
+          </el-radio-group>
+        </div>
+        <div id="diff-viewer" v-html="diffHtml" class="diff-content"></div>
+      </div>
+    </template>
+
+    <div v-if="!compareResult && !comparing" class="empty-state">
+      <span class="text-muted">请选择分支进行对比</span>
+    </div>
 
     <!-- Merge Dialog -->
     <el-dialog v-model="showMergeDialog" title="合并分支" width="550px" destroy-on-close>
@@ -225,11 +221,11 @@ watch(diffViewMode, () => {
   if (currentFile.value) selectFile(currentFile.value)
 })
 
-function getFileStatusType(status: string): '' | 'success' | 'warning' | 'danger' | 'info' {
-  if (status === 'A') return 'success'
-  if (status === 'D') return 'danger'
-  if (status === 'M') return 'warning'
-  if (status === 'R') return 'info'
+function getFileStatusClass(status: string): string {
+  if (status === 'A') return 'added'
+  if (status === 'D') return 'deleted'
+  if (status === 'M') return 'modified'
+  if (status === 'R') return 'renamed'
   return ''
 }
 
@@ -310,91 +306,339 @@ async function handleMerge() {
 </script>
 
 <style scoped>
+.compare-page {
+  padding: var(--spacing-xl);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-height: 100vh;
+  background: var(--bg-color);
+}
+
 .page-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  justify-content: space-between;
 }
+
 .header-left {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
 }
+
 .header-left h2 {
   margin: 0;
-  font-size: 20px;
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text-color-primary);
 }
-.form-label {
-  font-size: 12px;
-  color: #909399;
-  margin-bottom: 4px;
-}
-.text-center {
-  text-align: center;
-  padding-top: 20px;
-}
-.text-right {
-  text-align: right;
-  padding-top: 20px;
-}
-.mb-3 {
-  margin-bottom: 12px;
-}
-.mb-4 {
-  margin-bottom: 16px;
-}
-.mt-3 {
-  margin-top: 12px;
-}
-.file-list {
-  max-height: 600px;
-  overflow-y: auto;
-}
-.file-item {
-  padding: 6px 8px;
-  cursor: pointer;
-  border-bottom: 1px solid #f0f0f0;
-  display: flex;
-  justify-content: space-between;
+
+.back-btn {
+  display: inline-flex;
   align-items: center;
-}
-.file-item:hover {
-  background: #ecf5ff;
-}
-.file-item.active {
-  background: #ecf5ff;
-  border-left: 3px solid #409eff;
-}
-.file-stat {
-  display: flex;
   gap: 6px;
+  font-size: 13px;
+  color: var(--text-color-secondary);
+  background: none;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.back-btn:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.control-panel {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  background: var(--bg-color-page);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+}
+
+.branch-select-group {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+}
+
+.branch-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.branch-label {
   font-size: 12px;
+  color: var(--text-color-secondary);
+}
+
+.branch-box :deep(.el-select) {
+  width: 100%;
+}
+
+.arrow-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+}
+
+.control-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.action-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 10px 20px;
+  border-radius: var(--border-radius-md);
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-family: var(--font-family);
+}
+
+.action-pill:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.action-pill--primary {
+  background: var(--primary-color);
+  color: #FFFFFF;
+}
+.action-pill--primary:hover:not(:disabled) {
+  background: var(--primary-color-hover);
+}
+
+.action-pill--green {
+  background: #ECFDF5;
+  color: var(--success-color);
+}
+.action-pill--green:hover:not(:disabled) {
+  background: #D1FAE5;
+}
+
+.action-pill--outline {
+  background: transparent;
+  color: var(--text-color-primary);
+  border: 1px solid var(--border-color);
+}
+
+.stats-row {
+  display: flex;
+  gap: 16px;
+}
+
+.stat-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  background: var(--bg-color-page);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+}
+
+.stat-card--action {
+  justify-content: center;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text-color-primary);
+}
+
+.stat-value--green {
+  color: var(--success-color);
+}
+
+.stat-value--red {
+  color: var(--danger-color);
+}
+
+.stat-label {
+  font-size: 12px;
+  color: var(--text-color-secondary);
+}
+
+.section-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-color-primary);
+}
+
+.file-table-card {
+  border-radius: var(--border-radius-lg);
+  border: 1px solid var(--border-color);
+  background: var(--bg-color-page);
+  overflow: hidden;
+}
+
+.table-header {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  background: var(--accent-bg);
+}
+
+.th {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-color-secondary);
+}
+
+.table-row {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border-color);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.table-row:last-child {
+  border-bottom: none;
+}
+
+.table-row:hover {
+  background: var(--border-color-extra-light);
+}
+
+.table-row.active {
+  background: var(--accent-bg);
+}
+
+.td {
+  font-size: 13px;
+  color: var(--text-color-secondary);
+}
+
+.status-tag {
+  display: inline-block;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: var(--border-radius-sm);
+}
+
+.status-tag--added {
+  background: #ECFDF5;
+  color: var(--success-color);
+}
+
+.status-tag--deleted {
+  background: #FEF2F2;
+  color: var(--danger-color);
+}
+
+.status-tag--modified {
+  background: #EEF2FF;
+  color: var(--primary-color);
+}
+
+.status-tag--renamed {
+  background: #FFFBEB;
+  color: var(--warning-color);
+}
+
+.td-path {
+  color: var(--text-color-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+.td-mono {
+  font-family: 'SF Mono', 'Monaco', 'Menlo', 'Consolas', monospace;
+  font-size: 13px;
+}
+
 .stat-add {
-  color: #67c23a;
+  color: var(--success-color);
 }
+
 .stat-del {
-  color: #f56c6c;
+  color: var(--danger-color);
 }
+
+.diff-section {
+  border-radius: var(--border-radius-lg);
+  border: 1px solid var(--border-color);
+  background: var(--bg-color-page);
+  overflow: hidden;
+}
+
 .diff-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border-color);
 }
+
+.diff-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-color-primary);
+}
+
 .diff-content {
   overflow-x: auto;
+  padding: 0;
 }
-.download-card {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
+
+.empty-state {
+  padding: 40px;
+  text-align: center;
 }
-.download-card :deep(.el-card__body) {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+
+.text-muted {
+  font-size: 13px;
+  color: var(--text-color-placeholder);
+}
+
+@media (max-width: 768px) {
+  .compare-page {
+    padding: var(--spacing-md);
+  }
+
+  .control-panel {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .branch-select-group {
+    flex-direction: column;
+  }
+
+  .arrow-box {
+    transform: rotate(90deg);
+  }
+
+  .stats-row {
+    flex-wrap: wrap;
+  }
+
+  .stat-card {
+    min-width: calc(50% - 12px);
+  }
 }
 </style>

@@ -126,8 +126,8 @@ function sshKeyTypeColor(t: string): string {
   gap: 4px;
 }
 .description {
-  margin-top: 8px;
-  font-size: 13px;
-  color: #606266;
+  margin-top: var(--spacing-sm);
+  font-size: var(--font-size-sm);
+  color: var(--text-color-regular);
 }
 </style>
