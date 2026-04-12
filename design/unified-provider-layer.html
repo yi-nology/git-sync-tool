@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>统一 Git 平台能力层 — 设计文档 | Git Manage Service</title>
+    <meta name="generator" content="VuePress 1.9.10">
+    <link rel="icon" type="image/svg+xml" href="/git-manage-service/images/favicon.svg">
+    <meta name="description" content="轻量级多仓库自动化同步管理系统">
+    <meta name="theme-color" content="#6366f1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    
+    <link rel="preload" href="/git-manage-service/assets/css/0.styles.92870b7f.css" as="style"><link rel="preload" href="/git-manage-service/assets/js/app.dc8f39c3.js" as="script"><link rel="preload" href="/git-manage-service/assets/js/2.98b0deb4.js" as="script"><link rel="preload" href="/git-manage-service/assets/js/1.77e78a7e.js" as="script"><link rel="preload" href="/git-manage-service/assets/js/31.561ccfaf.js" as="script"><link rel="prefetch" href="/git-manage-service/assets/js/10.b6fc63e7.js"><link rel="prefetch" href="/git-manage-service/assets/js/11.a556731a.js"><link rel="prefetch" href="/git-manage-service/assets/js/12.bc135387.js"><link rel="prefetch" href="/git-manage-service/assets/js/13.1520762d.js"><link rel="prefetch" href="/git-manage-service/assets/js/14.440abb79.js"><link rel="prefetch" href="/git-manage-service/assets/js/15.540584f5.js"><link rel="prefetch" href="/git-manage-service/assets/js/16.d61ffc33.js"><link rel="prefetch" href="/git-manage-service/assets/js/17.fe7e2849.js"><link rel="prefetch" href="/git-manage-service/assets/js/18.5341d2b3.js"><link rel="prefetch" href="/git-manage-service/assets/js/19.6ee6f591.js"><link rel="prefetch" href="/git-manage-service/assets/js/20.57fccbda.js"><link rel="prefetch" href="/git-manage-service/assets/js/21.5e6ee4ad.js"><link rel="prefetch" href="/git-manage-service/assets/js/22.df847616.js"><link rel="prefetch" href="/git-manage-service/assets/js/23.5874e4ea.js"><link rel="prefetch" href="/git-manage-service/assets/js/24.b3510823.js"><link rel="prefetch" href="/git-manage-service/assets/js/25.5fe74e41.js"><link rel="prefetch" href="/git-manage-service/assets/js/26.976f771e.js"><link rel="prefetch" href="/git-manage-service/assets/js/27.5905740c.js"><link rel="prefetch" href="/git-manage-service/assets/js/28.5389d93b.js"><link rel="prefetch" href="/git-manage-service/assets/js/29.891e2cbd.js"><link rel="prefetch" href="/git-manage-service/assets/js/3.48c22373.js"><link rel="prefetch" href="/git-manage-service/assets/js/30.966a53c4.js"><link rel="prefetch" href="/git-manage-service/assets/js/32.9eb3db93.js"><link rel="prefetch" href="/git-manage-service/assets/js/33.84a5ae59.js"><link rel="prefetch" href="/git-manage-service/assets/js/34.093405f5.js"><link rel="prefetch" href="/git-manage-service/assets/js/35.b605d5e1.js"><link rel="prefetch" href="/git-manage-service/assets/js/36.d013fa78.js"><link rel="prefetch" href="/git-manage-service/assets/js/37.e5eda3bc.js"><link rel="prefetch" href="/git-manage-service/assets/js/38.3e4beef7.js"><link rel="prefetch" href="/git-manage-service/assets/js/39.1aa54073.js"><link rel="prefetch" href="/git-manage-service/assets/js/4.76aca2d3.js"><link rel="prefetch" href="/git-manage-service/assets/js/40.2a1edcc8.js"><link rel="prefetch" href="/git-manage-service/assets/js/41.c125a58e.js"><link rel="prefetch" href="/git-manage-service/assets/js/42.f2f35cd0.js"><link rel="prefetch" href="/git-manage-service/assets/js/43.147284bf.js"><link rel="prefetch" href="/git-manage-service/assets/js/44.003db7d2.js"><link rel="prefetch" href="/git-manage-service/assets/js/45.e4bcd873.js"><link rel="prefetch" href="/git-manage-service/assets/js/46.cb49954d.js"><link rel="prefetch" href="/git-manage-service/assets/js/47.ad8587b8.js"><link rel="prefetch" href="/git-manage-service/assets/js/48.cb3bef92.js"><link rel="prefetch" href="/git-manage-service/assets/js/49.38971bdd.js"><link rel="prefetch" href="/git-manage-service/assets/js/5.eeff0cb2.js"><link rel="prefetch" href="/git-manage-service/assets/js/50.614e3203.js"><link rel="prefetch" href="/git-manage-service/assets/js/51.56f44bfd.js"><link rel="prefetch" href="/git-manage-service/assets/js/52.edc8d7b0.js"><link rel="prefetch" href="/git-manage-service/assets/js/53.4a5ed580.js"><link rel="prefetch" href="/git-manage-service/assets/js/54.e88cf30b.js"><link rel="prefetch" href="/git-manage-service/assets/js/55.4562eab4.js"><link rel="prefetch" href="/git-manage-service/assets/js/56.442ff2ff.js"><link rel="prefetch" href="/git-manage-service/assets/js/57.a56f8911.js"><link rel="prefetch" href="/git-manage-service/assets/js/58.ddefa9d3.js"><link rel="prefetch" href="/git-manage-service/assets/js/59.14a0e5a8.js"><link rel="prefetch" href="/git-manage-service/assets/js/6.196c85db.js"><link rel="prefetch" href="/git-manage-service/assets/js/60.bcd0f602.js"><link rel="prefetch" href="/git-manage-service/assets/js/7.dadc5d64.js"><link rel="prefetch" href="/git-manage-service/assets/js/vendors~docsearch.bd0b093a.js">
+    <link rel="stylesheet" href="/git-manage-service/assets/css/0.styles.92870b7f.css">
+  </head>
+  <body>
+    <div id="app" data-server-rendered="true"><div class="theme-container"><header class="navbar"><div class="sidebar-button"><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" viewBox="0 0 448 512" class="icon"><path fill="currentColor" d="M436 124H12c-6.627 0-12-5.373-12-12V80c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12z"></path></svg></div> <a href="/git-manage-service/" class="home-link router-link-active"><!----> <span class="site-name">Git Manage Service</span></a> <div class="links"><div class="search-box"><input aria-label="Search" autocomplete="off" spellcheck="false" value=""> <!----></div> <nav class="nav-links can-hide"><div class="nav-item"><a href="/git-manage-service/" class="nav-link">
+  首页
+</a></div><div class="nav-item"><a href="/git-manage-service/getting-started.html" class="nav-link">
+  快速开始
+</a></div><div class="nav-item"><div class="dropdown-wrapper"><button type="button" aria-label="功能指南" class="dropdown-title"><span class="title">功能指南</span> <span class="arrow down"></span></button> <button type="button" aria-label="功能指南" class="mobile-dropdown-title"><span class="title">功能指南</span> <span class="arrow right"></span></button> <ul class="nav-dropdown" style="display:none;"><li class="dropdown-item"><!----> <a href="/git-manage-service/features/repo.html" class="nav-link">
+  仓库管理
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/branch.html" class="nav-link">
+  分支管理
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/sync.html" class="nav-link">
+  同步任务
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/webhook.html" class="nav-link">
+  Webhook
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/notification.html" class="nav-link">
+  通知配置
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/ssh.html" class="nav-link">
+  SSH 密钥
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/metrics.html" class="nav-link">
+  代码度量
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/spec-editor.html" class="nav-link">
+  Spec 编辑器
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/patch-manager.html" class="nav-link">
+  Patch 管理
+</a></li></ul></div></div><div class="nav-item"><div class="dropdown-wrapper"><button type="button" aria-label="部署方案" class="dropdown-title"><span class="title">部署方案</span> <span class="arrow down"></span></button> <button type="button" aria-label="部署方案" class="mobile-dropdown-title"><span class="title">部署方案</span> <span class="arrow right"></span></button> <ul class="nav-dropdown" style="display:none;"><li class="dropdown-item"><!----> <a href="/git-manage-service/deployment/binary.html" class="nav-link">
+  二进制部署
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/deployment/docker.html" class="nav-link">
+  Docker 部署
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/deployment/kubernetes.html" class="nav-link">
+  Kubernetes
+</a></li></ul></div></div><div class="nav-item"><a href="/git-manage-service/configuration.html" class="nav-link">
+  配置参考
+</a></div><div class="nav-item"><a href="/git-manage-service/api.html" class="nav-link">
+  API 文档
+</a></div> <a href="https://github.com/yi-nology/git-manage-service" target="_blank" rel="noopener noreferrer" class="repo-link">
+    GitHub
+    <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></nav></div></header> <div class="sidebar-mask"></div> <aside class="sidebar"><nav class="nav-links"><div class="nav-item"><a href="/git-manage-service/" class="nav-link">
+  首页
+</a></div><div class="nav-item"><a href="/git-manage-service/getting-started.html" class="nav-link">
+  快速开始
+</a></div><div class="nav-item"><div class="dropdown-wrapper"><button type="button" aria-label="功能指南" class="dropdown-title"><span class="title">功能指南</span> <span class="arrow down"></span></button> <button type="button" aria-label="功能指南" class="mobile-dropdown-title"><span class="title">功能指南</span> <span class="arrow right"></span></button> <ul class="nav-dropdown" style="display:none;"><li class="dropdown-item"><!----> <a href="/git-manage-service/features/repo.html" class="nav-link">
+  仓库管理
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/branch.html" class="nav-link">
+  分支管理
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/sync.html" class="nav-link">
+  同步任务
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/webhook.html" class="nav-link">
+  Webhook
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/notification.html" class="nav-link">
+  通知配置
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/ssh.html" class="nav-link">
+  SSH 密钥
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/metrics.html" class="nav-link">
+  代码度量
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/spec-editor.html" class="nav-link">
+  Spec 编辑器
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/patch-manager.html" class="nav-link">
+  Patch 管理
+</a></li></ul></div></div><div class="nav-item"><div class="dropdown-wrapper"><button type="button" aria-label="部署方案" class="dropdown-title"><span class="title">部署方案</span> <span class="arrow down"></span></button> <button type="button" aria-label="部署方案" class="mobile-dropdown-title"><span class="title">部署方案</span> <span class="arrow right"></span></button> <ul class="nav-dropdown" style="display:none;"><li class="dropdown-item"><!----> <a href="/git-manage-service/deployment/binary.html" class="nav-link">
+  二进制部署
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/deployment/docker.html" class="nav-link">
+  Docker 部署
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/deployment/kubernetes.html" class="nav-link">
+  Kubernetes
+</a></li></ul></div></div><div class="nav-item"><a href="/git-manage-service/configuration.html" class="nav-link">
+  配置参考
+</a></div><div class="nav-item"><a href="/git-manage-service/api.html" class="nav-link">
+  API 文档
+</a></div> <a href="https://github.com/yi-nology/git-manage-service" target="_blank" rel="noopener noreferrer" class="repo-link">
+    GitHub
+    <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></nav>  <ul class="sidebar-links"><li><section class="sidebar-group depth-0"><p class="sidebar-heading open"><span>📖 概览</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/git-manage-service/" aria-current="page" class="sidebar-link">Home</a></li><li><a href="/git-manage-service/getting-started.html" class="sidebar-link">快速开始</a></li></ul></section></li><li><section class="sidebar-group collapsable depth-0"><p class="sidebar-heading"><span>🚀 功能指南</span> <span class="arrow right"></span></p> <!----></section></li><li><section class="sidebar-group collapsable depth-0"><p class="sidebar-heading"><span>📦 部署方案</span> <span class="arrow right"></span></p> <!----></section></li><li><section class="sidebar-group collapsable depth-0"><p class="sidebar-heading"><span>⚙️ 参考</span> <span class="arrow right"></span></p> <!----></section></li></ul> </aside> <main class="page"> <div class="theme-default-content content__default"><h1 id="统一-git-平台能力层-设计文档"><a href="#统一-git-平台能力层-设计文档" class="header-anchor">#</a> 统一 Git 平台能力层 — 设计文档</h1> <blockquote><p>基于现有 git-manage-service 架构，新增 Provider 抽象层，屏蔽 GitLab/GitHub/Gitea 差异。</p></blockquote> <hr> <h2 id="_1-现状分析"><a href="#_1-现状分析" class="header-anchor">#</a> 1. 现状分析</h2> <table><thead><tr><th>能力</th> <th>现状</th> <th>缺口</th></tr></thead> <tbody><tr><td>仓库管理</td> <td>完整 CRUD + clone + scan</td> <td>无平台感知，纯 git 协议操作</td></tr> <tr><td>分支管理</td> <td>17 个 API，含 cherry-pick/rebase</td> <td>无平台分支保护规则</td></tr> <tr><td>凭证管理</td> <td>SSH/HTTP Basic/HTTP Token 三类</td> <td>无平台 Token（OAuth2/PAT）类型</td></tr> <tr><td>同步</td> <td>单/全分支 + cron + webhook 触发</td> <td>无双向同步，无镜像模式</td></tr> <tr><td>Webhook</td> <td>仅出站触发同步任务</td> <td><strong>无入站接收</strong>，无事件解析</td></tr> <tr><td>PR/MR</td> <td><strong>完全缺失</strong></td> <td>需要新建整个模块</td></tr></tbody></table> <p><strong>核心结论</strong>：系统目前在 git 协议层非常完善，但缺少<strong>平台 API 集成层</strong>。设计重点是在不破坏现有分层的前提下，插入 Provider 抽象。</p> <hr> <h2 id="_2-总体架构"><a href="#_2-总体架构" class="header-anchor">#</a> 2. 总体架构</h2> <div class="language- line-numbers-mode"><pre class="language-text"><code>                         ┌─────────────────────────┐
+                         │     HTTP API (Hz)        │
+                         │  /api/v1/cr/*            │
+                         │  /api/v1/webhook/*       │
+                         └────────┬────────────────┘
+                                  │
+                    ┌─────────────┴─────────────┐
+                    │      Handler Layer         │  ← 参数绑定、校验
+                    └─────────────┬─────────────┘
+                                  │
+              ┌───────────────────┴───────────────────┐
+              │           Service Layer                │
+              │  ┌──────────────────────────────────┐  │
+              │  │      Provider Manager             │  │  ← 新增核心
+              │  │  ┌──────┬──────┬──────┬──────┐   │  │
+              │  │  │ GitLab│GitHub│Gitea │ Mock │   │  │
+              │  │  └──┬───┘──┬───┘──┬───┘──┬───┘   │  │
+              │  │     └───────┴───────┴──────┘      │  │
+              │  │     统一接口: Provider              │  │
+              │  └──────────────────────────────────┘  │
+              │                                         │
+              │  ┌──────────────┐  ┌────────────────┐  │
+              │  │ CR Service   │  │ Webhook Service │  │  ← 新增
+              │  └──────────────┘  └────────────────┘  │
+              │                                         │
+              │  ┌────────────────────────────────────┐ │
+              │  │ 现有: Git Service / Sync Service    │ │  ← 不变
+              │  └────────────────────────────────────┘ │
+              └───────────────────┬─────────────────────┘
+                                  │
+              ┌───────────────────┴─────────────────────┐
+              │              DAO Layer (GORM)            │
+              │  provider_config / cr / webhook_event    │  ← 新增表
+              └───────────────────┬─────────────────────┘
+                                  │
+                              SQLite / MySQL
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br><span class="line-number">11</span><br><span class="line-number">12</span><br><span class="line-number">13</span><br><span class="line-number">14</span><br><span class="line-number">15</span><br><span class="line-number">16</span><br><span class="line-number">17</span><br><span class="line-number">18</span><br><span class="line-number">19</span><br><span class="line-number">20</span><br><span class="line-number">21</span><br><span class="line-number">22</span><br><span class="line-number">23</span><br><span class="line-number">24</span><br><span class="line-number">25</span><br><span class="line-number">26</span><br><span class="line-number">27</span><br><span class="line-number">28</span><br><span class="line-number">29</span><br><span class="line-number">30</span><br><span class="line-number">31</span><br><span class="line-number">32</span><br><span class="line-number">33</span><br><span class="line-number">34</span><br><span class="line-number">35</span><br><span class="line-number">36</span><br></div></div><p><strong>设计原则</strong>：</p> <ul><li>现有 <code>biz/service/git/</code>（git 协议层）<strong>完全不动</strong></li> <li>新增 <code>biz/service/provider/</code>（平台 API 层），与 git 层平行</li> <li>Handler/Router/DAO 遵循现有分层模式</li> <li>Provider 通过接口抽象，每个平台一个实现</li></ul> <hr> <h2 id="_3-provider-抽象层"><a href="#_3-provider-抽象层" class="header-anchor">#</a> 3. Provider 抽象层</h2> <h3 id="_3-1-核心接口"><a href="#_3-1-核心接口" class="header-anchor">#</a> 3.1 核心接口</h3> <div class="language-go line-numbers-mode"><pre class="language-go"><code><span class="token comment">// biz/service/provider/provider.go</span>
+
+<span class="token keyword">type</span> Platform <span class="token builtin">string</span>
+
+<span class="token keyword">const</span> <span class="token punctuation">(</span>
+    PlatformGitLab Platform <span class="token operator">=</span> <span class="token string">&quot;gitlab&quot;</span>
+    PlatformGitHub Platform <span class="token operator">=</span> <span class="token string">&quot;github&quot;</span>
+    PlatformGitea  Platform <span class="token operator">=</span> <span class="token string">&quot;gitea&quot;</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">type</span> Provider <span class="token keyword">interface</span> <span class="token punctuation">{</span>
+    <span class="token comment">// 平台信息</span>
+    <span class="token function">Platform</span><span class="token punctuation">(</span><span class="token punctuation">)</span> Platform
+    
+    <span class="token comment">// 仓库</span>
+    <span class="token function">ListRepos</span><span class="token punctuation">(</span>ctx context<span class="token punctuation">.</span>Context<span class="token punctuation">,</span> opts ListRepoOptions<span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token operator">*</span>PlatformRepo<span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span>
+    <span class="token function">GetRepo</span><span class="token punctuation">(</span>ctx context<span class="token punctuation">.</span>Context<span class="token punctuation">,</span> owner<span class="token punctuation">,</span> repo <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token operator">*</span>PlatformRepo<span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span>
+    
+    <span class="token comment">// 分支保护</span>
+    <span class="token function">ListProtectedBranches</span><span class="token punctuation">(</span>ctx context<span class="token punctuation">.</span>Context<span class="token punctuation">,</span> owner<span class="token punctuation">,</span> repo <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token operator">*</span>BranchProtection<span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span>
+    
+    <span class="token comment">// Merge Request / Pull Request</span>
+    <span class="token function">CreateCR</span><span class="token punctuation">(</span>ctx context<span class="token punctuation">.</span>Context<span class="token punctuation">,</span> opts CreateCROptions<span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token operator">*</span>ChangeRequest<span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span>
+    <span class="token function">GetCR</span><span class="token punctuation">(</span>ctx context<span class="token punctuation">.</span>Context<span class="token punctuation">,</span> owner<span class="token punctuation">,</span> repo <span class="token builtin">string</span><span class="token punctuation">,</span> number <span class="token builtin">int</span><span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token operator">*</span>ChangeRequest<span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span>
+    <span class="token function">ListCRs</span><span class="token punctuation">(</span>ctx context<span class="token punctuation">.</span>Context<span class="token punctuation">,</span> opts ListCROptions<span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token operator">*</span>ChangeRequest<span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span>
+    <span class="token function">MergeCR</span><span class="token punctuation">(</span>ctx context<span class="token punctuation">.</span>Context<span class="token punctuation">,</span> owner<span class="token punctuation">,</span> repo <span class="token builtin">string</span><span class="token punctuation">,</span> number <span class="token builtin">int</span><span class="token punctuation">,</span> opts MergeCROptions<span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token operator">*</span>ChangeRequest<span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span>
+    <span class="token function">CloseCR</span><span class="token punctuation">(</span>ctx context<span class="token punctuation">.</span>Context<span class="token punctuation">,</span> owner<span class="token punctuation">,</span> repo <span class="token builtin">string</span><span class="token punctuation">,</span> number <span class="token builtin">int</span><span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token operator">*</span>ChangeRequest<span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span>
+    
+    <span class="token comment">// Webhook 注册</span>
+    <span class="token function">CreateWebhook</span><span class="token punctuation">(</span>ctx context<span class="token punctuation">.</span>Context<span class="token punctuation">,</span> opts CreateWebhookOptions<span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token operator">*</span>PlatformWebhook<span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span>
+    <span class="token function">DeleteWebhook</span><span class="token punctuation">(</span>ctx context<span class="token punctuation">.</span>Context<span class="token punctuation">,</span> owner<span class="token punctuation">,</span> repo <span class="token builtin">string</span><span class="token punctuation">,</span> webhookID <span class="token builtin">int64</span><span class="token punctuation">)</span> <span class="token builtin">error</span>
+    <span class="token function">ListWebhooks</span><span class="token punctuation">(</span>ctx context<span class="token punctuation">.</span>Context<span class="token punctuation">,</span> owner<span class="token punctuation">,</span> repo <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token operator">*</span>PlatformWebhook<span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span>
+    
+    <span class="token comment">// Webhook 事件解析</span>
+    <span class="token function">ParseWebhookEvent</span><span class="token punctuation">(</span>r <span class="token operator">*</span>http<span class="token punctuation">.</span>Request<span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token operator">*</span>NormalizedEvent<span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span>
+    <span class="token function">ValidateWebhookSignature</span><span class="token punctuation">(</span>r <span class="token operator">*</span>http<span class="token punctuation">.</span>Request<span class="token punctuation">,</span> secret <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token builtin">error</span>
+<span class="token punctuation">}</span>
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br><span class="line-number">11</span><br><span class="line-number">12</span><br><span class="line-number">13</span><br><span class="line-number">14</span><br><span class="line-number">15</span><br><span class="line-number">16</span><br><span class="line-number">17</span><br><span class="line-number">18</span><br><span class="line-number">19</span><br><span class="line-number">20</span><br><span class="line-number">21</span><br><span class="line-number">22</span><br><span class="line-number">23</span><br><span class="line-number">24</span><br><span class="line-number">25</span><br><span class="line-number">26</span><br><span class="line-number">27</span><br><span class="line-number">28</span><br><span class="line-number">29</span><br><span class="line-number">30</span><br><span class="line-number">31</span><br><span class="line-number">32</span><br><span class="line-number">33</span><br><span class="line-number">34</span><br><span class="line-number">35</span><br><span class="line-number">36</span><br><span class="line-number">37</span><br></div></div><h3 id="_3-2-统一数据模型-接口层-dto"><a href="#_3-2-统一数据模型-接口层-dto" class="header-anchor">#</a> 3.2 统一数据模型（接口层 DTO）</h3> <div class="language-go line-numbers-mode"><pre class="language-go"><code><span class="token keyword">type</span> PlatformRepo <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+    ID          <span class="token builtin">int64</span>  <span class="token string">`json:&quot;id&quot;`</span>
+    FullName    <span class="token builtin">string</span> <span class="token string">`json:&quot;full_name&quot;`</span>     <span class="token comment">// &quot;owner/repo&quot;</span>
+    Name        <span class="token builtin">string</span> <span class="token string">`json:&quot;name&quot;`</span>
+    Owner       <span class="token builtin">string</span> <span class="token string">`json:&quot;owner&quot;`</span>
+    Description <span class="token builtin">string</span> <span class="token string">`json:&quot;description&quot;`</span>
+    CloneURL    <span class="token builtin">string</span> <span class="token string">`json:&quot;clone_url&quot;`</span>
+    SSHURL      <span class="token builtin">string</span> <span class="token string">`json:&quot;ssh_url&quot;`</span>
+    DefaultBranch <span class="token builtin">string</span> <span class="token string">`json:&quot;default_branch&quot;`</span>
+    Private     <span class="token builtin">bool</span>   <span class="token string">`json:&quot;private&quot;`</span>
+    Platform    Platform <span class="token string">`json:&quot;platform&quot;`</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">type</span> ChangeRequest <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+    ID          <span class="token builtin">int64</span>        <span class="token string">`json:&quot;id&quot;`</span>
+    Number      <span class="token builtin">int</span>          <span class="token string">`json:&quot;number&quot;`</span>       <span class="token comment">// 平台 MR/PR 编号</span>
+    Title       <span class="token builtin">string</span>       <span class="token string">`json:&quot;title&quot;`</span>
+    Description <span class="token builtin">string</span>       <span class="token string">`json:&quot;description&quot;`</span>
+    State       CRState      <span class="token string">`json:&quot;state&quot;`</span>        <span class="token comment">// opened, merged, closed</span>
+    SourceBranch <span class="token builtin">string</span>      <span class="token string">`json:&quot;source_branch&quot;`</span>
+    TargetBranch <span class="token builtin">string</span>      <span class="token string">`json:&quot;target_branch&quot;`</span>
+    Author      <span class="token operator">*</span>CRUser      <span class="token string">`json:&quot;author&quot;`</span>
+    Reviewers   <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token operator">*</span>CRUser    <span class="token string">`json:&quot;reviewers&quot;`</span>
+    Labels      <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">string</span>     <span class="token string">`json:&quot;labels&quot;`</span>
+    MergeStatus <span class="token builtin">string</span>       <span class="token string">`json:&quot;merge_status&quot;`</span> <span class="token comment">// mergeable, conflicting, checking</span>
+    WebURL      <span class="token builtin">string</span>       <span class="token string">`json:&quot;web_url&quot;`</span>      <span class="token comment">// 平台页面链接</span>
+    CreatedAt   time<span class="token punctuation">.</span>Time    <span class="token string">`json:&quot;created_at&quot;`</span>
+    UpdatedAt   time<span class="token punctuation">.</span>Time    <span class="token string">`json:&quot;updated_at&quot;`</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">type</span> CRState <span class="token builtin">string</span>
+<span class="token keyword">const</span> <span class="token punctuation">(</span>
+    CRStateOpened CRState <span class="token operator">=</span> <span class="token string">&quot;opened&quot;</span>
+    CRStateMerged CRState <span class="token operator">=</span> <span class="token string">&quot;merged&quot;</span>
+    CRStateClosed CRState <span class="token operator">=</span> <span class="token string">&quot;closed&quot;</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">type</span> CRUser <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+    ID       <span class="token builtin">int64</span>  <span class="token string">`json:&quot;id&quot;`</span>
+    Username <span class="token builtin">string</span> <span class="token string">`json:&quot;username&quot;`</span>
+    Name     <span class="token builtin">string</span> <span class="token string">`json:&quot;name&quot;`</span>
+    AvatarURL <span class="token builtin">string</span> <span class="token string">`json:&quot;avatar_url&quot;`</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">type</span> ListRepoOptions <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+    Owner  <span class="token builtin">string</span> <span class="token string">`json:&quot;owner&quot;`</span>
+    Page   <span class="token builtin">int</span>    <span class="token string">`json:&quot;page&quot;`</span>
+    PerPage <span class="token builtin">int</span>   <span class="token string">`json:&quot;per_page&quot;`</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">type</span> CreateCROptions <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+    Owner        <span class="token builtin">string</span> <span class="token string">`json:&quot;owner&quot;`</span>
+    Repo         <span class="token builtin">string</span> <span class="token string">`json:&quot;repo&quot;`</span>
+    Title        <span class="token builtin">string</span> <span class="token string">`json:&quot;title&quot;`</span>
+    Description  <span class="token builtin">string</span> <span class="token string">`json:&quot;description&quot;`</span>
+    SourceBranch <span class="token builtin">string</span> <span class="token string">`json:&quot;source_branch&quot;`</span>
+    TargetBranch <span class="token builtin">string</span> <span class="token string">`json:&quot;target_branch&quot;`</span>
+    Labels       <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">string</span> <span class="token string">`json:&quot;labels&quot;`</span>
+    RemoveSourceBranch <span class="token builtin">bool</span> <span class="token string">`json:&quot;remove_source_branch&quot;`</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">type</span> ListCROptions <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+    Owner        <span class="token builtin">string</span> <span class="token string">`json:&quot;owner&quot;`</span>
+    Repo         <span class="token builtin">string</span> <span class="token string">`json:&quot;repo&quot;`</span>
+    State        CRState <span class="token string">`json:&quot;state&quot;`</span>
+    SourceBranch <span class="token builtin">string</span> <span class="token string">`json:&quot;source_branch&quot;`</span>
+    TargetBranch <span class="token builtin">string</span> <span class="token string">`json:&quot;target_branch&quot;`</span>
+    Page         <span class="token builtin">int</span>    <span class="token string">`json:&quot;page&quot;`</span>
+    PerPage      <span class="token builtin">int</span>    <span class="token string">`json:&quot;per_page&quot;`</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">type</span> MergeCROptions <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+    MergeCommitMessage <span class="token builtin">string</span> <span class="token string">`json:&quot;merge_commit_message&quot;`</span>
+    Squash             <span class="token builtin">bool</span>   <span class="token string">`json:&quot;squash&quot;`</span>
+    RemoveSourceBranch <span class="token builtin">bool</span>   <span class="token string">`json:&quot;remove_source_branch&quot;`</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">type</span> BranchProtection <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+    Pattern         <span class="token builtin">string</span>   <span class="token string">`json:&quot;pattern&quot;`</span>
+    AllowPush       <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">string</span> <span class="token string">`json:&quot;allow_push&quot;`</span>
+    AllowMerge      <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">string</span> <span class="token string">`json:&quot;allow_merge&quot;`</span>
+    RequireReview   <span class="token builtin">bool</span>     <span class="token string">`json:&quot;require_review&quot;`</span>
+    MinReviewers    <span class="token builtin">int</span>      <span class="token string">`json:&quot;min_reviewers&quot;`</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">type</span> CreateWebhookOptions <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+    Owner     <span class="token builtin">string</span>   <span class="token string">`json:&quot;owner&quot;`</span>
+    Repo      <span class="token builtin">string</span>   <span class="token string">`json:&quot;repo&quot;`</span>
+    URL       <span class="token builtin">string</span>   <span class="token string">`json:&quot;url&quot;`</span>
+    Secret    <span class="token builtin">string</span>   <span class="token string">`json:&quot;secret&quot;`</span>
+    Events    <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">string</span> <span class="token string">`json:&quot;events&quot;`</span> <span class="token comment">// push, cr, branch</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">type</span> PlatformWebhook <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+    ID     <span class="token builtin">int64</span>    <span class="token string">`json:&quot;id&quot;`</span>
+    URL    <span class="token builtin">string</span>   <span class="token string">`json:&quot;url&quot;`</span>
+    Events <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">string</span> <span class="token string">`json:&quot;events&quot;`</span>
+<span class="token punctuation">}</span>
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br><span class="line-number">11</span><br><span class="line-number">12</span><br><span class="line-number">13</span><br><span class="line-number">14</span><br><span class="line-number">15</span><br><span class="line-number">16</span><br><span class="line-number">17</span><br><span class="line-number">18</span><br><span class="line-number">19</span><br><span class="line-number">20</span><br><span class="line-number">21</span><br><span class="line-number">22</span><br><span class="line-number">23</span><br><span class="line-number">24</span><br><span class="line-number">25</span><br><span class="line-number">26</span><br><span class="line-number">27</span><br><span class="line-number">28</span><br><span class="line-number">29</span><br><span class="line-number">30</span><br><span class="line-number">31</span><br><span class="line-number">32</span><br><span class="line-number">33</span><br><span class="line-number">34</span><br><span class="line-number">35</span><br><span class="line-number">36</span><br><span class="line-number">37</span><br><span class="line-number">38</span><br><span class="line-number">39</span><br><span class="line-number">40</span><br><span class="line-number">41</span><br><span class="line-number">42</span><br><span class="line-number">43</span><br><span class="line-number">44</span><br><span class="line-number">45</span><br><span class="line-number">46</span><br><span class="line-number">47</span><br><span class="line-number">48</span><br><span class="line-number">49</span><br><span class="line-number">50</span><br><span class="line-number">51</span><br><span class="line-number">52</span><br><span class="line-number">53</span><br><span class="line-number">54</span><br><span class="line-number">55</span><br><span class="line-number">56</span><br><span class="line-number">57</span><br><span class="line-number">58</span><br><span class="line-number">59</span><br><span class="line-number">60</span><br><span class="line-number">61</span><br><span class="line-number">62</span><br><span class="line-number">63</span><br><span class="line-number">64</span><br><span class="line-number">65</span><br><span class="line-number">66</span><br><span class="line-number">67</span><br><span class="line-number">68</span><br><span class="line-number">69</span><br><span class="line-number">70</span><br><span class="line-number">71</span><br><span class="line-number">72</span><br><span class="line-number">73</span><br><span class="line-number">74</span><br><span class="line-number">75</span><br><span class="line-number">76</span><br><span class="line-number">77</span><br><span class="line-number">78</span><br><span class="line-number">79</span><br><span class="line-number">80</span><br><span class="line-number">81</span><br><span class="line-number">82</span><br><span class="line-number">83</span><br><span class="line-number">84</span><br><span class="line-number">85</span><br><span class="line-number">86</span><br><span class="line-number">87</span><br><span class="line-number">88</span><br><span class="line-number">89</span><br><span class="line-number">90</span><br><span class="line-number">91</span><br><span class="line-number">92</span><br><span class="line-number">93</span><br><span class="line-number">94</span><br><span class="line-number">95</span><br><span class="line-number">96</span><br><span class="line-number">97</span><br><span class="line-number">98</span><br></div></div><h3 id="_3-3-目录结构"><a href="#_3-3-目录结构" class="header-anchor">#</a> 3.3 目录结构</h3> <div class="language- line-numbers-mode"><pre class="language-text"><code>biz/service/provider/
+├── provider.go           # Provider 接口定义 + 统一 DTO
+├── manager.go            # ProviderManager: 注册/获取 provider 实例
+├── detect.go             # 从 URL 自动检测平台类型
+├── gitlab/
+│   ├── provider.go       # GitLab Provider 实现
+│   ├── mr.go             # MR 操作
+│   ├── webhook.go        # Webhook 注册 + 事件解析
+│   └── types.go          # GitLab API 原始类型 → 统一 DTO 转换
+├── github/
+│   ├── provider.go
+│   ├── pr.go
+│   ├── webhook.go
+│   └── types.go
+└── gitea/
+    ├── provider.go
+    ├── pr.go
+    ├── webhook.go
+    └── types.go
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br><span class="line-number">11</span><br><span class="line-number">12</span><br><span class="line-number">13</span><br><span class="line-number">14</span><br><span class="line-number">15</span><br><span class="line-number">16</span><br><span class="line-number">17</span><br><span class="line-number">18</span><br><span class="line-number">19</span><br></div></div><h3 id="_3-4-平台自动检测"><a href="#_3-4-平台自动检测" class="header-anchor">#</a> 3.4 平台自动检测</h3> <div class="language-go line-numbers-mode"><pre class="language-go"><code><span class="token comment">// biz/service/provider/detect.go</span>
+
+<span class="token keyword">func</span> <span class="token function">DetectPlatform</span><span class="token punctuation">(</span>remoteURL <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token punctuation">(</span>Platform<span class="token punctuation">,</span> <span class="token builtin">string</span><span class="token punctuation">,</span> <span class="token builtin">string</span><span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// 解析 remote URL，提取平台标识 + owner + repo</span>
+    <span class="token comment">// git@github.com:owner/repo.git     → github, owner, repo</span>
+    <span class="token comment">// https://gitlab.com/owner/repo.git → gitlab, owner, repo</span>
+    <span class="token comment">// git@gitea.example.com:org/repo    → gitea, org, repo</span>
+    
+    patterns <span class="token operator">:=</span> <span class="token keyword">map</span><span class="token punctuation">[</span><span class="token builtin">string</span><span class="token punctuation">]</span>Platform<span class="token punctuation">{</span>
+        <span class="token string">&quot;github.com&quot;</span><span class="token punctuation">:</span>         PlatformGitHub<span class="token punctuation">,</span>
+        <span class="token string">&quot;gitlab.com&quot;</span><span class="token punctuation">:</span>         PlatformGitLab<span class="token punctuation">,</span>
+        <span class="token string">&quot;gitlab.example.com&quot;</span><span class="token punctuation">:</span> PlatformGitLab<span class="token punctuation">,</span> <span class="token comment">// 自托管，从配置读</span>
+    <span class="token punctuation">}</span>
+    <span class="token comment">// 同时查 provider_configs 表匹配自定义域名</span>
+<span class="token punctuation">}</span>
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br><span class="line-number">11</span><br><span class="line-number">12</span><br><span class="line-number">13</span><br><span class="line-number">14</span><br><span class="line-number">15</span><br></div></div><h3 id="_3-5-provider-manager"><a href="#_3-5-provider-manager" class="header-anchor">#</a> 3.5 Provider Manager</h3> <div class="language-go line-numbers-mode"><pre class="language-go"><code><span class="token comment">// biz/service/provider/manager.go</span>
+
+<span class="token keyword">type</span> ProviderManager <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+    providers <span class="token keyword">map</span><span class="token punctuation">[</span>Platform<span class="token punctuation">]</span>Provider
+    configs   <span class="token keyword">map</span><span class="token punctuation">[</span><span class="token builtin">int64</span><span class="token punctuation">]</span><span class="token operator">*</span>po<span class="token punctuation">.</span>ProviderConfig  <span class="token comment">// 缓存，按 config ID</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token function">NewProviderManager</span><span class="token punctuation">(</span>dao <span class="token operator">*</span>db<span class="token punctuation">.</span>ProviderConfigDAO<span class="token punctuation">)</span> <span class="token operator">*</span>ProviderManager
+
+<span class="token comment">// GetProvider 根据 repo 关联的 provider_config_id 获取已认证的 Provider</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>m <span class="token operator">*</span>ProviderManager<span class="token punctuation">)</span> <span class="token function">GetProvider</span><span class="token punctuation">(</span>configID <span class="token builtin">int64</span><span class="token punctuation">)</span> <span class="token punctuation">(</span>Provider<span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span>
+
+<span class="token comment">// DetectAndCreate 从 remote URL 自动检测平台并创建 Provider</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>m <span class="token operator">*</span>ProviderManager<span class="token punctuation">)</span> <span class="token function">DetectAndCreate</span><span class="token punctuation">(</span>remoteURL <span class="token builtin">string</span><span class="token punctuation">,</span> credential <span class="token operator">*</span>po<span class="token punctuation">.</span>Credential<span class="token punctuation">)</span> <span class="token punctuation">(</span>Provider<span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span>
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br><span class="line-number">11</span><br><span class="line-number">12</span><br><span class="line-number">13</span><br><span class="line-number">14</span><br></div></div><hr> <h2 id="_4-数据库模型"><a href="#_4-数据库模型" class="header-anchor">#</a> 4. 数据库模型</h2> <h3 id="_4-1-provider-config-平台连接配置-新表"><a href="#_4-1-provider-config-平台连接配置-新表" class="header-anchor">#</a> 4.1 provider_config（平台连接配置）— 新表</h3> <div class="language-go line-numbers-mode"><pre class="language-go"><code><span class="token comment">// biz/model/po/provider_config.go</span>
+
+<span class="token keyword">type</span> ProviderConfig <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+    gorm<span class="token punctuation">.</span>Model
+    Name        <span class="token builtin">string</span> <span class="token string">`gorm:&quot;uniqueIndex;size:100&quot; json:&quot;name&quot;`</span>         <span class="token comment">// &quot;公司 GitLab&quot;</span>
+    Platform    <span class="token builtin">string</span> <span class="token string">`gorm:&quot;size:20;index&quot; json:&quot;platform&quot;`</span>            <span class="token comment">// gitlab, github, gitea</span>
+    BaseURL     <span class="token builtin">string</span> <span class="token string">`gorm:&quot;size:500&quot; json:&quot;base_url&quot;`</span>                 <span class="token comment">// https://gitlab.com (自托管可改)</span>
+    CredentialID <span class="token builtin">uint</span>  <span class="token string">`gorm:&quot;index&quot; json:&quot;credential_id&quot;`</span>              <span class="token comment">// 关联凭证 (Token 类型)</span>
+    
+    <span class="token comment">// Webhook 接收配置</span>
+    WebhookSecret   <span class="token builtin">string</span> <span class="token string">`gorm:&quot;size:200&quot; json:&quot;webhook_secret&quot;`</span>        <span class="token comment">// 验证签名</span>
+    WebhookEndpoint <span class="token builtin">string</span> <span class="token string">`gorm:&quot;size:500&quot; json:&quot;webhook_endpoint&quot;`</span>      <span class="token comment">// 回调地址</span>
+    
+    <span class="token comment">// 平台特有设置 (JSON)</span>
+    SettingsJSON <span class="token builtin">string</span> <span class="token string">`gorm:&quot;type:text&quot; json:&quot;-&quot;`</span>                      <span class="token comment">// 扩展字段</span>
+    Settings     <span class="token keyword">map</span><span class="token punctuation">[</span><span class="token builtin">string</span><span class="token punctuation">]</span><span class="token keyword">interface</span><span class="token punctuation">{</span><span class="token punctuation">}</span> <span class="token string">`gorm:&quot;-&quot; json:&quot;settings&quot;`</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>ProviderConfig<span class="token punctuation">)</span> <span class="token function">TableName</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">string</span> <span class="token punctuation">{</span> <span class="token keyword">return</span> <span class="token string">&quot;provider_configs&quot;</span> <span class="token punctuation">}</span>
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br><span class="line-number">11</span><br><span class="line-number">12</span><br><span class="line-number">13</span><br><span class="line-number">14</span><br><span class="line-number">15</span><br><span class="line-number">16</span><br><span class="line-number">17</span><br><span class="line-number">18</span><br><span class="line-number">19</span><br></div></div><h3 id="_4-2-扩展现有-repo-模型"><a href="#_4-2-扩展现有-repo-模型" class="header-anchor">#</a> 4.2 扩展现有 Repo 模型</h3> <div class="language-go line-numbers-mode"><pre class="language-go"><code><span class="token comment">// 在 po.Repo 中新增字段</span>
+<span class="token keyword">type</span> Repo <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+    <span class="token comment">// ... 现有字段 ...</span>
+    
+    <span class="token comment">// 新增: 平台关联</span>
+    ProviderConfigID <span class="token builtin">uint</span>   <span class="token string">`gorm:&quot;index&quot; json:&quot;provider_config_id&quot;`</span> <span class="token comment">// 关联平台配置</span>
+    PlatformRepoID   <span class="token builtin">string</span> <span class="token string">`gorm:&quot;size:100&quot; json:&quot;platform_repo_id&quot;`</span> <span class="token comment">// 平台侧仓库 ID</span>
+    PlatformOwner    <span class="token builtin">string</span> <span class="token string">`gorm:&quot;size:200&quot; json:&quot;platform_owner&quot;`</span>   <span class="token comment">// 平台 owner/org</span>
+    PlatformRepo     <span class="token builtin">string</span> <span class="token string">`gorm:&quot;size:200&quot; json:&quot;platform_repo&quot;`</span>    <span class="token comment">// 平台仓库名</span>
+<span class="token punctuation">}</span>
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br></div></div><h3 id="_4-3-扩展-credential-模型"><a href="#_4-3-扩展-credential-模型" class="header-anchor">#</a> 4.3 扩展 Credential 模型</h3> <div class="language-go line-numbers-mode"><pre class="language-go"><code><span class="token comment">// 在 po.Credential 的 Type 字段新增值</span>
+<span class="token comment">// 现有: ssh_key, http_basic, http_token</span>
+<span class="token comment">// 新增: platform_token</span>
+
+<span class="token keyword">type</span> Credential <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+    <span class="token comment">// ... 现有字段 ...</span>
+    
+    <span class="token comment">// 新增</span>
+    Platform      <span class="token builtin">string</span> <span class="token string">`gorm:&quot;size:20&quot; json:&quot;platform&quot;`</span>       <span class="token comment">// 所属平台 (当 Type=platform_token)</span>
+    PlatformScope <span class="token builtin">string</span> <span class="token string">`gorm:&quot;size:200&quot; json:&quot;platform_scope&quot;`</span> <span class="token comment">// Token 权限 scope</span>
+<span class="token punctuation">}</span>
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br><span class="line-number">11</span><br></div></div><h3 id="_4-4-change-request-cr-mr-统一记录-新表"><a href="#_4-4-change-request-cr-mr-统一记录-新表" class="header-anchor">#</a> 4.4 change_request（CR/MR 统一记录）— 新表</h3> <div class="language-go line-numbers-mode"><pre class="language-go"><code><span class="token comment">// biz/model/po/change_request.go</span>
+
+<span class="token keyword">type</span> ChangeRequest <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+    gorm<span class="token punctuation">.</span>Model
+    RepoID          <span class="token builtin">uint</span>   <span class="token string">`gorm:&quot;index&quot; json:&quot;repo_id&quot;`</span>                    <span class="token comment">// 关联本地 repo</span>
+    ProviderConfigID <span class="token builtin">uint</span>  <span class="token string">`gorm:&quot;index&quot; json:&quot;provider_config_id&quot;`</span>         <span class="token comment">// 关联平台配置</span>
+    PlatformCRID    <span class="token builtin">int64</span>  <span class="token string">`gorm:&quot;index&quot; json:&quot;platform_cr_id&quot;`</span>             <span class="token comment">// 平台侧 MR/PR ID</span>
+    CRNumber        <span class="token builtin">int</span>    <span class="token string">`gorm:&quot;index&quot; json:&quot;cr_number&quot;`</span>                  <span class="token comment">// 平台侧编号</span>
+    Title           <span class="token builtin">string</span> <span class="token string">`gorm:&quot;size:500&quot; json:&quot;title&quot;`</span>
+    Description     <span class="token builtin">string</span> <span class="token string">`gorm:&quot;type:text&quot; json:&quot;description&quot;`</span>
+    State           <span class="token builtin">string</span> <span class="token string">`gorm:&quot;size:20;index&quot; json:&quot;state&quot;`</span>              <span class="token comment">// opened, merged, closed</span>
+    SourceBranch    <span class="token builtin">string</span> <span class="token string">`gorm:&quot;size:200;index&quot; json:&quot;source_branch&quot;`</span>
+    TargetBranch    <span class="token builtin">string</span> <span class="token string">`gorm:&quot;size:200;index&quot; json:&quot;target_branch&quot;`</span>
+    AuthorName      <span class="token builtin">string</span> <span class="token string">`gorm:&quot;size:200&quot; json:&quot;author_name&quot;`</span>
+    AuthorUsername  <span class="token builtin">string</span> <span class="token string">`gorm:&quot;size:200&quot; json:&quot;author_username&quot;`</span>
+    WebURL          <span class="token builtin">string</span> <span class="token string">`gorm:&quot;size:500&quot; json:&quot;web_url&quot;`</span>
+    MergeStatus     <span class="token builtin">string</span> <span class="token string">`gorm:&quot;size:30&quot; json:&quot;merge_status&quot;`</span>             <span class="token comment">// mergeable, conflicting</span>
+    LabelsJSON      <span class="token builtin">string</span> <span class="token string">`gorm:&quot;type:text&quot; json:&quot;-&quot;`</span>
+    Labels          <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">string</span> <span class="token string">`gorm:&quot;-&quot; json:&quot;labels&quot;`</span>
+    MergedAt        <span class="token operator">*</span>time<span class="token punctuation">.</span>Time <span class="token string">`json:&quot;merged_at&quot;`</span>
+    ClosedAt        <span class="token operator">*</span>time<span class="token punctuation">.</span>Time <span class="token string">`json:&quot;closed_at&quot;`</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>ChangeRequest<span class="token punctuation">)</span> <span class="token function">TableName</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">string</span> <span class="token punctuation">{</span> <span class="token keyword">return</span> <span class="token string">&quot;change_requests&quot;</span> <span class="token punctuation">}</span>
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br><span class="line-number">11</span><br><span class="line-number">12</span><br><span class="line-number">13</span><br><span class="line-number">14</span><br><span class="line-number">15</span><br><span class="line-number">16</span><br><span class="line-number">17</span><br><span class="line-number">18</span><br><span class="line-number">19</span><br><span class="line-number">20</span><br><span class="line-number">21</span><br><span class="line-number">22</span><br><span class="line-number">23</span><br><span class="line-number">24</span><br></div></div><h3 id="_4-5-webhook-event-标准化事件记录-新表"><a href="#_4-5-webhook-event-标准化事件记录-新表" class="header-anchor">#</a> 4.5 webhook_event（标准化事件记录）— 新表</h3> <div class="language-go line-numbers-mode"><pre class="language-go"><code><span class="token comment">// biz/model/po/webhook_event.go</span>
+
+<span class="token keyword">type</span> WebhookEvent <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+    gorm<span class="token punctuation">.</span>Model
+    EventID         <span class="token builtin">string</span> <span class="token string">`gorm:&quot;uniqueIndex;size:100&quot; json:&quot;event_id&quot;`</span>    <span class="token comment">// 去重 ID</span>
+    ProviderConfigID <span class="token builtin">uint</span>  <span class="token string">`gorm:&quot;index&quot; json:&quot;provider_config_id&quot;`</span>
+    EventType       <span class="token builtin">string</span> <span class="token string">`gorm:&quot;size:50;index&quot; json:&quot;event_type&quot;`</span>          <span class="token comment">// cr.opened, cr.merged ...</span>
+    Source          <span class="token builtin">string</span> <span class="token string">`gorm:&quot;size:20;index&quot; json:&quot;source&quot;`</span>              <span class="token comment">// gitlab, github, gitea</span>
+    
+    <span class="token comment">// 关联资源</span>
+    RepoID          <span class="token builtin">uint</span>   <span class="token string">`gorm:&quot;index&quot; json:&quot;repo_id&quot;`</span>
+    CRID            <span class="token builtin">uint</span>   <span class="token string">`gorm:&quot;index&quot; json:&quot;cr_id&quot;`</span>                       <span class="token comment">// 关联 change_requests 表</span>
+    PlatformCRNumber <span class="token builtin">int</span>   <span class="token string">`json:&quot;platform_cr_number&quot;`</span>
+    
+    <span class="token comment">// 事件详情</span>
+    ActorName       <span class="token builtin">string</span> <span class="token string">`gorm:&quot;size:200&quot; json:&quot;actor_name&quot;`</span>
+    ActorUsername   <span class="token builtin">string</span> <span class="token string">`gorm:&quot;size:200&quot; json:&quot;actor_username&quot;`</span>
+    PayloadJSON     <span class="token builtin">string</span> <span class="token string">`gorm:&quot;type:text&quot; json:&quot;-&quot;`</span>                       <span class="token comment">// 原始 payload (加密)</span>
+    Payload         <span class="token keyword">map</span><span class="token punctuation">[</span><span class="token builtin">string</span><span class="token punctuation">]</span><span class="token keyword">interface</span><span class="token punctuation">{</span><span class="token punctuation">}</span> <span class="token string">`gorm:&quot;-&quot; json:&quot;payload&quot;`</span>
+    
+    <span class="token comment">// 处理状态</span>
+    Status          <span class="token builtin">string</span> <span class="token string">`gorm:&quot;size:20;index&quot; json:&quot;status&quot;`</span>              <span class="token comment">// received, processed, failed</span>
+    ProcessedAt     <span class="token operator">*</span>time<span class="token punctuation">.</span>Time <span class="token string">`json:&quot;processed_at&quot;`</span>
+    ErrorMessage    <span class="token builtin">string</span> <span class="token string">`gorm:&quot;size:500&quot; json:&quot;error_message&quot;`</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>WebhookEvent<span class="token punctuation">)</span> <span class="token function">TableName</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">string</span> <span class="token punctuation">{</span> <span class="token keyword">return</span> <span class="token string">&quot;webhook_events&quot;</span> <span class="token punctuation">}</span>
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br><span class="line-number">11</span><br><span class="line-number">12</span><br><span class="line-number">13</span><br><span class="line-number">14</span><br><span class="line-number">15</span><br><span class="line-number">16</span><br><span class="line-number">17</span><br><span class="line-number">18</span><br><span class="line-number">19</span><br><span class="line-number">20</span><br><span class="line-number">21</span><br><span class="line-number">22</span><br><span class="line-number">23</span><br><span class="line-number">24</span><br><span class="line-number">25</span><br><span class="line-number">26</span><br><span class="line-number">27</span><br></div></div><h3 id="_4-6-webhook-rule-webhook-路由规则-新表"><a href="#_4-6-webhook-rule-webhook-路由规则-新表" class="header-anchor">#</a> 4.6 webhook_rule（Webhook 路由规则）— 新表</h3> <div class="language-go line-numbers-mode"><pre class="language-go"><code><span class="token comment">// biz/model/po/webhook_rule.go</span>
+
+<span class="token keyword">type</span> WebhookRule <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+    gorm<span class="token punctuation">.</span>Model
+    Name            <span class="token builtin">string</span> <span class="token string">`gorm:&quot;size:100&quot; json:&quot;name&quot;`</span>
+    ProviderConfigID <span class="token builtin">uint</span>  <span class="token string">`gorm:&quot;index&quot; json:&quot;provider_config_id&quot;`</span>          <span class="token comment">// 0 = 全局</span>
+    EventTypePattern <span class="token builtin">string</span> <span class="token string">`gorm:&quot;size:100&quot; json:&quot;event_type_pattern&quot;`</span>      <span class="token comment">// &quot;cr.*&quot;, &quot;branch.*&quot;</span>
+    RepoPattern     <span class="token builtin">string</span> <span class="token string">`gorm:&quot;size:200&quot; json:&quot;repo_pattern&quot;`</span>             <span class="token comment">// &quot;owner/repo&quot;, &quot;*&quot;</span>
+    Action          <span class="token builtin">string</span> <span class="token string">`gorm:&quot;size:50&quot; json:&quot;action&quot;`</span>                    <span class="token comment">// sync, notify, script</span>
+    ActionConfigJSON <span class="token builtin">string</span> <span class="token string">`gorm:&quot;type:text&quot; json:&quot;-&quot;`</span>                     <span class="token comment">// 动作参数</span>
+    ActionConfig    <span class="token keyword">map</span><span class="token punctuation">[</span><span class="token builtin">string</span><span class="token punctuation">]</span><span class="token keyword">interface</span><span class="token punctuation">{</span><span class="token punctuation">}</span> <span class="token string">`gorm:&quot;-&quot; json:&quot;action_config&quot;`</span>
+    Enabled         <span class="token builtin">bool</span>   <span class="token string">`gorm:&quot;default:true&quot; json:&quot;enabled&quot;`</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>WebhookRule<span class="token punctuation">)</span> <span class="token function">TableName</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">string</span> <span class="token punctuation">{</span> <span class="token keyword">return</span> <span class="token string">&quot;webhook_rules&quot;</span> <span class="token punctuation">}</span>
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br><span class="line-number">11</span><br><span class="line-number">12</span><br><span class="line-number">13</span><br><span class="line-number">14</span><br><span class="line-number">15</span><br></div></div><h3 id="_4-7-er-关系"><a href="#_4-7-er-关系" class="header-anchor">#</a> 4.7 ER 关系</h3> <div class="language- line-numbers-mode"><pre class="language-text"><code>provider_config ──1:N── repo
+       │                  │
+       │                  ├──1:N── change_request
+       │                  │
+       │                  └──1:N── webhook_event
+       │
+       └──1:N── webhook_event
+                      │
+                      └──N:1── change_request
+
+webhook_rule ──N:1── provider_config
+
+credential ──1:1── provider_config  (Token 凭证)
+credential ──1:N── repo             (现有 SSH/HTTP 凭证)
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br><span class="line-number">11</span><br><span class="line-number">12</span><br><span class="line-number">13</span><br><span class="line-number">14</span><br></div></div><hr> <h2 id="_5-webhook-标准化"><a href="#_5-webhook-标准化" class="header-anchor">#</a> 5. Webhook 标准化</h2> <h3 id="_5-1-统一事件格式"><a href="#_5-1-统一事件格式" class="header-anchor">#</a> 5.1 统一事件格式</h3> <p>入站 webhook 经 Provider 解析后，统一输出以下标准事件：</p> <table><thead><tr><th>标准事件类型</th> <th>触发条件</th> <th>含义</th></tr></thead> <tbody><tr><td><code>cr.opened</code></td> <td>MR/PR 创建</td> <td>变更请求被创建</td></tr> <tr><td><code>cr.updated</code></td> <td>MR/PR 更新</td> <td>变更请求被更新</td></tr> <tr><td><code>cr.merged</code></td> <td>MR/PR 合并</td> <td>变更请求被合并</td></tr> <tr><td><code>cr.closed</code></td> <td>MR/PR 关闭（未合并）</td> <td>变更请求被关闭</td></tr> <tr><td><code>cr.reviewed</code></td> <td>MR/PR 收到 Review</td> <td>审批状态变化</td></tr> <tr><td><code>branch.created</code></td> <td>分支创建</td> <td>新分支出现</td></tr> <tr><td><code>branch.deleted</code></td> <td>分支删除</td> <td>分支被删除</td></tr> <tr><td><code>tag.created</code></td> <td>标签创建</td> <td>新标签</td></tr> <tr><td><code>push</code></td> <td>代码推送</td> <td>有新 commit</td></tr></tbody></table> <div class="language-go line-numbers-mode"><pre class="language-go"><code><span class="token keyword">type</span> NormalizedEvent <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+    ID          <span class="token builtin">string</span>                 <span class="token string">`json:&quot;id&quot;`</span>           <span class="token comment">// 唯一事件 ID</span>
+    Type        <span class="token builtin">string</span>                 <span class="token string">`json:&quot;type&quot;`</span>         <span class="token comment">// cr.opened, branch.created ...</span>
+    Source      Platform               <span class="token string">`json:&quot;source&quot;`</span>       <span class="token comment">// gitlab, github, gitea</span>
+    Timestamp   time<span class="token punctuation">.</span>Time              <span class="token string">`json:&quot;timestamp&quot;`</span>
+    Actor       <span class="token operator">*</span>CRUser                <span class="token string">`json:&quot;actor&quot;`</span>
+    Repo        <span class="token operator">*</span>EventRepo             <span class="token string">`json:&quot;repo&quot;`</span>
+    CR          <span class="token operator">*</span>ChangeRequest         <span class="token string">`json:&quot;cr,omitempty&quot;`</span> <span class="token comment">// cr.* 事件时填充</span>
+    Branch      <span class="token builtin">string</span>                 <span class="token string">`json:&quot;branch,omitempty&quot;`</span>
+    Tag         <span class="token builtin">string</span>                 <span class="token string">`json:&quot;tag,omitempty&quot;`</span>
+    RawPayload  json<span class="token punctuation">.</span>RawMessage        <span class="token string">`json:&quot;raw_payload&quot;`</span>  <span class="token comment">// 平台原始数据</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">type</span> EventRepo <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+    FullName <span class="token builtin">string</span> <span class="token string">`json:&quot;full_name&quot;`</span>
+    Owner    <span class="token builtin">string</span> <span class="token string">`json:&quot;owner&quot;`</span>
+    Name     <span class="token builtin">string</span> <span class="token string">`json:&quot;name&quot;`</span>
+<span class="token punctuation">}</span>
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br><span class="line-number">11</span><br><span class="line-number">12</span><br><span class="line-number">13</span><br><span class="line-number">14</span><br><span class="line-number">15</span><br><span class="line-number">16</span><br><span class="line-number">17</span><br><span class="line-number">18</span><br></div></div><h3 id="_5-2-入站-webhook-流程"><a href="#_5-2-入站-webhook-流程" class="header-anchor">#</a> 5.2 入站 Webhook 流程</h3> <div class="language- line-numbers-mode"><pre class="language-text"><code>GitLab/GitHub/Gitea
+        │
+        │  HTTP POST (平台原始 webhook payload)
+        ▼
+┌──────────────────────────────┐
+│ POST /api/webhooks/receive   │  ← 统一入口
+│         │                    │
+│  1. 验证签名 (Provider)      │
+│  2. 检测来源平台             │  ← Header: X-GitLab-Event / X-GitHub-Event
+│  3. 路由到对应 Provider      │
+│  4. 解析为 NormalizedEvent   │
+│  5. 写入 webhook_events 表   │
+│  6. 匹配 webhook_rule        │
+│  7. 执行动作 (sync/notify)   │
+└──────────────────────────────┘
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br><span class="line-number">11</span><br><span class="line-number">12</span><br><span class="line-number">13</span><br><span class="line-number">14</span><br><span class="line-number">15</span><br></div></div><h3 id="_5-3-webhook-路由规则"><a href="#_5-3-webhook-路由规则" class="header-anchor">#</a> 5.3 Webhook 路由规则</h3> <p>每个 provider_config 可以配置多条规则：</p> <div class="language-json line-numbers-mode"><pre class="language-json"><code><span class="token punctuation">{</span>
+  <span class="token property">&quot;name&quot;</span><span class="token operator">:</span> <span class="token string">&quot;MR merged → sync&quot;</span><span class="token punctuation">,</span>
+  <span class="token property">&quot;event_type_pattern&quot;</span><span class="token operator">:</span> <span class="token string">&quot;cr.merged&quot;</span><span class="token punctuation">,</span>
+  <span class="token property">&quot;repo_pattern&quot;</span><span class="token operator">:</span> <span class="token string">&quot;*&quot;</span><span class="token punctuation">,</span>
+  <span class="token property">&quot;action&quot;</span><span class="token operator">:</span> <span class="token string">&quot;sync&quot;</span><span class="token punctuation">,</span>
+  <span class="token property">&quot;action_config&quot;</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token property">&quot;sync_task_key&quot;</span><span class="token operator">:</span> <span class="token string">&quot;sync-to-mirror&quot;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br></div></div><div class="language-json line-numbers-mode"><pre class="language-json"><code><span class="token punctuation">{</span>
+  <span class="token property">&quot;name&quot;</span><span class="token operator">:</span> <span class="token string">&quot;MR opened → notify&quot;</span><span class="token punctuation">,</span>
+  <span class="token property">&quot;event_type_pattern&quot;</span><span class="token operator">:</span> <span class="token string">&quot;cr.opened&quot;</span><span class="token punctuation">,</span>
+  <span class="token property">&quot;repo_pattern&quot;</span><span class="token operator">:</span> <span class="token string">&quot;yi-nology/*&quot;</span><span class="token punctuation">,</span>
+  <span class="token property">&quot;action&quot;</span><span class="token operator">:</span> <span class="token string">&quot;notify&quot;</span><span class="token punctuation">,</span>
+  <span class="token property">&quot;action_config&quot;</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token property">&quot;channel&quot;</span><span class="token operator">:</span> <span class="token string">&quot;feishu&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;template&quot;</span><span class="token operator">:</span> <span class="token string">&quot;cr_opened_notification&quot;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br></div></div><hr> <h2 id="_6-pr-mr-管理模块"><a href="#_6-pr-mr-管理模块" class="header-anchor">#</a> 6. PR/MR 管理模块</h2> <h3 id="_6-1-proto-定义"><a href="#_6-1-proto-定义" class="header-anchor">#</a> 6.1 Proto 定义</h3> <div class="language-protobuf line-numbers-mode"><pre class="language-protobuf"><code><span class="token comment">// idl/biz/cr.proto</span>
+
+<span class="token keyword">syntax</span> <span class="token operator">=</span> <span class="token string">&quot;proto3&quot;</span><span class="token punctuation">;</span>
+<span class="token keyword">package</span> cr<span class="token punctuation">;</span>
+<span class="token keyword">option</span> go_package <span class="token operator">=</span> <span class="token string">&quot;github.com/yi-nology/git-manage-service/biz/model/cr&quot;</span><span class="token punctuation">;</span>
+
+<span class="token keyword">import</span> <span class="token string">&quot;api.proto&quot;</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token string">&quot;common.proto&quot;</span><span class="token punctuation">;</span>
+
+<span class="token keyword">message</span> <span class="token class-name">ChangeRequest</span> <span class="token punctuation">{</span>
+    <span class="token builtin">int64</span> id <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token builtin">int32</span> cr_number <span class="token operator">=</span> <span class="token number">2</span><span class="token punctuation">;</span>
+    <span class="token builtin">string</span> title <span class="token operator">=</span> <span class="token number">3</span><span class="token punctuation">;</span>
+    <span class="token builtin">string</span> description <span class="token operator">=</span> <span class="token number">4</span><span class="token punctuation">;</span>
+    <span class="token builtin">string</span> state <span class="token operator">=</span> <span class="token number">5</span><span class="token punctuation">;</span>         <span class="token comment">// opened, merged, closed</span>
+    <span class="token builtin">string</span> source_branch <span class="token operator">=</span> <span class="token number">6</span><span class="token punctuation">;</span>
+    <span class="token builtin">string</span> target_branch <span class="token operator">=</span> <span class="token number">7</span><span class="token punctuation">;</span>
+    <span class="token builtin">string</span> author_name <span class="token operator">=</span> <span class="token number">8</span><span class="token punctuation">;</span>
+    <span class="token builtin">string</span> author_username <span class="token operator">=</span> <span class="token number">9</span><span class="token punctuation">;</span>
+    <span class="token builtin">string</span> web_url <span class="token operator">=</span> <span class="token number">10</span><span class="token punctuation">;</span>
+    <span class="token builtin">string</span> merge_status <span class="token operator">=</span> <span class="token number">11</span><span class="token punctuation">;</span>
+    <span class="token keyword">repeated</span> <span class="token builtin">string</span> labels <span class="token operator">=</span> <span class="token number">12</span><span class="token punctuation">;</span>
+    <span class="token builtin">string</span> created_at <span class="token operator">=</span> <span class="token number">13</span><span class="token punctuation">;</span>
+    <span class="token builtin">string</span> updated_at <span class="token operator">=</span> <span class="token number">14</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">// ---- 创建 CR ----</span>
+<span class="token keyword">message</span> <span class="token class-name">CreateCRRequest</span> <span class="token punctuation">{</span>
+    <span class="token builtin">string</span> repo_key <span class="token operator">=</span> <span class="token number">1</span> <span class="token punctuation">[</span><span class="token punctuation">(</span>api<span class="token punctuation">.</span>body<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token string">&quot;repo_key&quot;</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token builtin">string</span> title <span class="token operator">=</span> <span class="token number">2</span> <span class="token punctuation">[</span><span class="token punctuation">(</span>api<span class="token punctuation">.</span>body<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token string">&quot;title&quot;</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token builtin">string</span> description <span class="token operator">=</span> <span class="token number">3</span> <span class="token punctuation">[</span><span class="token punctuation">(</span>api<span class="token punctuation">.</span>body<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token string">&quot;description&quot;</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token builtin">string</span> source_branch <span class="token operator">=</span> <span class="token number">4</span> <span class="token punctuation">[</span><span class="token punctuation">(</span>api<span class="token punctuation">.</span>body<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token string">&quot;source_branch&quot;</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token builtin">string</span> target_branch <span class="token operator">=</span> <span class="token number">5</span> <span class="token punctuation">[</span><span class="token punctuation">(</span>api<span class="token punctuation">.</span>body<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token string">&quot;target_branch&quot;</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token keyword">repeated</span> <span class="token builtin">string</span> labels <span class="token operator">=</span> <span class="token number">6</span> <span class="token punctuation">[</span><span class="token punctuation">(</span>api<span class="token punctuation">.</span>body<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token string">&quot;labels&quot;</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token builtin">bool</span> remove_source_branch <span class="token operator">=</span> <span class="token number">7</span> <span class="token punctuation">[</span><span class="token punctuation">(</span>api<span class="token punctuation">.</span>body<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token string">&quot;remove_source_branch&quot;</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">message</span> <span class="token class-name">CreateCRResponse</span> <span class="token punctuation">{</span>
+    <span class="token positional-class-name class-name">common<span class="token punctuation">.</span>BaseResponse</span> base <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token positional-class-name class-name">ChangeRequest</span> cr <span class="token operator">=</span> <span class="token number">2</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">// ---- 查询 CR ----</span>
+<span class="token keyword">message</span> <span class="token class-name">GetCRRequest</span> <span class="token punctuation">{</span>
+    <span class="token builtin">string</span> repo_key <span class="token operator">=</span> <span class="token number">1</span> <span class="token punctuation">[</span><span class="token punctuation">(</span>api<span class="token punctuation">.</span>query<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token string">&quot;repo_key&quot;</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token builtin">int32</span> cr_number <span class="token operator">=</span> <span class="token number">2</span> <span class="token punctuation">[</span><span class="token punctuation">(</span>api<span class="token punctuation">.</span>query<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token string">&quot;cr_number&quot;</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">message</span> <span class="token class-name">ListCRsRequest</span> <span class="token punctuation">{</span>
+    <span class="token builtin">string</span> repo_key <span class="token operator">=</span> <span class="token number">1</span> <span class="token punctuation">[</span><span class="token punctuation">(</span>api<span class="token punctuation">.</span>query<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token string">&quot;repo_key&quot;</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token builtin">string</span> state <span class="token operator">=</span> <span class="token number">2</span> <span class="token punctuation">[</span><span class="token punctuation">(</span>api<span class="token punctuation">.</span>query<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token string">&quot;state&quot;</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token builtin">string</span> source_branch <span class="token operator">=</span> <span class="token number">3</span> <span class="token punctuation">[</span><span class="token punctuation">(</span>api<span class="token punctuation">.</span>query<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token string">&quot;source_branch&quot;</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token builtin">string</span> target_branch <span class="token operator">=</span> <span class="token number">4</span> <span class="token punctuation">[</span><span class="token punctuation">(</span>api<span class="token punctuation">.</span>query<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token string">&quot;target_branch&quot;</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token builtin">int32</span> page <span class="token operator">=</span> <span class="token number">5</span> <span class="token punctuation">[</span><span class="token punctuation">(</span>api<span class="token punctuation">.</span>query<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token string">&quot;page&quot;</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token builtin">int32</span> page_size <span class="token operator">=</span> <span class="token number">6</span> <span class="token punctuation">[</span><span class="token punctuation">(</span>api<span class="token punctuation">.</span>query<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token string">&quot;page_size&quot;</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">message</span> <span class="token class-name">ListCRsResponse</span> <span class="token punctuation">{</span>
+    <span class="token positional-class-name class-name">common<span class="token punctuation">.</span>BaseResponse</span> base <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token keyword">repeated</span> <span class="token positional-class-name class-name">ChangeRequest</span> items <span class="token operator">=</span> <span class="token number">2</span><span class="token punctuation">;</span>
+    <span class="token builtin">int32</span> total <span class="token operator">=</span> <span class="token number">3</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">// ---- 合并 CR ----</span>
+<span class="token keyword">message</span> <span class="token class-name">MergeCRRequest</span> <span class="token punctuation">{</span>
+    <span class="token builtin">string</span> repo_key <span class="token operator">=</span> <span class="token number">1</span> <span class="token punctuation">[</span><span class="token punctuation">(</span>api<span class="token punctuation">.</span>body<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token string">&quot;repo_key&quot;</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token builtin">int32</span> cr_number <span class="token operator">=</span> <span class="token number">2</span> <span class="token punctuation">[</span><span class="token punctuation">(</span>api<span class="token punctuation">.</span>body<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token string">&quot;cr_number&quot;</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token builtin">string</span> merge_commit_message <span class="token operator">=</span> <span class="token number">3</span> <span class="token punctuation">[</span><span class="token punctuation">(</span>api<span class="token punctuation">.</span>body<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token string">&quot;merge_commit_message&quot;</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token builtin">bool</span> squash <span class="token operator">=</span> <span class="token number">4</span> <span class="token punctuation">[</span><span class="token punctuation">(</span>api<span class="token punctuation">.</span>body<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token string">&quot;squash&quot;</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token builtin">bool</span> remove_source_branch <span class="token operator">=</span> <span class="token number">5</span> <span class="token punctuation">[</span><span class="token punctuation">(</span>api<span class="token punctuation">.</span>body<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token string">&quot;remove_source_branch&quot;</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">message</span> <span class="token class-name">MergeCRResponse</span> <span class="token punctuation">{</span>
+    <span class="token positional-class-name class-name">common<span class="token punctuation">.</span>BaseResponse</span> base <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token positional-class-name class-name">ChangeRequest</span> cr <span class="token operator">=</span> <span class="token number">2</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">// ---- 关闭 CR ----</span>
+<span class="token keyword">message</span> <span class="token class-name">CloseCRRequest</span> <span class="token punctuation">{</span>
+    <span class="token builtin">string</span> repo_key <span class="token operator">=</span> <span class="token number">1</span> <span class="token punctuation">[</span><span class="token punctuation">(</span>api<span class="token punctuation">.</span>body<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token string">&quot;repo_key&quot;</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token builtin">int32</span> cr_number <span class="token operator">=</span> <span class="token number">2</span> <span class="token punctuation">[</span><span class="token punctuation">(</span>api<span class="token punctuation">.</span>body<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token string">&quot;cr_number&quot;</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">message</span> <span class="token class-name">CloseCRResponse</span> <span class="token punctuation">{</span>
+    <span class="token positional-class-name class-name">common<span class="token punctuation">.</span>BaseResponse</span> base <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token positional-class-name class-name">ChangeRequest</span> cr <span class="token operator">=</span> <span class="token number">2</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">// ---- 同步平台 CR 到本地 ----</span>
+<span class="token keyword">message</span> <span class="token class-name">SyncCRsRequest</span> <span class="token punctuation">{</span>
+    <span class="token builtin">string</span> repo_key <span class="token operator">=</span> <span class="token number">1</span> <span class="token punctuation">[</span><span class="token punctuation">(</span>api<span class="token punctuation">.</span>query<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token string">&quot;repo_key&quot;</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token builtin">string</span> state <span class="token operator">=</span> <span class="token number">2</span> <span class="token punctuation">[</span><span class="token punctuation">(</span>api<span class="token punctuation">.</span>query<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token string">&quot;state&quot;</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">message</span> <span class="token class-name">SyncCRsResponse</span> <span class="token punctuation">{</span>
+    <span class="token positional-class-name class-name">common<span class="token punctuation">.</span>BaseResponse</span> base <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token builtin">int32</span> synced_count <span class="token operator">=</span> <span class="token number">2</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">service</span> <span class="token class-name">CRService</span> <span class="token punctuation">{</span>
+    <span class="token keyword">rpc</span> <span class="token function">Create</span><span class="token punctuation">(</span><span class="token class-name">CreateCRRequest</span><span class="token punctuation">)</span> <span class="token keyword">returns</span> <span class="token punctuation">(</span><span class="token class-name">CreateCRResponse</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">option</span> <span class="token punctuation">(</span>api<span class="token punctuation">.</span>post<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token string">&quot;/api/v1/cr/create&quot;</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">rpc</span> <span class="token function">Get</span><span class="token punctuation">(</span><span class="token class-name">GetCRRequest</span><span class="token punctuation">)</span> <span class="token keyword">returns</span> <span class="token punctuation">(</span><span class="token class-name">CreateCRResponse</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">option</span> <span class="token punctuation">(</span>api<span class="token punctuation">.</span>get<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token string">&quot;/api/v1/cr/detail&quot;</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">rpc</span> <span class="token function">List</span><span class="token punctuation">(</span><span class="token class-name">ListCRsRequest</span><span class="token punctuation">)</span> <span class="token keyword">returns</span> <span class="token punctuation">(</span><span class="token class-name">ListCRsResponse</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">option</span> <span class="token punctuation">(</span>api<span class="token punctuation">.</span>get<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token string">&quot;/api/v1/cr/list&quot;</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">rpc</span> <span class="token function">Merge</span><span class="token punctuation">(</span><span class="token class-name">MergeCRRequest</span><span class="token punctuation">)</span> <span class="token keyword">returns</span> <span class="token punctuation">(</span><span class="token class-name">MergeCRResponse</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">option</span> <span class="token punctuation">(</span>api<span class="token punctuation">.</span>post<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token string">&quot;/api/v1/cr/merge&quot;</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">rpc</span> <span class="token function">Close</span><span class="token punctuation">(</span><span class="token class-name">CloseCRRequest</span><span class="token punctuation">)</span> <span class="token keyword">returns</span> <span class="token punctuation">(</span><span class="token class-name">CloseCRResponse</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">option</span> <span class="token punctuation">(</span>api<span class="token punctuation">.</span>post<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token string">&quot;/api/v1/cr/close&quot;</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">rpc</span> <span class="token function">Sync</span><span class="token punctuation">(</span><span class="token class-name">SyncCRsRequest</span><span class="token punctuation">)</span> <span class="token keyword">returns</span> <span class="token punctuation">(</span><span class="token class-name">SyncCRsResponse</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">option</span> <span class="token punctuation">(</span>api<span class="token punctuation">.</span>post<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token string">&quot;/api/v1/cr/sync&quot;</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br><span class="line-number">11</span><br><span class="line-number">12</span><br><span class="line-number">13</span><br><span class="line-number">14</span><br><span class="line-number">15</span><br><span class="line-number">16</span><br><span class="line-number">17</span><br><span class="line-number">18</span><br><span class="line-number">19</span><br><span class="line-number">20</span><br><span class="line-number">21</span><br><span class="line-number">22</span><br><span class="line-number">23</span><br><span class="line-number">24</span><br><span class="line-number">25</span><br><span class="line-number">26</span><br><span class="line-number">27</span><br><span class="line-number">28</span><br><span class="line-number">29</span><br><span class="line-number">30</span><br><span class="line-number">31</span><br><span class="line-number">32</span><br><span class="line-number">33</span><br><span class="line-number">34</span><br><span class="line-number">35</span><br><span class="line-number">36</span><br><span class="line-number">37</span><br><span class="line-number">38</span><br><span class="line-number">39</span><br><span class="line-number">40</span><br><span class="line-number">41</span><br><span class="line-number">42</span><br><span class="line-number">43</span><br><span class="line-number">44</span><br><span class="line-number">45</span><br><span class="line-number">46</span><br><span class="line-number">47</span><br><span class="line-number">48</span><br><span class="line-number">49</span><br><span class="line-number">50</span><br><span class="line-number">51</span><br><span class="line-number">52</span><br><span class="line-number">53</span><br><span class="line-number">54</span><br><span class="line-number">55</span><br><span class="line-number">56</span><br><span class="line-number">57</span><br><span class="line-number">58</span><br><span class="line-number">59</span><br><span class="line-number">60</span><br><span class="line-number">61</span><br><span class="line-number">62</span><br><span class="line-number">63</span><br><span class="line-number">64</span><br><span class="line-number">65</span><br><span class="line-number">66</span><br><span class="line-number">67</span><br><span class="line-number">68</span><br><span class="line-number">69</span><br><span class="line-number">70</span><br><span class="line-number">71</span><br><span class="line-number">72</span><br><span class="line-number">73</span><br><span class="line-number">74</span><br><span class="line-number">75</span><br><span class="line-number">76</span><br><span class="line-number">77</span><br><span class="line-number">78</span><br><span class="line-number">79</span><br><span class="line-number">80</span><br><span class="line-number">81</span><br><span class="line-number">82</span><br><span class="line-number">83</span><br><span class="line-number">84</span><br><span class="line-number">85</span><br><span class="line-number">86</span><br><span class="line-number">87</span><br><span class="line-number">88</span><br><span class="line-number">89</span><br><span class="line-number">90</span><br><span class="line-number">91</span><br><span class="line-number">92</span><br><span class="line-number">93</span><br><span class="line-number">94</span><br><span class="line-number">95</span><br><span class="line-number">96</span><br><span class="line-number">97</span><br><span class="line-number">98</span><br><span class="line-number">99</span><br><span class="line-number">100</span><br><span class="line-number">101</span><br><span class="line-number">102</span><br><span class="line-number">103</span><br><span class="line-number">104</span><br><span class="line-number">105</span><br><span class="line-number">106</span><br><span class="line-number">107</span><br><span class="line-number">108</span><br><span class="line-number">109</span><br><span class="line-number">110</span><br><span class="line-number">111</span><br><span class="line-number">112</span><br><span class="line-number">113</span><br><span class="line-number">114</span><br><span class="line-number">115</span><br><span class="line-number">116</span><br><span class="line-number">117</span><br><span class="line-number">118</span><br><span class="line-number">119</span><br></div></div><h3 id="_6-2-webhook-event-proto"><a href="#_6-2-webhook-event-proto" class="header-anchor">#</a> 6.2 Webhook Event Proto</h3> <div class="language-protobuf line-numbers-mode"><pre class="language-protobuf"><code><span class="token comment">// idl/biz/webhook_event.proto</span>
+
+<span class="token keyword">syntax</span> <span class="token operator">=</span> <span class="token string">&quot;proto3&quot;</span><span class="token punctuation">;</span>
+<span class="token keyword">package</span> webhook_event<span class="token punctuation">;</span>
+<span class="token keyword">option</span> go_package <span class="token operator">=</span> <span class="token string">&quot;github.com/yi-nology/git-manage-service/biz/model/webhook_event&quot;</span><span class="token punctuation">;</span>
+
+<span class="token keyword">import</span> <span class="token string">&quot;api.proto&quot;</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token string">&quot;common.proto&quot;</span><span class="token punctuation">;</span>
+
+<span class="token keyword">message</span> <span class="token class-name">WebhookEvent</span> <span class="token punctuation">{</span>
+    <span class="token builtin">int64</span> id <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token builtin">string</span> event_id <span class="token operator">=</span> <span class="token number">2</span><span class="token punctuation">;</span>
+    <span class="token builtin">string</span> event_type <span class="token operator">=</span> <span class="token number">3</span><span class="token punctuation">;</span>
+    <span class="token builtin">string</span> source <span class="token operator">=</span> <span class="token number">4</span><span class="token punctuation">;</span>
+    <span class="token builtin">string</span> actor_name <span class="token operator">=</span> <span class="token number">5</span><span class="token punctuation">;</span>
+    <span class="token builtin">string</span> repo_full_name <span class="token operator">=</span> <span class="token number">6</span><span class="token punctuation">;</span>
+    <span class="token builtin">int32</span> platform_cr_number <span class="token operator">=</span> <span class="token number">7</span><span class="token punctuation">;</span>
+    <span class="token builtin">string</span> status <span class="token operator">=</span> <span class="token number">8</span><span class="token punctuation">;</span>
+    <span class="token builtin">string</span> created_at <span class="token operator">=</span> <span class="token number">9</span><span class="token punctuation">;</span>
+    <span class="token builtin">string</span> processed_at <span class="token operator">=</span> <span class="token number">10</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">message</span> <span class="token class-name">ListWebhookEventsRequest</span> <span class="token punctuation">{</span>
+    <span class="token builtin">string</span> event_type <span class="token operator">=</span> <span class="token number">1</span> <span class="token punctuation">[</span><span class="token punctuation">(</span>api<span class="token punctuation">.</span>query<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token string">&quot;event_type&quot;</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token builtin">string</span> source <span class="token operator">=</span> <span class="token number">2</span> <span class="token punctuation">[</span><span class="token punctuation">(</span>api<span class="token punctuation">.</span>query<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token string">&quot;source&quot;</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token builtin">string</span> status <span class="token operator">=</span> <span class="token number">3</span> <span class="token punctuation">[</span><span class="token punctuation">(</span>api<span class="token punctuation">.</span>query<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token string">&quot;status&quot;</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token builtin">int32</span> page <span class="token operator">=</span> <span class="token number">4</span> <span class="token punctuation">[</span><span class="token punctuation">(</span>api<span class="token punctuation">.</span>query<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token string">&quot;page&quot;</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token builtin">int32</span> page_size <span class="token operator">=</span> <span class="token number">5</span> <span class="token punctuation">[</span><span class="token punctuation">(</span>api<span class="token punctuation">.</span>query<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token string">&quot;page_size&quot;</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">message</span> <span class="token class-name">ListWebhookEventsResponse</span> <span class="token punctuation">{</span>
+    <span class="token positional-class-name class-name">common<span class="token punctuation">.</span>BaseResponse</span> base <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token keyword">repeated</span> <span class="token positional-class-name class-name">WebhookEvent</span> items <span class="token operator">=</span> <span class="token number">2</span><span class="token punctuation">;</span>
+    <span class="token builtin">int32</span> total <span class="token operator">=</span> <span class="token number">3</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">message</span> <span class="token class-name">RetryWebhookEventRequest</span> <span class="token punctuation">{</span>
+    <span class="token builtin">int64</span> event_id <span class="token operator">=</span> <span class="token number">1</span> <span class="token punctuation">[</span><span class="token punctuation">(</span>api<span class="token punctuation">.</span>body<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token string">&quot;event_id&quot;</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">service</span> <span class="token class-name">WebhookEventService</span> <span class="token punctuation">{</span>
+    <span class="token keyword">rpc</span> <span class="token function">List</span><span class="token punctuation">(</span><span class="token class-name">ListWebhookEventsRequest</span><span class="token punctuation">)</span> <span class="token keyword">returns</span> <span class="token punctuation">(</span><span class="token class-name">ListWebhookEventsResponse</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">option</span> <span class="token punctuation">(</span>api<span class="token punctuation">.</span>get<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token string">&quot;/api/v1/webhook/events&quot;</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">rpc</span> <span class="token function">Retry</span><span class="token punctuation">(</span><span class="token class-name">RetryWebhookEventRequest</span><span class="token punctuation">)</span> <span class="token keyword">returns</span> <span class="token punctuation">(</span><span class="token class-name">common.BaseResponse</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">option</span> <span class="token punctuation">(</span>api<span class="token punctuation">.</span>post<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token string">&quot;/api/v1/webhook/events/retry&quot;</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br><span class="line-number">11</span><br><span class="line-number">12</span><br><span class="line-number">13</span><br><span class="line-number">14</span><br><span class="line-number">15</span><br><span class="line-number">16</span><br><span class="line-number">17</span><br><span class="line-number">18</span><br><span class="line-number">19</span><br><span class="line-number">20</span><br><span class="line-number">21</span><br><span class="line-number">22</span><br><span class="line-number">23</span><br><span class="line-number">24</span><br><span class="line-number">25</span><br><span class="line-number">26</span><br><span class="line-number">27</span><br><span class="line-number">28</span><br><span class="line-number">29</span><br><span class="line-number">30</span><br><span class="line-number">31</span><br><span class="line-number">32</span><br><span class="line-number">33</span><br><span class="line-number">34</span><br><span class="line-number">35</span><br><span class="line-number">36</span><br><span class="line-number">37</span><br><span class="line-number">38</span><br><span class="line-number">39</span><br><span class="line-number">40</span><br><span class="line-number">41</span><br><span class="line-number">42</span><br><span class="line-number">43</span><br><span class="line-number">44</span><br><span class="line-number">45</span><br><span class="line-number">46</span><br><span class="line-number">47</span><br><span class="line-number">48</span><br></div></div><h3 id="_6-3-provider-config-proto"><a href="#_6-3-provider-config-proto" class="header-anchor">#</a> 6.3 Provider Config Proto</h3> <div class="language-protobuf line-numbers-mode"><pre class="language-protobuf"><code><span class="token comment">// idl/biz/provider.proto</span>
+
+<span class="token keyword">syntax</span> <span class="token operator">=</span> <span class="token string">&quot;proto3&quot;</span><span class="token punctuation">;</span>
+<span class="token keyword">package</span> provider<span class="token punctuation">;</span>
+<span class="token keyword">option</span> go_package <span class="token operator">=</span> <span class="token string">&quot;github.com/yi-nology/git-manage-service/biz/model/provider&quot;</span><span class="token punctuation">;</span>
+
+<span class="token keyword">import</span> <span class="token string">&quot;api.proto&quot;</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token string">&quot;common.proto&quot;</span><span class="token punctuation">;</span>
+
+<span class="token keyword">message</span> <span class="token class-name">ProviderConfig</span> <span class="token punctuation">{</span>
+    <span class="token builtin">int64</span> id <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token builtin">string</span> name <span class="token operator">=</span> <span class="token number">2</span><span class="token punctuation">;</span>
+    <span class="token builtin">string</span> platform <span class="token operator">=</span> <span class="token number">3</span><span class="token punctuation">;</span>      <span class="token comment">// gitlab, github, gitea</span>
+    <span class="token builtin">string</span> base_url <span class="token operator">=</span> <span class="token number">4</span><span class="token punctuation">;</span>
+    <span class="token builtin">int64</span> credential_id <span class="token operator">=</span> <span class="token number">5</span><span class="token punctuation">;</span>
+    <span class="token builtin">string</span> webhook_secret <span class="token operator">=</span> <span class="token number">6</span><span class="token punctuation">;</span>
+    <span class="token builtin">string</span> created_at <span class="token operator">=</span> <span class="token number">7</span><span class="token punctuation">;</span>
+    <span class="token builtin">string</span> updated_at <span class="token operator">=</span> <span class="token number">8</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">message</span> <span class="token class-name">CreateProviderConfigRequest</span> <span class="token punctuation">{</span>
+    <span class="token builtin">string</span> name <span class="token operator">=</span> <span class="token number">1</span> <span class="token punctuation">[</span><span class="token punctuation">(</span>api<span class="token punctuation">.</span>body<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token string">&quot;name&quot;</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token builtin">string</span> platform <span class="token operator">=</span> <span class="token number">2</span> <span class="token punctuation">[</span><span class="token punctuation">(</span>api<span class="token punctuation">.</span>body<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token string">&quot;platform&quot;</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token builtin">string</span> base_url <span class="token operator">=</span> <span class="token number">3</span> <span class="token punctuation">[</span><span class="token punctuation">(</span>api<span class="token punctuation">.</span>body<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token string">&quot;base_url&quot;</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token builtin">int64</span> credential_id <span class="token operator">=</span> <span class="token number">4</span> <span class="token punctuation">[</span><span class="token punctuation">(</span>api<span class="token punctuation">.</span>body<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token string">&quot;credential_id&quot;</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token builtin">string</span> webhook_secret <span class="token operator">=</span> <span class="token number">5</span> <span class="token punctuation">[</span><span class="token punctuation">(</span>api<span class="token punctuation">.</span>body<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token string">&quot;webhook_secret&quot;</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">message</span> <span class="token class-name">UpdateProviderConfigRequest</span> <span class="token punctuation">{</span>
+    <span class="token builtin">int64</span> id <span class="token operator">=</span> <span class="token number">1</span> <span class="token punctuation">[</span><span class="token punctuation">(</span>api<span class="token punctuation">.</span>body<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token string">&quot;id&quot;</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token builtin">string</span> name <span class="token operator">=</span> <span class="token number">2</span> <span class="token punctuation">[</span><span class="token punctuation">(</span>api<span class="token punctuation">.</span>body<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token string">&quot;name&quot;</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token builtin">string</span> base_url <span class="token operator">=</span> <span class="token number">3</span> <span class="token punctuation">[</span><span class="token punctuation">(</span>api<span class="token punctuation">.</span>body<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token string">&quot;base_url&quot;</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token builtin">int64</span> credential_id <span class="token operator">=</span> <span class="token number">4</span> <span class="token punctuation">[</span><span class="token punctuation">(</span>api<span class="token punctuation">.</span>body<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token string">&quot;credential_id&quot;</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token builtin">string</span> webhook_secret <span class="token operator">=</span> <span class="token number">5</span> <span class="token punctuation">[</span><span class="token punctuation">(</span>api<span class="token punctuation">.</span>body<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token string">&quot;webhook_secret&quot;</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">message</span> <span class="token class-name">DeleteProviderConfigRequest</span> <span class="token punctuation">{</span>
+    <span class="token builtin">int64</span> id <span class="token operator">=</span> <span class="token number">1</span> <span class="token punctuation">[</span><span class="token punctuation">(</span>api<span class="token punctuation">.</span>body<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token string">&quot;id&quot;</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">message</span> <span class="token class-name">GetProviderConfigRequest</span> <span class="token punctuation">{</span>
+    <span class="token builtin">int64</span> id <span class="token operator">=</span> <span class="token number">1</span> <span class="token punctuation">[</span><span class="token punctuation">(</span>api<span class="token punctuation">.</span>query<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token string">&quot;id&quot;</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">message</span> <span class="token class-name">ListProviderConfigsRequest</span> <span class="token punctuation">{</span>
+    <span class="token builtin">string</span> platform <span class="token operator">=</span> <span class="token number">1</span> <span class="token punctuation">[</span><span class="token punctuation">(</span>api<span class="token punctuation">.</span>query<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token string">&quot;platform&quot;</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">message</span> <span class="token class-name">ListProviderConfigsResponse</span> <span class="token punctuation">{</span>
+    <span class="token positional-class-name class-name">common<span class="token punctuation">.</span>BaseResponse</span> base <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token keyword">repeated</span> <span class="token positional-class-name class-name">ProviderConfig</span> items <span class="token operator">=</span> <span class="token number">2</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">message</span> <span class="token class-name">TestProviderConfigRequest</span> <span class="token punctuation">{</span>
+    <span class="token builtin">int64</span> id <span class="token operator">=</span> <span class="token number">1</span> <span class="token punctuation">[</span><span class="token punctuation">(</span>api<span class="token punctuation">.</span>body<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token string">&quot;id&quot;</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">message</span> <span class="token class-name">TestProviderConfigResponse</span> <span class="token punctuation">{</span>
+    <span class="token positional-class-name class-name">common<span class="token punctuation">.</span>BaseResponse</span> base <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token builtin">bool</span> connected <span class="token operator">=</span> <span class="token number">2</span><span class="token punctuation">;</span>
+    <span class="token builtin">string</span> platform <span class="token operator">=</span> <span class="token number">3</span><span class="token punctuation">;</span>
+    <span class="token builtin">string</span> user_name <span class="token operator">=</span> <span class="token number">4</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">service</span> <span class="token class-name">ProviderConfigService</span> <span class="token punctuation">{</span>
+    <span class="token keyword">rpc</span> <span class="token function">Create</span><span class="token punctuation">(</span><span class="token class-name">CreateProviderConfigRequest</span><span class="token punctuation">)</span> <span class="token keyword">returns</span> <span class="token punctuation">(</span><span class="token class-name">common.BaseResponse</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">option</span> <span class="token punctuation">(</span>api<span class="token punctuation">.</span>post<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token string">&quot;/api/v1/provider/create&quot;</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">rpc</span> <span class="token function">Get</span><span class="token punctuation">(</span><span class="token class-name">GetProviderConfigRequest</span><span class="token punctuation">)</span> <span class="token keyword">returns</span> <span class="token punctuation">(</span><span class="token class-name">ListProviderConfigsResponse</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">option</span> <span class="token punctuation">(</span>api<span class="token punctuation">.</span>get<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token string">&quot;/api/v1/provider/detail&quot;</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">rpc</span> <span class="token function">List</span><span class="token punctuation">(</span><span class="token class-name">ListProviderConfigsRequest</span><span class="token punctuation">)</span> <span class="token keyword">returns</span> <span class="token punctuation">(</span><span class="token class-name">ListProviderConfigsResponse</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">option</span> <span class="token punctuation">(</span>api<span class="token punctuation">.</span>get<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token string">&quot;/api/v1/provider/list&quot;</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">rpc</span> <span class="token function">Update</span><span class="token punctuation">(</span><span class="token class-name">UpdateProviderConfigRequest</span><span class="token punctuation">)</span> <span class="token keyword">returns</span> <span class="token punctuation">(</span><span class="token class-name">common.BaseResponse</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">option</span> <span class="token punctuation">(</span>api<span class="token punctuation">.</span>post<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token string">&quot;/api/v1/provider/update&quot;</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">rpc</span> <span class="token function">Delete</span><span class="token punctuation">(</span><span class="token class-name">DeleteProviderConfigRequest</span><span class="token punctuation">)</span> <span class="token keyword">returns</span> <span class="token punctuation">(</span><span class="token class-name">common.BaseResponse</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">option</span> <span class="token punctuation">(</span>api<span class="token punctuation">.</span>post<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token string">&quot;/api/v1/provider/delete&quot;</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">rpc</span> <span class="token function">Test</span><span class="token punctuation">(</span><span class="token class-name">TestProviderConfigRequest</span><span class="token punctuation">)</span> <span class="token keyword">returns</span> <span class="token punctuation">(</span><span class="token class-name">TestProviderConfigResponse</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">option</span> <span class="token punctuation">(</span>api<span class="token punctuation">.</span>post<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token string">&quot;/api/v1/provider/test&quot;</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br><span class="line-number">11</span><br><span class="line-number">12</span><br><span class="line-number">13</span><br><span class="line-number">14</span><br><span class="line-number">15</span><br><span class="line-number">16</span><br><span class="line-number">17</span><br><span class="line-number">18</span><br><span class="line-number">19</span><br><span class="line-number">20</span><br><span class="line-number">21</span><br><span class="line-number">22</span><br><span class="line-number">23</span><br><span class="line-number">24</span><br><span class="line-number">25</span><br><span class="line-number">26</span><br><span class="line-number">27</span><br><span class="line-number">28</span><br><span class="line-number">29</span><br><span class="line-number">30</span><br><span class="line-number">31</span><br><span class="line-number">32</span><br><span class="line-number">33</span><br><span class="line-number">34</span><br><span class="line-number">35</span><br><span class="line-number">36</span><br><span class="line-number">37</span><br><span class="line-number">38</span><br><span class="line-number">39</span><br><span class="line-number">40</span><br><span class="line-number">41</span><br><span class="line-number">42</span><br><span class="line-number">43</span><br><span class="line-number">44</span><br><span class="line-number">45</span><br><span class="line-number">46</span><br><span class="line-number">47</span><br><span class="line-number">48</span><br><span class="line-number">49</span><br><span class="line-number">50</span><br><span class="line-number">51</span><br><span class="line-number">52</span><br><span class="line-number">53</span><br><span class="line-number">54</span><br><span class="line-number">55</span><br><span class="line-number">56</span><br><span class="line-number">57</span><br><span class="line-number">58</span><br><span class="line-number">59</span><br><span class="line-number">60</span><br><span class="line-number">61</span><br><span class="line-number">62</span><br><span class="line-number">63</span><br><span class="line-number">64</span><br><span class="line-number">65</span><br><span class="line-number">66</span><br><span class="line-number">67</span><br><span class="line-number">68</span><br><span class="line-number">69</span><br><span class="line-number">70</span><br><span class="line-number">71</span><br><span class="line-number">72</span><br><span class="line-number">73</span><br><span class="line-number">74</span><br><span class="line-number">75</span><br><span class="line-number">76</span><br><span class="line-number">77</span><br><span class="line-number">78</span><br><span class="line-number">79</span><br><span class="line-number">80</span><br><span class="line-number">81</span><br><span class="line-number">82</span><br><span class="line-number">83</span><br><span class="line-number">84</span><br></div></div><hr> <h2 id="_7-新增目录结构总览"><a href="#_7-新增目录结构总览" class="header-anchor">#</a> 7. 新增目录结构总览</h2> <div class="language- line-numbers-mode"><pre class="language-text"><code>biz/
+├── service/
+│   └── provider/                  # 新增
+│       ├── provider.go            # 接口定义 + DTO
+│       ├── manager.go             # Provider 实例管理
+│       ├── detect.go              # URL → 平台检测
+│       ├── gitlab/                # 新增
+│       │   ├── provider.go
+│       │   ├── mr.go
+│       │   ├── webhook.go
+│       │   └── types.go
+│       ├── github/                # 新增
+│       │   ├── provider.go
+│       │   ├── pr.go
+│       │   ├── webhook.go
+│       │   └── types.go
+│       └── gitea/                 # 新增
+│           ├── provider.go
+│           ├── pr.go
+│           ├── webhook.go
+│           └── types.go
+├── handler/
+│   ├── cr/                        # 新增
+│   │   └── cr_service.go
+│   ├── provider/                  # 新增
+│   │   └── provider_config_service.go
+│   ├── webhook_event/             # 新增
+│   │   └── webhook_event_service.go
+│   └── webhook/
+│       └── webhook_service.go     # 扩展: 新增 /receive 入口
+├── router/
+│   ├── cr/                        # 新增 (Hz 生成)
+│   ├── provider/                  # 新增 (Hz 生成)
+│   └── webhook_event/             # 新增 (Hz 生成)
+├── model/
+│   ├── cr/                        # 新增 (Hz 生成)
+│   ├── provider/                  # 新增 (Hz 生成)
+│   └── webhook_event/             # 新增 (Hz 生成)
+├── model/po/                      # 新增
+│   ├── provider_config.go
+│   ├── change_request.go
+│   ├── webhook_event.go
+│   └── webhook_rule.go
+├── dal/db/                        # 新增
+│   ├── provider_config_dao.go
+│   ├── change_request_dao.go
+│   ├── webhook_event_dao.go
+│   └── webhook_rule_dao.go
+├── service/
+│   ├── cr_service.go              # 新增
+│   └── webhook_event_service.go   # 新增
+└── middleware/
+    └── webhook_auth.go            # 新增: 签名验证中间件
+
+idl/biz/
+├── provider.proto                 # 新增
+├── cr.proto                       # 新增
+└── webhook_event.proto            # 新增
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br><span class="line-number">11</span><br><span class="line-number">12</span><br><span class="line-number">13</span><br><span class="line-number">14</span><br><span class="line-number">15</span><br><span class="line-number">16</span><br><span class="line-number">17</span><br><span class="line-number">18</span><br><span class="line-number">19</span><br><span class="line-number">20</span><br><span class="line-number">21</span><br><span class="line-number">22</span><br><span class="line-number">23</span><br><span class="line-number">24</span><br><span class="line-number">25</span><br><span class="line-number">26</span><br><span class="line-number">27</span><br><span class="line-number">28</span><br><span class="line-number">29</span><br><span class="line-number">30</span><br><span class="line-number">31</span><br><span class="line-number">32</span><br><span class="line-number">33</span><br><span class="line-number">34</span><br><span class="line-number">35</span><br><span class="line-number">36</span><br><span class="line-number">37</span><br><span class="line-number">38</span><br><span class="line-number">39</span><br><span class="line-number">40</span><br><span class="line-number">41</span><br><span class="line-number">42</span><br><span class="line-number">43</span><br><span class="line-number">44</span><br><span class="line-number">45</span><br><span class="line-number">46</span><br><span class="line-number">47</span><br><span class="line-number">48</span><br><span class="line-number">49</span><br><span class="line-number">50</span><br><span class="line-number">51</span><br><span class="line-number">52</span><br><span class="line-number">53</span><br><span class="line-number">54</span><br><span class="line-number">55</span><br><span class="line-number">56</span><br><span class="line-number">57</span><br><span class="line-number">58</span><br></div></div><hr> <h2 id="_8-api-汇总"><a href="#_8-api-汇总" class="header-anchor">#</a> 8. API 汇总</h2> <h3 id="_8-1-平台配置"><a href="#_8-1-平台配置" class="header-anchor">#</a> 8.1 平台配置</h3> <table><thead><tr><th>方法</th> <th>路径</th> <th>说明</th></tr></thead> <tbody><tr><td>POST</td> <td><code>/api/v1/provider/create</code></td> <td>添加平台连接</td></tr> <tr><td>GET</td> <td><code>/api/v1/provider/detail</code></td> <td>查询配置详情</td></tr> <tr><td>GET</td> <td><code>/api/v1/provider/list</code></td> <td>列出所有平台配置</td></tr> <tr><td>POST</td> <td><code>/api/v1/provider/update</code></td> <td>更新配置</td></tr> <tr><td>POST</td> <td><code>/api/v1/provider/delete</code></td> <td>删除配置</td></tr> <tr><td>POST</td> <td><code>/api/v1/provider/test</code></td> <td>测试连通性</td></tr></tbody></table> <h3 id="_8-2-cr-mr-管理"><a href="#_8-2-cr-mr-管理" class="header-anchor">#</a> 8.2 CR/MR 管理</h3> <table><thead><tr><th>方法</th> <th>路径</th> <th>说明</th></tr></thead> <tbody><tr><td>POST</td> <td><code>/api/v1/cr/create</code></td> <td>创建 CR (跨平台)</td></tr> <tr><td>GET</td> <td><code>/api/v1/cr/detail</code></td> <td>查询 CR 详情</td></tr> <tr><td>GET</td> <td><code>/api/v1/cr/list</code></td> <td>列出 CR</td></tr> <tr><td>POST</td> <td><code>/api/v1/cr/merge</code></td> <td>合并 CR</td></tr> <tr><td>POST</td> <td><code>/api/v1/cr/close</code></td> <td>关闭 CR</td></tr> <tr><td>POST</td> <td><code>/api/v1/cr/sync</code></td> <td>从平台同步 CR 到本地</td></tr></tbody></table> <h3 id="_8-3-webhook-事件"><a href="#_8-3-webhook-事件" class="header-anchor">#</a> 8.3 Webhook 事件</h3> <table><thead><tr><th>方法</th> <th>路径</th> <th>说明</th></tr></thead> <tbody><tr><td>POST</td> <td><code>/api/webhooks/receive</code></td> <td>接收平台 webhook (统一入口)</td></tr> <tr><td>GET</td> <td><code>/api/v1/webhook/events</code></td> <td>查询事件列表</td></tr> <tr><td>POST</td> <td><code>/api/v1/webhook/events/retry</code></td> <td>重试失败事件</td></tr></tbody></table> <h3 id="_8-4-现有-api-不变"><a href="#_8-4-现有-api-不变" class="header-anchor">#</a> 8.4 现有 API 不变</h3> <p>所有 <code>/api/v1/repo/*</code>、<code>/api/v1/branch/*</code>、<code>/api/v1/sync/*</code>、<code>/api/v1/credential/*</code> 等现有 API 完全不动。</p> <hr> <h2 id="_9-实现优先级与里程碑"><a href="#_9-实现优先级与里程碑" class="header-anchor">#</a> 9. 实现优先级与里程碑</h2> <h3 id="phase-1-基础设施-1-周"><a href="#phase-1-基础设施-1-周" class="header-anchor">#</a> Phase 1: 基础设施（1 周）</h3> <div class="language- line-numbers-mode"><pre class="language-text"><code>[1] provider_config 表 + DAO + CRUD API
+[2] Provider 接口定义 + Manager
+[3] 平台 URL 自动检测
+[4] Credential 扩展 (platform_token 类型)
+[5] 数据库迁移
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br></div></div><h3 id="phase-2-gitlab-provider-cr-2-周"><a href="#phase-2-gitlab-provider-cr-2-周" class="header-anchor">#</a> Phase 2: GitLab Provider + CR（2 周）</h3> <div class="language- line-numbers-mode"><pre class="language-text"><code>[1] GitLab Provider 实现 (MR CRUD + Webhook 注册)
+[2] CR 模块 (Proto → Handler → Service → DAO)
+[3] CR 同步 (从 GitLab 拉取 MR 列表到本地)
+[4] 集成测试
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br></div></div><h3 id="phase-3-github-gitea-provider-2-周"><a href="#phase-3-github-gitea-provider-2-周" class="header-anchor">#</a> Phase 3: GitHub/Gitea Provider（2 周）</h3> <div class="language- line-numbers-mode"><pre class="language-text"><code>[1] GitHub Provider 实现 (PR CRUD + Webhook)
+[2] Gitea Provider 实现 (PR CRUD + Webhook)
+[3] CR 跨平台统一查询
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br></div></div><h3 id="phase-4-webhook-标准化-1-周"><a href="#phase-4-webhook-标准化-1-周" class="header-anchor">#</a> Phase 4: Webhook 标准化（1 周）</h3> <div class="language- line-numbers-mode"><pre class="language-text"><code>[1] 统一入站 endpoint + 签名验证
+[2] 事件解析 (各平台 → NormalizedEvent)
+[3] webhook_event 存储 + 去重
+[4] webhook_rule 路由 + 动作执行
+[5] 事件重试机制
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br></div></div><h3 id="phase-5-质量保障"><a href="#phase-5-质量保障" class="header-anchor">#</a> Phase 5: 质量保障</h3> <div class="language- line-numbers-mode"><pre class="language-text"><code>[1] Webhook 丢失率 = 0: 事件去重 + 失败重试 + 死信队列
+[2] CR 成功率 ≥ 99.9%: 幂等合并 + 冲突预检 + 重试
+[3] 分支创建 &lt; 500ms: 本地 git 操作已满足，平台 API 异步
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br></div></div><hr> <h2 id="_10-关键设计决策"><a href="#_10-关键设计决策" class="header-anchor">#</a> 10. 关键设计决策</h2> <table><thead><tr><th>决策</th> <th>选择</th> <th>原因</th></tr></thead> <tbody><tr><td>Provider 用接口还是 HTTP client 封装</td> <td><strong>Go 接口</strong></td> <td>编译期类型安全，mock 友好</td></tr> <tr><td>CR 数据存本地还是只做透传</td> <td><strong>双写：本地存一份 + 平台操作</strong></td> <td>支持离线查询、统计分析、事件关联</td></tr> <tr><td>Webhook 入站是一个还是多个 endpoint</td> <td><strong>统一 <code>/api/webhooks/receive</code></strong></td> <td>通过 Header 区分平台，简化配置</td></tr> <tr><td>平台 Token 放哪里</td> <td><strong>复用现有 Credential 体系</strong></td> <td>加密存储已实现，加 <code>platform_token</code> 类型即可</td></tr> <tr><td>现有 git 操作层是否改造</td> <td><strong>不改</strong></td> <td>git 协议操作和平台 API 操作是两个正交关注点</td></tr> <tr><td>Webhook 事件处理</td> <td><strong>异步 + 规则引擎</strong></td> <td>不阻塞响应，规则匹配决定后续动作</td></tr></tbody></table> <hr> <h2 id="_11-与现有系统的集成点"><a href="#_11-与现有系统的集成点" class="header-anchor">#</a> 11. 与现有系统的集成点</h2> <div class="language- line-numbers-mode"><pre class="language-text"><code>                        ┌──────────────────────────────────┐
+                        │         新增模块                   │
+                        │  Provider / CR / Webhook Event    │
+                        └───┬──────────┬──────────┬────────┘
+                            │          │          │
+                 ┌──────────┘          │          └──────────┐
+                 ▼                     ▼                     ▼
+          ┌─────────────┐   ┌─────────────────┐   ┌──────────────┐
+          │ Credential  │   │   Repo Model    │   │  Notification │
+          │ (扩展类型)   │   │ (扩展平台字段)  │   │  (复用现有)   │
+          └─────────────┘   └─────────────────┘   └──────────────┘
+                                                     ▲
+          ┌──────────────────────────────────────────┘
+          │  Webhook Rule 触发:
+          │  - sync → 调用现有 SyncService
+          │  - notify → 调用现有 NotificationService
+          └──────────────────────────────────────────
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br><span class="line-number">11</span><br><span class="line-number">12</span><br><span class="line-number">13</span><br><span class="line-number">14</span><br><span class="line-number">15</span><br><span class="line-number">16</span><br><span class="line-number">17</span><br></div></div><p><strong>复用点</strong>：</p> <ul><li><strong>Credential 系统</strong>：直接新增 <code>platform_token</code> 类型，Token 加密存储已实现</li> <li><strong>Repo 模型</strong>：扩展字段即可，不影响现有逻辑</li> <li><strong>Notification 系统</strong>：webhook rule 的 <code>notify</code> 动作直接复用</li> <li><strong>Sync 系统</strong>：webhook rule 的 <code>sync</code> 动作直接调用现有同步能力</li> <li><strong>Audit 系统</strong>：所有 CR/Webhook 操作自动产生审计日志</li></ul></div> <footer class="page-edit"><div class="edit-link"><a href="https://github.com/yi-nology/git-manage-service/edit/main/docs/design/unified-provider-layer.md" target="_blank" rel="noopener noreferrer">在 GitHub 上编辑此页</a> <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></div> <div class="last-updated"><span class="prefix">上次更新:</span> <span class="time">4/12/2026, 6:27:20 PM</span></div></footer> <!----> </main></div><div class="global-ui"></div></div>
+    <script src="/git-manage-service/assets/js/app.dc8f39c3.js" defer></script><script src="/git-manage-service/assets/js/2.98b0deb4.js" defer></script><script src="/git-manage-service/assets/js/1.77e78a7e.js" defer></script><script src="/git-manage-service/assets/js/31.561ccfaf.js" defer></script>
+  </body>
+</html>

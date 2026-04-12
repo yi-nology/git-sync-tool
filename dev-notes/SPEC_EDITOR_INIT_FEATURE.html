@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Spec 编辑器 - 初始化功能实施完成 | Git Manage Service</title>
+    <meta name="generator" content="VuePress 1.9.10">
+    <link rel="icon" type="image/svg+xml" href="/git-manage-service/images/favicon.svg">
+    <meta name="description" content="轻量级多仓库自动化同步管理系统">
+    <meta name="theme-color" content="#6366f1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    
+    <link rel="preload" href="/git-manage-service/assets/css/0.styles.92870b7f.css" as="style"><link rel="preload" href="/git-manage-service/assets/js/app.dc8f39c3.js" as="script"><link rel="preload" href="/git-manage-service/assets/js/2.98b0deb4.js" as="script"><link rel="preload" href="/git-manage-service/assets/js/1.77e78a7e.js" as="script"><link rel="preload" href="/git-manage-service/assets/js/41.c125a58e.js" as="script"><link rel="prefetch" href="/git-manage-service/assets/js/10.b6fc63e7.js"><link rel="prefetch" href="/git-manage-service/assets/js/11.a556731a.js"><link rel="prefetch" href="/git-manage-service/assets/js/12.bc135387.js"><link rel="prefetch" href="/git-manage-service/assets/js/13.1520762d.js"><link rel="prefetch" href="/git-manage-service/assets/js/14.440abb79.js"><link rel="prefetch" href="/git-manage-service/assets/js/15.540584f5.js"><link rel="prefetch" href="/git-manage-service/assets/js/16.d61ffc33.js"><link rel="prefetch" href="/git-manage-service/assets/js/17.fe7e2849.js"><link rel="prefetch" href="/git-manage-service/assets/js/18.5341d2b3.js"><link rel="prefetch" href="/git-manage-service/assets/js/19.6ee6f591.js"><link rel="prefetch" href="/git-manage-service/assets/js/20.57fccbda.js"><link rel="prefetch" href="/git-manage-service/assets/js/21.5e6ee4ad.js"><link rel="prefetch" href="/git-manage-service/assets/js/22.df847616.js"><link rel="prefetch" href="/git-manage-service/assets/js/23.5874e4ea.js"><link rel="prefetch" href="/git-manage-service/assets/js/24.b3510823.js"><link rel="prefetch" href="/git-manage-service/assets/js/25.5fe74e41.js"><link rel="prefetch" href="/git-manage-service/assets/js/26.976f771e.js"><link rel="prefetch" href="/git-manage-service/assets/js/27.5905740c.js"><link rel="prefetch" href="/git-manage-service/assets/js/28.5389d93b.js"><link rel="prefetch" href="/git-manage-service/assets/js/29.891e2cbd.js"><link rel="prefetch" href="/git-manage-service/assets/js/3.48c22373.js"><link rel="prefetch" href="/git-manage-service/assets/js/30.966a53c4.js"><link rel="prefetch" href="/git-manage-service/assets/js/31.561ccfaf.js"><link rel="prefetch" href="/git-manage-service/assets/js/32.9eb3db93.js"><link rel="prefetch" href="/git-manage-service/assets/js/33.84a5ae59.js"><link rel="prefetch" href="/git-manage-service/assets/js/34.093405f5.js"><link rel="prefetch" href="/git-manage-service/assets/js/35.b605d5e1.js"><link rel="prefetch" href="/git-manage-service/assets/js/36.d013fa78.js"><link rel="prefetch" href="/git-manage-service/assets/js/37.e5eda3bc.js"><link rel="prefetch" href="/git-manage-service/assets/js/38.3e4beef7.js"><link rel="prefetch" href="/git-manage-service/assets/js/39.1aa54073.js"><link rel="prefetch" href="/git-manage-service/assets/js/4.76aca2d3.js"><link rel="prefetch" href="/git-manage-service/assets/js/40.2a1edcc8.js"><link rel="prefetch" href="/git-manage-service/assets/js/42.f2f35cd0.js"><link rel="prefetch" href="/git-manage-service/assets/js/43.147284bf.js"><link rel="prefetch" href="/git-manage-service/assets/js/44.003db7d2.js"><link rel="prefetch" href="/git-manage-service/assets/js/45.e4bcd873.js"><link rel="prefetch" href="/git-manage-service/assets/js/46.cb49954d.js"><link rel="prefetch" href="/git-manage-service/assets/js/47.ad8587b8.js"><link rel="prefetch" href="/git-manage-service/assets/js/48.cb3bef92.js"><link rel="prefetch" href="/git-manage-service/assets/js/49.38971bdd.js"><link rel="prefetch" href="/git-manage-service/assets/js/5.eeff0cb2.js"><link rel="prefetch" href="/git-manage-service/assets/js/50.614e3203.js"><link rel="prefetch" href="/git-manage-service/assets/js/51.56f44bfd.js"><link rel="prefetch" href="/git-manage-service/assets/js/52.edc8d7b0.js"><link rel="prefetch" href="/git-manage-service/assets/js/53.4a5ed580.js"><link rel="prefetch" href="/git-manage-service/assets/js/54.e88cf30b.js"><link rel="prefetch" href="/git-manage-service/assets/js/55.4562eab4.js"><link rel="prefetch" href="/git-manage-service/assets/js/56.442ff2ff.js"><link rel="prefetch" href="/git-manage-service/assets/js/57.a56f8911.js"><link rel="prefetch" href="/git-manage-service/assets/js/58.ddefa9d3.js"><link rel="prefetch" href="/git-manage-service/assets/js/59.14a0e5a8.js"><link rel="prefetch" href="/git-manage-service/assets/js/6.196c85db.js"><link rel="prefetch" href="/git-manage-service/assets/js/60.bcd0f602.js"><link rel="prefetch" href="/git-manage-service/assets/js/7.dadc5d64.js"><link rel="prefetch" href="/git-manage-service/assets/js/vendors~docsearch.bd0b093a.js">
+    <link rel="stylesheet" href="/git-manage-service/assets/css/0.styles.92870b7f.css">
+  </head>
+  <body>
+    <div id="app" data-server-rendered="true"><div class="theme-container"><header class="navbar"><div class="sidebar-button"><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" viewBox="0 0 448 512" class="icon"><path fill="currentColor" d="M436 124H12c-6.627 0-12-5.373-12-12V80c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12z"></path></svg></div> <a href="/git-manage-service/" class="home-link router-link-active"><!----> <span class="site-name">Git Manage Service</span></a> <div class="links"><div class="search-box"><input aria-label="Search" autocomplete="off" spellcheck="false" value=""> <!----></div> <nav class="nav-links can-hide"><div class="nav-item"><a href="/git-manage-service/" class="nav-link">
+  首页
+</a></div><div class="nav-item"><a href="/git-manage-service/getting-started.html" class="nav-link">
+  快速开始
+</a></div><div class="nav-item"><div class="dropdown-wrapper"><button type="button" aria-label="功能指南" class="dropdown-title"><span class="title">功能指南</span> <span class="arrow down"></span></button> <button type="button" aria-label="功能指南" class="mobile-dropdown-title"><span class="title">功能指南</span> <span class="arrow right"></span></button> <ul class="nav-dropdown" style="display:none;"><li class="dropdown-item"><!----> <a href="/git-manage-service/features/repo.html" class="nav-link">
+  仓库管理
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/branch.html" class="nav-link">
+  分支管理
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/sync.html" class="nav-link">
+  同步任务
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/webhook.html" class="nav-link">
+  Webhook
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/notification.html" class="nav-link">
+  通知配置
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/ssh.html" class="nav-link">
+  SSH 密钥
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/metrics.html" class="nav-link">
+  代码度量
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/spec-editor.html" class="nav-link">
+  Spec 编辑器
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/patch-manager.html" class="nav-link">
+  Patch 管理
+</a></li></ul></div></div><div class="nav-item"><div class="dropdown-wrapper"><button type="button" aria-label="部署方案" class="dropdown-title"><span class="title">部署方案</span> <span class="arrow down"></span></button> <button type="button" aria-label="部署方案" class="mobile-dropdown-title"><span class="title">部署方案</span> <span class="arrow right"></span></button> <ul class="nav-dropdown" style="display:none;"><li class="dropdown-item"><!----> <a href="/git-manage-service/deployment/binary.html" class="nav-link">
+  二进制部署
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/deployment/docker.html" class="nav-link">
+  Docker 部署
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/deployment/kubernetes.html" class="nav-link">
+  Kubernetes
+</a></li></ul></div></div><div class="nav-item"><a href="/git-manage-service/configuration.html" class="nav-link">
+  配置参考
+</a></div><div class="nav-item"><a href="/git-manage-service/api.html" class="nav-link">
+  API 文档
+</a></div> <a href="https://github.com/yi-nology/git-manage-service" target="_blank" rel="noopener noreferrer" class="repo-link">
+    GitHub
+    <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></nav></div></header> <div class="sidebar-mask"></div> <aside class="sidebar"><nav class="nav-links"><div class="nav-item"><a href="/git-manage-service/" class="nav-link">
+  首页
+</a></div><div class="nav-item"><a href="/git-manage-service/getting-started.html" class="nav-link">
+  快速开始
+</a></div><div class="nav-item"><div class="dropdown-wrapper"><button type="button" aria-label="功能指南" class="dropdown-title"><span class="title">功能指南</span> <span class="arrow down"></span></button> <button type="button" aria-label="功能指南" class="mobile-dropdown-title"><span class="title">功能指南</span> <span class="arrow right"></span></button> <ul class="nav-dropdown" style="display:none;"><li class="dropdown-item"><!----> <a href="/git-manage-service/features/repo.html" class="nav-link">
+  仓库管理
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/branch.html" class="nav-link">
+  分支管理
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/sync.html" class="nav-link">
+  同步任务
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/webhook.html" class="nav-link">
+  Webhook
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/notification.html" class="nav-link">
+  通知配置
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/ssh.html" class="nav-link">
+  SSH 密钥
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/metrics.html" class="nav-link">
+  代码度量
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/spec-editor.html" class="nav-link">
+  Spec 编辑器
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/patch-manager.html" class="nav-link">
+  Patch 管理
+</a></li></ul></div></div><div class="nav-item"><div class="dropdown-wrapper"><button type="button" aria-label="部署方案" class="dropdown-title"><span class="title">部署方案</span> <span class="arrow down"></span></button> <button type="button" aria-label="部署方案" class="mobile-dropdown-title"><span class="title">部署方案</span> <span class="arrow right"></span></button> <ul class="nav-dropdown" style="display:none;"><li class="dropdown-item"><!----> <a href="/git-manage-service/deployment/binary.html" class="nav-link">
+  二进制部署
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/deployment/docker.html" class="nav-link">
+  Docker 部署
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/deployment/kubernetes.html" class="nav-link">
+  Kubernetes
+</a></li></ul></div></div><div class="nav-item"><a href="/git-manage-service/configuration.html" class="nav-link">
+  配置参考
+</a></div><div class="nav-item"><a href="/git-manage-service/api.html" class="nav-link">
+  API 文档
+</a></div> <a href="https://github.com/yi-nology/git-manage-service" target="_blank" rel="noopener noreferrer" class="repo-link">
+    GitHub
+    <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></nav>  <ul class="sidebar-links"><li><section class="sidebar-group depth-0"><p class="sidebar-heading open"><span>📖 概览</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/git-manage-service/" aria-current="page" class="sidebar-link">Home</a></li><li><a href="/git-manage-service/getting-started.html" class="sidebar-link">快速开始</a></li></ul></section></li><li><section class="sidebar-group collapsable depth-0"><p class="sidebar-heading"><span>🚀 功能指南</span> <span class="arrow right"></span></p> <!----></section></li><li><section class="sidebar-group collapsable depth-0"><p class="sidebar-heading"><span>📦 部署方案</span> <span class="arrow right"></span></p> <!----></section></li><li><section class="sidebar-group collapsable depth-0"><p class="sidebar-heading"><span>⚙️ 参考</span> <span class="arrow right"></span></p> <!----></section></li></ul> </aside> <main class="page"> <div class="theme-default-content content__default"><h1 id="spec-编辑器-初始化功能实施完成"><a href="#spec-编辑器-初始化功能实施完成" class="header-anchor">#</a> Spec 编辑器 - 初始化功能实施完成</h1> <p>实施时间: 2026-03-09 00:52
+状态: 已完成 ✅</p> <hr> <h2 id="新增功能"><a href="#新增功能" class="header-anchor">#</a> 新增功能</h2> <h3 id="初始化-spec-文件"><a href="#初始化-spec-文件" class="header-anchor">#</a> 初始化 Spec 文件</h3> <p><strong>功能描述</strong>:</p> <ul><li>如果仓库中没有 .spec 文件，显示 &quot;初始化 Spec 文件&quot; 按钮</li> <li>点击按钮打开对话框，填写基本信息</li> <li>根据用户输入生成完整的 Spec 模板</li> <li>自动创建文件并在编辑器中打开</li></ul> <p><strong>用户体验</strong>:</p> <ol><li>进入仓库详情页 → 点击 &quot;Spec 编辑器&quot; 标签</li> <li>如果没有 .spec 文件，看到友好的空状态提示</li> <li>点击 &quot;初始化 Spec 文件&quot; 按钮</li> <li>填写表单：
+<ul><li>文件名（如: mypackage）</li> <li>Name（软件包名称）</li> <li>Version（版本号，默认: 1.0.0）</li> <li>Release（发布号，默认: 1）</li> <li>Summary（简要描述）</li> <li>License（许可证，支持选择）</li> <li>URL（项目主页）</li> <li>Description（详细描述）</li></ul></li> <li>点击 &quot;创建并打开&quot;</li> <li>自动生成包含所有信息的 .spec 文件</li> <li>文件树刷新，自动打开新创建的文件</li></ol> <hr> <h2 id="技术实现"><a href="#技术实现" class="header-anchor">#</a> 技术实现</h2> <h3 id="前端修改"><a href="#前端修改" class="header-anchor">#</a> 前端修改</h3> <p><strong>文件</strong>: <code>frontend/src/components/spec/SpecEditor.vue</code></p> <p><strong>新增组件</strong>:</p> <ol><li><strong>空状态容器</strong>: 显示 &quot;初始化 Spec 文件&quot; 按钮</li> <li><strong>初始化对话框</strong>: 表单输入和验证</li> <li><strong>模板生成器</strong>: 根据用户输入生成完整 Spec 文件</li></ol> <p><strong>新增状态</strong>:</p> <ul><li><code>showInitDialog</code>: 对话框显示状态</li> <li><code>initInProgress</code>: 创建进行中状态</li> <li><code>initForm</code>: 表单数据</li> <li><code>initFormRules</code>: 表单验证规则</li></ul> <p><strong>新增方法</strong>:</p> <ul><li><code>handleInitSpec()</code>: 处理初始化逻辑</li> <li><code>generateSpecTemplate()</code>: 生成 Spec 模板内容</li></ul> <p><strong>样式优化</strong>:</p> <ul><li><code>.empty-tree-container</code>: 空状态容器样式</li> <li><code>.form-tip</code>: 表单提示样式</li></ul> <hr> <h3 id="后端修改"><a href="#后端修改" class="header-anchor">#</a> 后端修改</h3> <p><strong>文件 1</strong>: <code>biz/model/api/spec.go</code></p> <div class="language-go line-numbers-mode"><pre class="language-go"><code><span class="token keyword">type</span> CreateSpecFileReq <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+    RepoKey <span class="token builtin">string</span> <span class="token string">`json:&quot;repo_key&quot;`</span>
+    Path    <span class="token builtin">string</span> <span class="token string">`json:&quot;path&quot;`</span>
+    Name    <span class="token builtin">string</span> <span class="token string">`json:&quot;name&quot;`</span>
+    Content <span class="token builtin">string</span> <span class="token string">`json:&quot;content&quot;`</span> <span class="token comment">// 新增：可选内容</span>
+<span class="token punctuation">}</span>
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br></div></div><p><strong>文件 2</strong>: <code>biz/service/spec/spec_service.go</code></p> <div class="language-go line-numbers-mode"><pre class="language-go"><code><span class="token keyword">func</span> <span class="token punctuation">(</span>s <span class="token operator">*</span>SpecService<span class="token punctuation">)</span> <span class="token function">CreateSpecFileWithContent</span><span class="token punctuation">(</span>
+    repoPath<span class="token punctuation">,</span> dirPath<span class="token punctuation">,</span> fileName<span class="token punctuation">,</span> content <span class="token builtin">string</span>
+<span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token builtin">string</span><span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// 如果没有提供内容，使用模板</span>
+    <span class="token keyword">if</span> content <span class="token operator">==</span> <span class="token string">&quot;&quot;</span> <span class="token punctuation">{</span>
+        content <span class="token operator">=</span> s<span class="token punctuation">.</span><span class="token function">GetSpecTemplate</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+    <span class="token comment">// 写入内容</span>
+    os<span class="token punctuation">.</span><span class="token function">WriteFile</span><span class="token punctuation">(</span>fullPath<span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token function">byte</span><span class="token punctuation">(</span>content<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token number">0644</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br></div></div><p><strong>文件 3</strong>: <code>biz/handler/spec/spec_service.go</code></p> <div class="language-go line-numbers-mode"><pre class="language-go"><code><span class="token keyword">func</span> <span class="token function">CreateSpecFile</span><span class="token punctuation">(</span>ctx context<span class="token punctuation">.</span>Context<span class="token punctuation">,</span> c <span class="token operator">*</span>app<span class="token punctuation">.</span>RequestContext<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// ...</span>
+    path<span class="token punctuation">,</span> err <span class="token operator">:=</span> specSvc<span class="token punctuation">.</span><span class="token function">CreateSpecFileWithContent</span><span class="token punctuation">(</span>
+        repo<span class="token punctuation">.</span>Path<span class="token punctuation">,</span> req<span class="token punctuation">.</span>Path<span class="token punctuation">,</span> req<span class="token punctuation">.</span>Name<span class="token punctuation">,</span> req<span class="token punctuation">.</span>Content
+    <span class="token punctuation">)</span>
+    <span class="token comment">// ...</span>
+<span class="token punctuation">}</span>
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br></div></div><hr> <h2 id="spec-文件模板"><a href="#spec-文件模板" class="header-anchor">#</a> Spec 文件模板</h2> <p>生成的模板包含以下部分：</p> <div class="language-spec line-numbers-mode"><pre class="language-text"><code>Name:           %{name}
+Version:        %{version}
+Release:        %{release}%{?dist}
+Summary:        %{summary}
+
+License:        %{license}
+URL:            %{url}
+Source0:        %{name}-%{version}.tar.gz
+
+BuildRequires:  gcc
+BuildRequires:  make
+
+%description
+%{description}
+
+%prep
+%setup -q
+
+%build
+%configure
+make %{?_smp_mflags}
+
+%install
+rm -rf %{buildroot}
+%make_install
+
+%files
+%doc README.md
+%license LICENSE
+%{_bindir}/%{name}
+
+%changelog
+* %{date} %{maintainer} - %{version}-%{release}
+- Initial package
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br><span class="line-number">11</span><br><span class="line-number">12</span><br><span class="line-number">13</span><br><span class="line-number">14</span><br><span class="line-number">15</span><br><span class="line-number">16</span><br><span class="line-number">17</span><br><span class="line-number">18</span><br><span class="line-number">19</span><br><span class="line-number">20</span><br><span class="line-number">21</span><br><span class="line-number">22</span><br><span class="line-number">23</span><br><span class="line-number">24</span><br><span class="line-number">25</span><br><span class="line-number">26</span><br><span class="line-number">27</span><br><span class="line-number">28</span><br><span class="line-number">29</span><br><span class="line-number">30</span><br><span class="line-number">31</span><br><span class="line-number">32</span><br><span class="line-number">33</span><br><span class="line-number">34</span><br></div></div><p><strong>特性</strong>:</p> <ul><li>所有用户输入的信息都会被填充到模板中</li> <li>包含标准的 RPM Spec 文件结构</li> <li>预设了常用的 BuildRequires</li> <li>自动生成 changelog 条目</li></ul> <hr> <h2 id="测试验证"><a href="#测试验证" class="header-anchor">#</a> 测试验证</h2> <h3 id="api-测试"><a href="#api-测试" class="header-anchor">#</a> API 测试</h3> <p><strong>测试命令</strong>:</p> <div class="language-bash line-numbers-mode"><pre class="language-bash"><code><span class="token function">curl</span> <span class="token parameter variable">-X</span> POST http://localhost:38080/api/v1/spec/create <span class="token punctuation">\</span>
+  <span class="token parameter variable">-H</span> <span class="token string">&quot;Content-Type: application/json&quot;</span> <span class="token punctuation">\</span>
+  <span class="token parameter variable">-d</span> <span class="token string">'{
+    &quot;repo_key&quot;: &quot;test-repo&quot;,
+    &quot;path&quot;: &quot;.&quot;,
+    &quot;name&quot;: &quot;test-init.spec&quot;
+  }'</span>
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br></div></div><p><strong>测试结果</strong>: ✅ 成功</p> <div class="language-json line-numbers-mode"><pre class="language-json"><code><span class="token punctuation">{</span>
+  <span class="token property">&quot;code&quot;</span><span class="token operator">:</span> <span class="token number">0</span><span class="token punctuation">,</span>
+  <span class="token property">&quot;msg&quot;</span><span class="token operator">:</span> <span class="token string">&quot;success&quot;</span><span class="token punctuation">,</span>
+  <span class="token property">&quot;data&quot;</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token property">&quot;path&quot;</span><span class="token operator">:</span> <span class="token string">&quot;test-init.spec&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;message&quot;</span><span class="token operator">:</span> <span class="token string">&quot;Spec 文件创建成功&quot;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br></div></div><p><strong>文件验证</strong>:</p> <div class="language-bash line-numbers-mode"><pre class="language-bash"><code>$ <span class="token function">ls</span> <span class="token parameter variable">-la</span> /opt/project/git-manage-service/data/test-repo/*.spec
+-rw-------@ <span class="token number">1</span> zhangyi  admin  <span class="token number">383</span> Mar  <span class="token number">9</span> 00:51 test-init.spec
+-rw-------@ <span class="token number">1</span> zhangyi  admin  <span class="token number">120</span> Mar  <span class="token number">9</span> 00:14 test.spec
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br></div></div><p>✅ 文件已成功创建</p> <hr> <h2 id="用户流程图"><a href="#用户流程图" class="header-anchor">#</a> 用户流程图</h2> <div class="language- line-numbers-mode"><pre class="language-text"><code>用户进入仓库详情页
+    ↓
+点击 &quot;Spec 编辑器&quot; 标签
+    ↓
+文件树为空？
+    ├─ 是 → 显示 &quot;初始化 Spec 文件&quot; 按钮
+    │       ↓
+    │    点击按钮 → 打开对话框
+    │       ↓
+    │    填写表单（Name, Version, Summary, License...）
+    │       ↓
+    │    点击 &quot;创建并打开&quot;
+    │       ↓
+    │    生成 Spec 模板
+    │       ↓
+    │    调用后端 API 创建文件
+    │       ↓
+    │    文件树刷新
+    │       ↓
+    │    自动打开新文件
+    │
+    └─ 否 → 显示文件树
+            ↓
+        点击文件 → 在编辑器中打开
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br><span class="line-number">11</span><br><span class="line-number">12</span><br><span class="line-number">13</span><br><span class="line-number">14</span><br><span class="line-number">15</span><br><span class="line-number">16</span><br><span class="line-number">17</span><br><span class="line-number">18</span><br><span class="line-number">19</span><br><span class="line-number">20</span><br><span class="line-number">21</span><br><span class="line-number">22</span><br><span class="line-number">23</span><br><span class="line-number">24</span><br></div></div><hr> <h2 id="表单验证规则"><a href="#表单验证规则" class="header-anchor">#</a> 表单验证规则</h2> <table><thead><tr><th>字段</th> <th>规则</th> <th>说明</th></tr></thead> <tbody><tr><td>filename</td> <td>必填，字母/数字/下划线/短横线</td> <td>文件名（不含 .spec 后缀）</td></tr> <tr><td>name</td> <td>必填</td> <td>软件包名称</td></tr> <tr><td>version</td> <td>必填</td> <td>版本号（默认: 1.0.0）</td></tr> <tr><td>release</td> <td>必填</td> <td>发布号（默认: 1）</td></tr> <tr><td>summary</td> <td>必填</td> <td>简要描述</td></tr> <tr><td>license</td> <td>必填</td> <td>许可证（下拉选择）</td></tr> <tr><td>url</td> <td>可选</td> <td>项目主页 URL</td></tr> <tr><td>description</td> <td>可选</td> <td>详细描述</td></tr></tbody></table> <hr> <h2 id="许可证选项"><a href="#许可证选项" class="header-anchor">#</a> 许可证选项</h2> <p>预设的许可证选项（支持搜索和过滤）：</p> <ul><li>MIT</li> <li>Apache License 2.0</li> <li>GNU General Public License v3.0</li> <li>BSD 2-Clause</li> <li>BSD 3-Clause</li> <li>Mozilla Public License 2.0</li> <li>ISC</li> <li>Unlicense</li></ul> <hr> <h2 id="对话框截图"><a href="#对话框截图" class="header-anchor">#</a> 对话框截图</h2> <p><strong>空状态</strong>:</p> <div class="language- line-numbers-mode"><pre class="language-text"><code>┌─────────────────────────┐
+│   暂无 .spec 文件        │
+│                         │
+│  [初始化 Spec 文件]      │
+└─────────────────────────┘
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br></div></div><p><strong>初始化对话框</strong>:</p> <div class="language- line-numbers-mode"><pre class="language-text"><code>┌───────────────────────────────────┐
+│  初始化 Spec 文件                  │
+├───────────────────────────────────┤
+│  文件名: [mypackage      ].spec   │
+│  Name:   [MyPackage         ]     │
+│  Version: [1.0.0           ]      │
+│  Release: [1               ]      │
+│  Summary: [简要描述         ]     │
+│  License: [MIT            ▼]      │
+│  URL:     [https://...     ]      │
+│  描述:    [详细描述...     ]      │
+│                                   │
+├───────────────────────────────────┤
+│         [取消] [创建并打开]        │
+└───────────────────────────────────┘
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br><span class="line-number">11</span><br><span class="line-number">12</span><br><span class="line-number">13</span><br><span class="line-number">14</span><br><span class="line-number">15</span><br></div></div><hr> <h2 id="完成度评估"><a href="#完成度评估" class="header-anchor">#</a> 完成度评估</h2> <p><strong>功能完成度</strong>: 100%</p> <p><strong>已完成项</strong>:</p> <ul><li>✅ 空状态检测和提示</li> <li>✅ 初始化按钮</li> <li>✅ 初始化对话框</li> <li>✅ 表单验证</li> <li>✅ 模板生成器</li> <li>✅ API 集成</li> <li>✅ 文件树刷新</li> <li>✅ 自动打开新文件</li> <li>✅ 后端支持自定义内容</li></ul> <p><strong>待优化项</strong>（可选）:</p> <ul><li>添加更多许可证选项</li> <li>支持自定义 BuildRequires</li> <li>支持自定义 %files 列表</li> <li>添加 Spec 文件模板库</li> <li>支持从现有项目生成 Spec</li></ul> <hr> <h2 id="下一步建议"><a href="#下一步建议" class="header-anchor">#</a> 下一步建议</h2> <h3 id="立即测试"><a href="#立即测试" class="header-anchor">#</a> 立即测试</h3> <ol><li>访问 http://localhost:3000</li> <li>进入一个没有 .spec 文件的仓库</li> <li>点击 &quot;Spec 编辑器&quot; 标签</li> <li>点击 &quot;初始化 Spec 文件&quot; 按钮</li> <li>填写表单并创建</li></ol> <h3 id="可选增强"><a href="#可选增强" class="header-anchor">#</a> 可选增强</h3> <ol><li>添加 Spec 文件模板库（不同类型的软件）</li> <li>支持从 Git 仓库自动填充信息</li> <li>集成 rpmlint 验证</li> <li>添加更多的 BuildRequires 预设</li> <li>支持多文件项目</li></ol> <hr> <h2 id="相关文件"><a href="#相关文件" class="header-anchor">#</a> 相关文件</h2> <p><strong>前端</strong>:</p> <ul><li><code>frontend/src/components/spec/SpecEditor.vue</code></li> <li><code>frontend/src/api/modules/spec.ts</code></li></ul> <p><strong>后端</strong>:</p> <ul><li><code>biz/model/api/spec.go</code></li> <li><code>biz/handler/spec/spec_service.go</code></li> <li><code>biz/service/spec/spec_service.go</code></li></ul> <p><strong>文档</strong>:</p> <ul><li><code>SPEC_EDITOR_PLAN.md</code></li> <li><code>SPEC_EDITOR_TEST_REPORT_FINAL.md</code></li> <li><code>TODO-Git管理服务整体优化-20260308.md</code></li></ul> <hr> <h2 id="结论"><a href="#结论" class="header-anchor">#</a> 结论</h2> <p>✅ <strong>Spec 编辑器初始化功能已完成并可用</strong></p> <ul><li>用户可以在没有 .spec 文件的仓库中快速初始化</li> <li>提供友好的表单界面</li> <li>自动生成完整的 Spec 模板</li> <li>无需手动编写基础结构</li></ul> <p><strong>建议</strong>: 立即进行手动测试，验证所有交互功能。</p></div> <footer class="page-edit"><div class="edit-link"><a href="https://github.com/yi-nology/git-manage-service/edit/main/docs/dev-notes/SPEC_EDITOR_INIT_FEATURE.md" target="_blank" rel="noopener noreferrer">在 GitHub 上编辑此页</a> <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></div> <div class="last-updated"><span class="prefix">上次更新:</span> <span class="time">3/8/2026, 11:32:24 PM</span></div></footer> <!----> </main></div><div class="global-ui"></div></div>
+    <script src="/git-manage-service/assets/js/app.dc8f39c3.js" defer></script><script src="/git-manage-service/assets/js/2.98b0deb4.js" defer></script><script src="/git-manage-service/assets/js/1.77e78a7e.js" defer></script><script src="/git-manage-service/assets/js/41.c125a58e.js" defer></script>
+  </body>
+</html>

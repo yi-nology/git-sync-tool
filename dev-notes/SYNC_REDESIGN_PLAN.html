@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Git 同步功能重新设计方案 | Git Manage Service</title>
+    <meta name="generator" content="VuePress 1.9.10">
+    <link rel="icon" type="image/svg+xml" href="/git-manage-service/images/favicon.svg">
+    <meta name="description" content="轻量级多仓库自动化同步管理系统">
+    <meta name="theme-color" content="#6366f1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    
+    <link rel="preload" href="/git-manage-service/assets/css/0.styles.92870b7f.css" as="style"><link rel="preload" href="/git-manage-service/assets/js/app.dc8f39c3.js" as="script"><link rel="preload" href="/git-manage-service/assets/js/2.98b0deb4.js" as="script"><link rel="preload" href="/git-manage-service/assets/js/1.77e78a7e.js" as="script"><link rel="preload" href="/git-manage-service/assets/js/47.ad8587b8.js" as="script"><link rel="prefetch" href="/git-manage-service/assets/js/10.b6fc63e7.js"><link rel="prefetch" href="/git-manage-service/assets/js/11.a556731a.js"><link rel="prefetch" href="/git-manage-service/assets/js/12.bc135387.js"><link rel="prefetch" href="/git-manage-service/assets/js/13.1520762d.js"><link rel="prefetch" href="/git-manage-service/assets/js/14.440abb79.js"><link rel="prefetch" href="/git-manage-service/assets/js/15.540584f5.js"><link rel="prefetch" href="/git-manage-service/assets/js/16.d61ffc33.js"><link rel="prefetch" href="/git-manage-service/assets/js/17.fe7e2849.js"><link rel="prefetch" href="/git-manage-service/assets/js/18.5341d2b3.js"><link rel="prefetch" href="/git-manage-service/assets/js/19.6ee6f591.js"><link rel="prefetch" href="/git-manage-service/assets/js/20.57fccbda.js"><link rel="prefetch" href="/git-manage-service/assets/js/21.5e6ee4ad.js"><link rel="prefetch" href="/git-manage-service/assets/js/22.df847616.js"><link rel="prefetch" href="/git-manage-service/assets/js/23.5874e4ea.js"><link rel="prefetch" href="/git-manage-service/assets/js/24.b3510823.js"><link rel="prefetch" href="/git-manage-service/assets/js/25.5fe74e41.js"><link rel="prefetch" href="/git-manage-service/assets/js/26.976f771e.js"><link rel="prefetch" href="/git-manage-service/assets/js/27.5905740c.js"><link rel="prefetch" href="/git-manage-service/assets/js/28.5389d93b.js"><link rel="prefetch" href="/git-manage-service/assets/js/29.891e2cbd.js"><link rel="prefetch" href="/git-manage-service/assets/js/3.48c22373.js"><link rel="prefetch" href="/git-manage-service/assets/js/30.966a53c4.js"><link rel="prefetch" href="/git-manage-service/assets/js/31.561ccfaf.js"><link rel="prefetch" href="/git-manage-service/assets/js/32.9eb3db93.js"><link rel="prefetch" href="/git-manage-service/assets/js/33.84a5ae59.js"><link rel="prefetch" href="/git-manage-service/assets/js/34.093405f5.js"><link rel="prefetch" href="/git-manage-service/assets/js/35.b605d5e1.js"><link rel="prefetch" href="/git-manage-service/assets/js/36.d013fa78.js"><link rel="prefetch" href="/git-manage-service/assets/js/37.e5eda3bc.js"><link rel="prefetch" href="/git-manage-service/assets/js/38.3e4beef7.js"><link rel="prefetch" href="/git-manage-service/assets/js/39.1aa54073.js"><link rel="prefetch" href="/git-manage-service/assets/js/4.76aca2d3.js"><link rel="prefetch" href="/git-manage-service/assets/js/40.2a1edcc8.js"><link rel="prefetch" href="/git-manage-service/assets/js/41.c125a58e.js"><link rel="prefetch" href="/git-manage-service/assets/js/42.f2f35cd0.js"><link rel="prefetch" href="/git-manage-service/assets/js/43.147284bf.js"><link rel="prefetch" href="/git-manage-service/assets/js/44.003db7d2.js"><link rel="prefetch" href="/git-manage-service/assets/js/45.e4bcd873.js"><link rel="prefetch" href="/git-manage-service/assets/js/46.cb49954d.js"><link rel="prefetch" href="/git-manage-service/assets/js/48.cb3bef92.js"><link rel="prefetch" href="/git-manage-service/assets/js/49.38971bdd.js"><link rel="prefetch" href="/git-manage-service/assets/js/5.eeff0cb2.js"><link rel="prefetch" href="/git-manage-service/assets/js/50.614e3203.js"><link rel="prefetch" href="/git-manage-service/assets/js/51.56f44bfd.js"><link rel="prefetch" href="/git-manage-service/assets/js/52.edc8d7b0.js"><link rel="prefetch" href="/git-manage-service/assets/js/53.4a5ed580.js"><link rel="prefetch" href="/git-manage-service/assets/js/54.e88cf30b.js"><link rel="prefetch" href="/git-manage-service/assets/js/55.4562eab4.js"><link rel="prefetch" href="/git-manage-service/assets/js/56.442ff2ff.js"><link rel="prefetch" href="/git-manage-service/assets/js/57.a56f8911.js"><link rel="prefetch" href="/git-manage-service/assets/js/58.ddefa9d3.js"><link rel="prefetch" href="/git-manage-service/assets/js/59.14a0e5a8.js"><link rel="prefetch" href="/git-manage-service/assets/js/6.196c85db.js"><link rel="prefetch" href="/git-manage-service/assets/js/60.bcd0f602.js"><link rel="prefetch" href="/git-manage-service/assets/js/7.dadc5d64.js"><link rel="prefetch" href="/git-manage-service/assets/js/vendors~docsearch.bd0b093a.js">
+    <link rel="stylesheet" href="/git-manage-service/assets/css/0.styles.92870b7f.css">
+  </head>
+  <body>
+    <div id="app" data-server-rendered="true"><div class="theme-container"><header class="navbar"><div class="sidebar-button"><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" viewBox="0 0 448 512" class="icon"><path fill="currentColor" d="M436 124H12c-6.627 0-12-5.373-12-12V80c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12z"></path></svg></div> <a href="/git-manage-service/" class="home-link router-link-active"><!----> <span class="site-name">Git Manage Service</span></a> <div class="links"><div class="search-box"><input aria-label="Search" autocomplete="off" spellcheck="false" value=""> <!----></div> <nav class="nav-links can-hide"><div class="nav-item"><a href="/git-manage-service/" class="nav-link">
+  首页
+</a></div><div class="nav-item"><a href="/git-manage-service/getting-started.html" class="nav-link">
+  快速开始
+</a></div><div class="nav-item"><div class="dropdown-wrapper"><button type="button" aria-label="功能指南" class="dropdown-title"><span class="title">功能指南</span> <span class="arrow down"></span></button> <button type="button" aria-label="功能指南" class="mobile-dropdown-title"><span class="title">功能指南</span> <span class="arrow right"></span></button> <ul class="nav-dropdown" style="display:none;"><li class="dropdown-item"><!----> <a href="/git-manage-service/features/repo.html" class="nav-link">
+  仓库管理
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/branch.html" class="nav-link">
+  分支管理
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/sync.html" class="nav-link">
+  同步任务
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/webhook.html" class="nav-link">
+  Webhook
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/notification.html" class="nav-link">
+  通知配置
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/ssh.html" class="nav-link">
+  SSH 密钥
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/metrics.html" class="nav-link">
+  代码度量
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/spec-editor.html" class="nav-link">
+  Spec 编辑器
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/patch-manager.html" class="nav-link">
+  Patch 管理
+</a></li></ul></div></div><div class="nav-item"><div class="dropdown-wrapper"><button type="button" aria-label="部署方案" class="dropdown-title"><span class="title">部署方案</span> <span class="arrow down"></span></button> <button type="button" aria-label="部署方案" class="mobile-dropdown-title"><span class="title">部署方案</span> <span class="arrow right"></span></button> <ul class="nav-dropdown" style="display:none;"><li class="dropdown-item"><!----> <a href="/git-manage-service/deployment/binary.html" class="nav-link">
+  二进制部署
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/deployment/docker.html" class="nav-link">
+  Docker 部署
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/deployment/kubernetes.html" class="nav-link">
+  Kubernetes
+</a></li></ul></div></div><div class="nav-item"><a href="/git-manage-service/configuration.html" class="nav-link">
+  配置参考
+</a></div><div class="nav-item"><a href="/git-manage-service/api.html" class="nav-link">
+  API 文档
+</a></div> <a href="https://github.com/yi-nology/git-manage-service" target="_blank" rel="noopener noreferrer" class="repo-link">
+    GitHub
+    <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></nav></div></header> <div class="sidebar-mask"></div> <aside class="sidebar"><nav class="nav-links"><div class="nav-item"><a href="/git-manage-service/" class="nav-link">
+  首页
+</a></div><div class="nav-item"><a href="/git-manage-service/getting-started.html" class="nav-link">
+  快速开始
+</a></div><div class="nav-item"><div class="dropdown-wrapper"><button type="button" aria-label="功能指南" class="dropdown-title"><span class="title">功能指南</span> <span class="arrow down"></span></button> <button type="button" aria-label="功能指南" class="mobile-dropdown-title"><span class="title">功能指南</span> <span class="arrow right"></span></button> <ul class="nav-dropdown" style="display:none;"><li class="dropdown-item"><!----> <a href="/git-manage-service/features/repo.html" class="nav-link">
+  仓库管理
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/branch.html" class="nav-link">
+  分支管理
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/sync.html" class="nav-link">
+  同步任务
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/webhook.html" class="nav-link">
+  Webhook
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/notification.html" class="nav-link">
+  通知配置
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/ssh.html" class="nav-link">
+  SSH 密钥
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/metrics.html" class="nav-link">
+  代码度量
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/spec-editor.html" class="nav-link">
+  Spec 编辑器
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/features/patch-manager.html" class="nav-link">
+  Patch 管理
+</a></li></ul></div></div><div class="nav-item"><div class="dropdown-wrapper"><button type="button" aria-label="部署方案" class="dropdown-title"><span class="title">部署方案</span> <span class="arrow down"></span></button> <button type="button" aria-label="部署方案" class="mobile-dropdown-title"><span class="title">部署方案</span> <span class="arrow right"></span></button> <ul class="nav-dropdown" style="display:none;"><li class="dropdown-item"><!----> <a href="/git-manage-service/deployment/binary.html" class="nav-link">
+  二进制部署
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/deployment/docker.html" class="nav-link">
+  Docker 部署
+</a></li><li class="dropdown-item"><!----> <a href="/git-manage-service/deployment/kubernetes.html" class="nav-link">
+  Kubernetes
+</a></li></ul></div></div><div class="nav-item"><a href="/git-manage-service/configuration.html" class="nav-link">
+  配置参考
+</a></div><div class="nav-item"><a href="/git-manage-service/api.html" class="nav-link">
+  API 文档
+</a></div> <a href="https://github.com/yi-nology/git-manage-service" target="_blank" rel="noopener noreferrer" class="repo-link">
+    GitHub
+    <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></nav>  <ul class="sidebar-links"><li><section class="sidebar-group depth-0"><p class="sidebar-heading open"><span>📖 概览</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/git-manage-service/" aria-current="page" class="sidebar-link">Home</a></li><li><a href="/git-manage-service/getting-started.html" class="sidebar-link">快速开始</a></li></ul></section></li><li><section class="sidebar-group collapsable depth-0"><p class="sidebar-heading"><span>🚀 功能指南</span> <span class="arrow right"></span></p> <!----></section></li><li><section class="sidebar-group collapsable depth-0"><p class="sidebar-heading"><span>📦 部署方案</span> <span class="arrow right"></span></p> <!----></section></li><li><section class="sidebar-group collapsable depth-0"><p class="sidebar-heading"><span>⚙️ 参考</span> <span class="arrow right"></span></p> <!----></section></li></ul> </aside> <main class="page"> <div class="theme-default-content content__default"><h1 id="git-同步功能重新设计方案"><a href="#git-同步功能重新设计方案" class="header-anchor">#</a> Git 同步功能重新设计方案</h1> <h2 id="需求分析"><a href="#需求分析" class="header-anchor">#</a> 需求分析</h2> <h3 id="同步场景"><a href="#同步场景" class="header-anchor">#</a> 同步场景</h3> <ol><li><strong>全仓库同步</strong> - 一键同步所有已配置的同步规则</li> <li><strong>跨仓库同步</strong> - 仓库 A 的某个分支同步到仓库 B</li> <li><strong>本地 ↔ 远端</strong> - 本地推送或远端拉取</li> <li><strong>特殊 Git 命令</strong> - <code>--force</code>, <code>--tags</code>, <code>--prune</code>, <code>--no-verify</code> 等</li></ol> <h3 id="同步方向"><a href="#同步方向" class="header-anchor">#</a> 同步方向</h3> <table><thead><tr><th>模式</th> <th>描述</th></tr></thead> <tbody><tr><td>Push</td> <td>本地 → 远端</td></tr> <tr><td>Pull</td> <td>远端 → 本地</td></tr> <tr><td>Mirror</td> <td>双向镜像同步</td></tr> <tr><td>Cross-Repo</td> <td>跨仓库同步</td></tr></tbody></table> <hr> <h2 id="ui-设计"><a href="#ui-设计" class="header-anchor">#</a> UI 设计</h2> <h3 id="布局结构"><a href="#布局结构" class="header-anchor">#</a> 布局结构</h3> <div class="language- line-numbers-mode"><pre class="language-text"><code>┌─────────────────────────────────────────────────────────────┐
+│  [← 返回]  Git 同步管理                    [一键同步全部]    │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐           │
+│  │ 快速推送 │ │ 快速拉取 │ │ 新建规则 │ │ 同步历史 │           │
+│  └─────────┘ └─────────┘ └─────────┘ └─────────┘           │
+│                                                             │
+├─────────────────────────────────────────────────────────────┤
+│  同步规则                                                    │
+│  ┌─────────────────────────────────────────────────────────┐│
+│  │ 📦 规则卡片                                              ││
+│  │ ┌───────────┐     ┌───────────┐                         ││
+│  │ │   Local   │ ──► │  Origin   │  ✅ 已启用               ││
+│  │ │  main     │     │  main     │  ⏰ 每天 02:00           ││
+│  │ └───────────┘     └───────────┘                         ││
+│  │                          [执行] [历史] [编辑] [删除]      ││
+│  └─────────────────────────────────────────────────────────┘│
+│                                                             │
+│  ┌─────────────────────────────────────────────────────────┐│
+│  │ 📦 跨仓库同步                                            ││
+│  │ ┌───────────┐     ┌───────────┐                         ││
+│  │ │ Repo A    │ ──► │ Repo B    │  ⏸️ 已暂停               ││
+│  │ │ feature/* │     │ develop   │  手动触发               ││
+│  │ └───────────┘     └───────────┘                         ││
+│  └─────────────────────────────────────────────────────────┘│
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br><span class="line-number">11</span><br><span class="line-number">12</span><br><span class="line-number">13</span><br><span class="line-number">14</span><br><span class="line-number">15</span><br><span class="line-number">16</span><br><span class="line-number">17</span><br><span class="line-number">18</span><br><span class="line-number">19</span><br><span class="line-number">20</span><br><span class="line-number">21</span><br><span class="line-number">22</span><br><span class="line-number">23</span><br><span class="line-number">24</span><br><span class="line-number">25</span><br><span class="line-number">26</span><br><span class="line-number">27</span><br><span class="line-number">28</span><br></div></div><h3 id="快速操作面板"><a href="#快速操作面板" class="header-anchor">#</a> 快速操作面板</h3> <div class="language- line-numbers-mode"><pre class="language-text"><code>┌─────────────────────────────────────────────────────────────┐
+│  ⚡ 快速同步                                                  │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  源仓库/分支:  [ Repo A ▼ ] / [ main ▼ ]                    │
+│  目标仓库/分支: [ Origin ▼ ] / [ main ▼ ]                   │
+│                                                             │
+│  同步模式:                                                   │
+│  ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐               │
+│  │  Push  │ │  Pull  │ │ Force  │ │ Mirror │               │
+│  │ 本地→远│ │ 远→本地│ │ 强制推送│ │ 镜像   │               │
+│  └────────┘ └────────┘ └────────┘ └────────┘               │
+│                                                             │
+│  高级选项:  [ ] --tags  [ ] --prune  [ ] --no-verify        │
+│                                                             │
+│                    [ 预览变更 ]  [ 立即执行 ]                 │
+└─────────────────────────────────────────────────────────────┘
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br><span class="line-number">11</span><br><span class="line-number">12</span><br><span class="line-number">13</span><br><span class="line-number">14</span><br><span class="line-number">15</span><br><span class="line-number">16</span><br><span class="line-number">17</span><br></div></div><h3 id="新建规则对话框"><a href="#新建规则对话框" class="header-anchor">#</a> 新建规则对话框</h3> <div class="language- line-numbers-mode"><pre class="language-text"><code>┌─────────────────────────────────────────────────────────────┐
+│  新建同步规则                                           [×] │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  规则类型:                                                   │
+│  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐         │
+│  │   🔄 单向同步  │ │   🔀 跨仓库   │ │   📋 全分支   │         │
+│  │   Push/Pull   │ │   Repo → Repo │ │   --all      │         │
+│  └──────────────┘ └──────────────┘ └──────────────┘         │
+│                                                             │
+│  ─────────────────────────────────────────────────────────  │
+│                                                             │
+│  源:                                                         │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │ 仓库: [ 本地仓库 ▼ ]                                 │    │
+│  │ Remote: [ local ▼ ] 或 [ origin ▼ ]                 │    │
+│  │ 分支: [ main ▼ ] 或 [ * 全部 * ]                     │    │
+│  └─────────────────────────────────────────────────────┘    │
+│                                                             │
+│  目标:                                                       │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │ 仓库: [ 本地仓库 ▼ ] 或 [ 其他仓库 ▼ ]               │    │
+│  │ Remote: [ origin ▼ ]                                │    │
+│  │ 分支: [ main ▼ ] 或 [ 与源相同 ]                     │    │
+│  └─────────────────────────────────────────────────────┘    │
+│                                                             │
+│  ─────────────────────────────────────────────────────────  │
+│                                                             │
+│  Git 选项:                                                   │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │ [x] --tags       推送所有标签                         │    │
+│  │ [ ] --force      强制推送 (危险)                      │    │
+│  │ [ ] --prune      删除远端已不存在的本地分支引用        │    │
+│  │ [ ] --no-verify  跳过 pre-push 钩子                   │    │
+│  │ [ ] --dry-run    仅模拟不执行                         │    │
+│  └─────────────────────────────────────────────────────┘    │
+│                                                             │
+│  定时任务:  [ 0 2 * * * ]  (每天凌晨 2 点)                    │
+│                                                             │
+├─────────────────────────────────────────────────────────────┤
+│                              [ 取消 ]  [ 保存规则 ]          │
+└─────────────────────────────────────────────────────────────┘
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br><span class="line-number">11</span><br><span class="line-number">12</span><br><span class="line-number">13</span><br><span class="line-number">14</span><br><span class="line-number">15</span><br><span class="line-number">16</span><br><span class="line-number">17</span><br><span class="line-number">18</span><br><span class="line-number">19</span><br><span class="line-number">20</span><br><span class="line-number">21</span><br><span class="line-number">22</span><br><span class="line-number">23</span><br><span class="line-number">24</span><br><span class="line-number">25</span><br><span class="line-number">26</span><br><span class="line-number">27</span><br><span class="line-number">28</span><br><span class="line-number">29</span><br><span class="line-number">30</span><br><span class="line-number">31</span><br><span class="line-number">32</span><br><span class="line-number">33</span><br><span class="line-number">34</span><br><span class="line-number">35</span><br><span class="line-number">36</span><br><span class="line-number">37</span><br><span class="line-number">38</span><br><span class="line-number">39</span><br><span class="line-number">40</span><br><span class="line-number">41</span><br><span class="line-number">42</span><br></div></div><h3 id="同步预览"><a href="#同步预览" class="header-anchor">#</a> 同步预览</h3> <div class="language- line-numbers-mode"><pre class="language-text"><code>┌─────────────────────────────────────────────────────────────┐
+│  同步预览                                               [×] │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  将执行: git push origin main --tags                        │
+│                                                             │
+│  预览结果:                                                   │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │ + 3 commits to push                                  │    │
+│  │ + 2 tags to push: v1.0.0, v1.0.1                     │    │
+│  │                                                       │    │
+│  │ Commits:                                              │    │
+│  │ • abc123 feat: add new feature                        │    │
+│  │ • def456 fix: resolve issue                           │    │
+│  │ • ghi789 docs: update readme                          │    │
+│  └─────────────────────────────────────────────────────┘    │
+│                                                             │
+│  ⚠️ 注意: 目标分支 main 将被更新                             │
+│                                                             │
+├─────────────────────────────────────────────────────────────┤
+│                              [ 取消 ]  [ 确认执行 ]          │
+└─────────────────────────────────────────────────────────────┘
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br><span class="line-number">11</span><br><span class="line-number">12</span><br><span class="line-number">13</span><br><span class="line-number">14</span><br><span class="line-number">15</span><br><span class="line-number">16</span><br><span class="line-number">17</span><br><span class="line-number">18</span><br><span class="line-number">19</span><br><span class="line-number">20</span><br><span class="line-number">21</span><br><span class="line-number">22</span><br></div></div><hr> <h2 id="技术实现"><a href="#技术实现" class="header-anchor">#</a> 技术实现</h2> <h3 id="后端扩展"><a href="#后端扩展" class="header-anchor">#</a> 后端扩展</h3> <div class="language-go line-numbers-mode"><pre class="language-go"><code><span class="token comment">// SyncMode 同步模式</span>
+<span class="token keyword">type</span> SyncMode <span class="token builtin">string</span>
+
+<span class="token keyword">const</span> <span class="token punctuation">(</span>
+    SyncModePush      SyncMode <span class="token operator">=</span> <span class="token string">&quot;push&quot;</span>       <span class="token comment">// 本地 → 远端</span>
+    SyncModePull      SyncMode <span class="token operator">=</span> <span class="token string">&quot;pull&quot;</span>       <span class="token comment">// 远端 → 本地</span>
+    SyncModeMirror    SyncMode <span class="token operator">=</span> <span class="token string">&quot;mirror&quot;</span>     <span class="token comment">// 双向镜像</span>
+    SyncModeCrossRepo SyncMode <span class="token operator">=</span> <span class="token string">&quot;cross-repo&quot;</span> <span class="token comment">// 跨仓库</span>
+    SyncModeAllBranch SyncMode <span class="token operator">=</span> <span class="token string">&quot;all-branch&quot;</span> <span class="token comment">// 全分支</span>
+<span class="token punctuation">)</span>
+
+<span class="token comment">// GitOptions Git 选项</span>
+<span class="token keyword">type</span> GitOptions <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+    Tags     <span class="token builtin">bool</span> <span class="token string">`json:&quot;tags&quot;`</span>     <span class="token comment">// --tags</span>
+    Force    <span class="token builtin">bool</span> <span class="token string">`json:&quot;force&quot;`</span>    <span class="token comment">// --force</span>
+    Prune    <span class="token builtin">bool</span> <span class="token string">`json:&quot;prune&quot;`</span>    <span class="token comment">// --prune</span>
+    NoVerify <span class="token builtin">bool</span> <span class="token string">`json:&quot;no_verify&quot;`</span> <span class="token comment">// --no-verify</span>
+    DryRun   <span class="token builtin">bool</span> <span class="token string">`json:&quot;dry_run&quot;`</span>   <span class="token comment">// --dry-run</span>
+<span class="token punctuation">}</span>
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br><span class="line-number">11</span><br><span class="line-number">12</span><br><span class="line-number">13</span><br><span class="line-number">14</span><br><span class="line-number">15</span><br><span class="line-number">16</span><br><span class="line-number">17</span><br><span class="line-number">18</span><br><span class="line-number">19</span><br></div></div><h3 id="api-扩展"><a href="#api-扩展" class="header-anchor">#</a> API 扩展</h3> <div class="language- line-numbers-mode"><pre class="language-text"><code>POST /api/v1/sync/preview    # 预览同步变更
+POST /api/v1/sync/batch      # 批量执行同步
+GET  /api/v1/repos           # 获取仓库列表 (用于跨仓库选择)
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br></div></div><hr> <h2 id="实现阶段"><a href="#实现阶段" class="header-anchor">#</a> 实现阶段</h2> <h3 id="phase-1-ui-重构"><a href="#phase-1-ui-重构" class="header-anchor">#</a> Phase 1: UI 重构</h3> <ul><li>[ ] 新的页面布局</li> <li>[ ] 卡片式规则展示</li> <li>[ ] 可视化同步方向</li></ul> <h3 id="phase-2-功能增强"><a href="#phase-2-功能增强" class="header-anchor">#</a> Phase 2: 功能增强</h3> <ul><li>[ ] 跨仓库同步</li> <li>[ ] Git 选项支持</li> <li>[ ] 同步预览</li></ul> <h3 id="phase-3-批量操作"><a href="#phase-3-批量操作" class="header-anchor">#</a> Phase 3: 批量操作</h3> <ul><li>[ ] 一键同步全部</li> <li>[ ] 批量启用/禁用</li> <li>[ ] 批量删除</li></ul> <h3 id="phase-4-体验优化"><a href="#phase-4-体验优化" class="header-anchor">#</a> Phase 4: 体验优化</h3> <ul><li>[ ] 执行动画</li> <li>[ ] 实时日志</li> <li>[ ] 通知提醒</li></ul> <hr> <h2 id="风险提示"><a href="#风险提示" class="header-anchor">#</a> 风险提示</h2> <ul><li><code>--force</code> 强制推送可能覆盖远端提交</li> <li><code>--prune</code> 可能删除本地分支引用</li> <li>跨仓库同步需要确保目标仓库权限</li></ul></div> <footer class="page-edit"><div class="edit-link"><a href="https://github.com/yi-nology/git-manage-service/edit/main/docs/dev-notes/SYNC_REDESIGN_PLAN.md" target="_blank" rel="noopener noreferrer">在 GitHub 上编辑此页</a> <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></div> <div class="last-updated"><span class="prefix">上次更新:</span> <span class="time">3/8/2026, 11:32:24 PM</span></div></footer> <!----> </main></div><div class="global-ui"></div></div>
+    <script src="/git-manage-service/assets/js/app.dc8f39c3.js" defer></script><script src="/git-manage-service/assets/js/2.98b0deb4.js" defer></script><script src="/git-manage-service/assets/js/1.77e78a7e.js" defer></script><script src="/git-manage-service/assets/js/47.ad8587b8.js" defer></script>
+  </body>
+</html>
