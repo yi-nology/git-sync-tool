@@ -579,16 +579,15 @@ onMounted(async () => {
       } catch { /* ignore */ }
     }
     try {
-      statsBranches.value = await getStatsBranches(repoKey)
+      statsBranches.value = (await getStatsBranches(repoKey)) || []
       if (statsBranches.value.length > 0) {
         statsFilter.value.branch = statsBranches.value[0]!
         lineStatsFilter.value.branch = statsBranches.value[0]!
       }
-    } catch { /* ignore */ }
-    try { statsAuthors.value = await getStatsAuthors(repoKey) } catch { /* ignore */ }
-    try { currentVersion.value = await getCurrentVersion(repoKey) || '' } catch { /* ignore */ }
-    // 加载 tags 用于文件浏览和 commit 搜索
-    try { versionList.value = await getVersionList(repoKey) } catch { /* ignore */ }
+    } catch { statsBranches.value = [] }
+    try { statsAuthors.value = (await getStatsAuthors(repoKey)) || [] } catch { statsAuthors.value = [] }
+    try { currentVersion.value = (await getCurrentVersion(repoKey)) || '' } catch { /* ignore */ }
+    try { versionList.value = (await getVersionList(repoKey)) || [] } catch { versionList.value = [] }
   } finally {
     loading.value = false
   }
