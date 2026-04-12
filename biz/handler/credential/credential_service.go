@@ -50,8 +50,8 @@ func Create(ctx context.Context, c *app.RequestContext) {
 		response.BadRequest(c, "type is required")
 		return
 	}
-	if req.Type != "ssh_key" && req.Type != "http_basic" && req.Type != "http_token" {
-		response.BadRequest(c, "type must be ssh_key, http_basic or http_token")
+	if req.Type != "ssh_key" && req.Type != "http_basic" && req.Type != "http_token" && req.Type != "platform_token" {
+		response.BadRequest(c, "type must be ssh_key, http_basic, http_token or platform_token")
 		return
 	}
 

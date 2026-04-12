@@ -3,7 +3,10 @@
 package webhook
 
 import (
+	"bytes"
 	"context"
+	"io"
+	"net/http"
 
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/google/uuid"
@@ -11,7 +14,9 @@ import (
 	"github.com/yi-nology/git-manage-service/biz/model/po"
 	webhook "github.com/yi-nology/git-manage-service/biz/model/webhook"
 	"github.com/yi-nology/git-manage-service/biz/service/audit"
+	"github.com/yi-nology/git-manage-service/biz/service/provider"
 	"github.com/yi-nology/git-manage-service/biz/service/sync"
+	"github.com/yi-nology/git-manage-service/biz/service/webhookevent"
 	"github.com/yi-nology/git-manage-service/pkg/response"
 )
 
@@ -108,4 +113,82 @@ func TriggerSyncByToken(ctx context.Context, c *app.RequestContext) {
 		"status":   "started",
 		"message":  "sync task triggered by token",
 	})
+}
+
+func Receive(ctx context.Context, c *app.RequestContext) {
+	cfgDAO := db.NewProviderConfigDAO()
+	configs, err := cfgDAO.FindAll()
+	if err != nil || len(configs) == 0 {
+		response.BadRequest(c, "No provider configs found")
+		return
+	}
+
+	var matchedProvider provider.Provider
+	var matchedCfg po.ProviderConfig
+	for _, cfg := range configs {
+		p, pErr := provider.GetManager().GetProvider(cfg.ID)
+		if pErr != nil {
+			continue
+		}
+		stdReq := toHTTPRequest(c)
+		if validateErr := p.ValidateWebhookSignature(stdReq, cfg.WebhookSecret); validateErr == nil {
+			matchedProvider = p
+			matchedCfg = cfg
+			break
+		}
+	}
+
+	if matchedProvider == nil {
+		glEvent := string(c.Request.Header.Peek("X-Gitlab-Event"))
+		ghEvent := string(c.Request.Header.Peek("X-GitHub-Event"))
+		gtEvent := string(c.Request.Header.Peek("X-Gitea-Event"))
+		if glEvent != "" || ghEvent != "" || gtEvent != "" {
+			for _, cfg := range configs {
+				p, _ := provider.GetManager().GetProvider(cfg.ID)
+				if p != nil {
+					matchedProvider = p
+					matchedCfg = cfg
+					break
+				}
+			}
+		}
+	}
+
+	if matchedProvider == nil {
+		response.BadRequest(c, "Could not identify webhook source")
+		return
+	}
+
+	event, err := matchedProvider.ParseWebhookEvent(toHTTPRequest(c), matchedCfg.WebhookSecret)
+	if err != nil {
+		response.BadRequest(c, "Failed to parse webhook: "+err.Error())
+		return
+	}
+
+	go func() {
+		if processErr := webhookevent.ProcessIncomingEvent(event, matchedCfg.ID); processErr != nil {
+			_ = processErr
+		}
+	}()
+
+	audit.AuditSvc.Log(c, "WEBHOOK_RECEIVED", event.Type, map[string]string{
+		"event_id": event.ID,
+		"source":   string(event.Source),
+	})
+
+	response.Accepted(c, "Webhook received", map[string]interface{}{
+		"event_id":   event.ID,
+		"event_type": event.Type,
+		"source":     string(event.Source),
+	})
+}
+
+func toHTTPRequest(c *app.RequestContext) *http.Request {
+	body, _ := c.Body()
+	req, _ := http.NewRequest(string(c.Request.Header.Method()), c.Request.URI().String(), bytes.NewReader(body))
+	c.Request.Header.VisitAll(func(key, value []byte) {
+		req.Header.Set(string(key), string(value))
+	})
+	req.Body = io.NopCloser(bytes.NewReader(body))
+	return req
 }

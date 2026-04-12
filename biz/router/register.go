@@ -10,6 +10,10 @@ import (
 
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/app/server"
+	"github.com/yi-nology/git-manage-service/biz/handler/cr"
+	providerhandler "github.com/yi-nology/git-manage-service/biz/handler/provider"
+	webhookhandler "github.com/yi-nology/git-manage-service/biz/handler/webhook"
+	eventhandler "github.com/yi-nology/git-manage-service/biz/handler/webhook_event"
 	"github.com/yi-nology/git-manage-service/biz/middleware"
 	"github.com/yi-nology/git-manage-service/biz/router/audit"
 	"github.com/yi-nology/git-manage-service/biz/router/branch"
@@ -67,6 +71,30 @@ func GeneratedRegister(h *server.Hertz) {
 	patch.Register(h)
 	spec.Register(h)
 	stats.Register(h)
+
+	// Provider Config CRUD
+	h.GET("/api/v1/providers", providerhandler.List)
+	h.GET("/api/v1/providers/:id", providerhandler.Get)
+	h.POST("/api/v1/providers", providerhandler.Create)
+	h.PUT("/api/v1/providers/:id", providerhandler.Update)
+	h.DELETE("/api/v1/providers/:id", providerhandler.Delete)
+	h.POST("/api/v1/providers/:id/test", providerhandler.Test)
+
+	// Change Request (CR/MR) management
+	h.POST("/api/v1/cr/create", cr.Create)
+	h.GET("/api/v1/cr/detail", cr.Get)
+	h.GET("/api/v1/cr/list", cr.List)
+	h.POST("/api/v1/cr/merge", cr.Merge)
+	h.POST("/api/v1/cr/close", cr.Close)
+	h.POST("/api/v1/cr/sync", cr.Sync)
+	h.GET("/api/v1/cr/detect", cr.Detect)
+
+	// Webhook Events
+	h.GET("/api/v1/webhook/events", eventhandler.List)
+	h.POST("/api/v1/webhook/events/retry", eventhandler.Retry)
+
+	// Incoming webhook receiver
+	h.POST("/api/webhooks/receive", webhookhandler.Receive)
 
 	// 根路径
 	h.GET("/", func(ctx context.Context, c *app.RequestContext) {

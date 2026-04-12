@@ -21,10 +21,14 @@ type Repo struct {
 	RemoteAuthsJSON string                     `json:"-"`                     // Stored in DB (deprecated)
 	RemoteAuths     map[string]domain.AuthInfo `gorm:"-" json:"remote_auths"` // Memory & API (deprecated)
 
-	// 新凭证池字段
-	DefaultCredentialID   uint            `json:"default_credential_id"`       // 默认凭证 ID
-	RemoteCredentialsJSON string          `json:"-"`                           // Stored in DB: {"origin": 1, "upstream": 2}
-	RemoteCredentials     map[string]uint `gorm:"-" json:"remote_credentials"` // Memory & API: remote name -> credential ID
+	DefaultCredentialID   uint            `json:"default_credential_id"`
+	RemoteCredentialsJSON string          `json:"-"`
+	RemoteCredentials     map[string]uint `gorm:"-" json:"remote_credentials"`
+
+	ProviderConfigID uint   `gorm:"index" json:"provider_config_id"`
+	PlatformRepoID   string `gorm:"size:100" json:"platform_repo_id"`
+	PlatformOwner    string `gorm:"size:200" json:"platform_owner"`
+	PlatformRepo     string `gorm:"size:200" json:"platform_repo"`
 }
 
 func (Repo) TableName() string {
