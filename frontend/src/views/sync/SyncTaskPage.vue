@@ -594,60 +594,189 @@ function showLog(details: string) {
 
 <style scoped>
 .sync-page {
-  padding: 0;
+  padding: var(--spacing-xl);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-height: 100vh;
+  background: var(--bg-color);
 }
 
 .page-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
 .header-left {
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
+  gap: 12px;
 }
 
 .header-left h2 {
   margin: 0;
-  font-size: var(--font-size-xl);
+  font-size: 24px;
   font-weight: 600;
   color: var(--text-color-primary);
 }
 
-.header-right {
-  display: flex;
-  gap: var(--spacing-sm);
-}
-
-.quick-panel {
-  margin-bottom: 20px;
-  border-left: 4px solid var(--primary-color);
-}
-
-.panel-header {
-  display: flex;
-  justify-content: space-between;
+.back-btn {
+  display: inline-flex;
   align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-color-secondary);
+  background: none;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
 }
 
-.quick-form {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.arrow-icon {
-  font-size: 20px;
+.back-btn:hover {
+  border-color: var(--primary-color);
   color: var(--primary-color);
-  margin: 0 var(--spacing-sm);
 }
 
-.preview-result {
-  margin-top: var(--spacing-md);
+.header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.action-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  padding: 8px 16px;
+  border-radius: var(--border-radius-md);
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-family: var(--font-family);
+}
+
+.action-pill:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.action-pill--green {
+  background: #ECFDF5;
+  color: var(--success-color);
+}
+.action-pill--green:hover:not(:disabled) {
+  background: #D1FAE5;
+}
+
+.action-pill--primary {
+  background: var(--primary-color);
+  color: #FFFFFF;
+}
+.action-pill--primary:hover:not(:disabled) {
+  background: var(--primary-color-hover);
+}
+
+.action-pill--outline {
+  background: transparent;
+  color: var(--text-color-primary);
+  border: 1px solid var(--border-color);
+}
+.action-pill--outline:hover:not(:disabled) {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.quick-sync-panel {
+  background: var(--bg-color-page);
+  border: 1px solid var(--primary-color);
+  border-radius: var(--border-radius-lg);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.qp-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.qp-icon {
+  font-size: 16px;
+}
+
+.qp-title-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-color-primary);
+  flex: 1;
+}
+
+.qp-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-color-secondary);
+  display: flex;
+  align-items: center;
+}
+
+.qp-body {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.qp-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.qp-label {
+  font-size: 11px;
+  color: var(--text-color-secondary);
+}
+
+.qp-row {
+  display: flex;
+  gap: 8px;
+}
+
+.qp-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+}
+
+.qp-options {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.qp-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.qp-preview {
+  margin-top: 0;
+}
+
+.section-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-color-primary);
 }
 
 .task-list {
@@ -749,11 +878,6 @@ function showLog(details: string) {
   gap: var(--spacing-sm);
 }
 
-.text-center {
-  text-align: center;
-  padding: 40px 0;
-}
-
 .mb-3 {
   margin-bottom: 12px;
 }
@@ -773,5 +897,30 @@ function showLog(details: string) {
   color: var(--danger-color);
   font-size: var(--font-size-xs);
   margin-left: var(--spacing-sm);
+}
+
+@media (max-width: 768px) {
+  .sync-page {
+    padding: var(--spacing-md);
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .qp-body {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .qp-arrow {
+    transform: rotate(90deg);
+    justify-content: center;
+  }
+
+  .task-content {
+    flex-wrap: wrap;
+  }
 }
 </style>

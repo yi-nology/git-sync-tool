@@ -65,9 +65,10 @@ ARG VERSION=dev
 ARG BUILD_TIME=unknown
 ARG GIT_COMMIT=unknown
 
-# Build the application with version info
-RUN go build -ldflags "-X 'main.Version=${VERSION}' -X 'main.BuildTime=${BUILD_TIME}' -X 'main.GitCommit=${GIT_COMMIT}'" \
-    -o git-manage-service main.go
+# Build the application with version info (server mode, not desktop)
+RUN mkdir -p frontend/dist && touch frontend/dist/.gitkeep
+RUN go build -tags '!desktop' -ldflags "-X 'main.Version=${VERSION}' -X 'main.BuildTime=${BUILD_TIME}' -X 'main.GitCommit=${GIT_COMMIT}'" \
+    -o git-manage-service ./cmd/server/
 
 # Runtime Stage
 FROM alpine:latest
