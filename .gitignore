@@ -26,7 +26,7 @@ _testmain.go
 *nohup.out
 *settings.pyc
 *.sublime-project
-*.sublime-workspace
+*.sublime-workcase
 !.gitkeep
 .DS_Store
 /.idea
@@ -34,7 +34,28 @@ _testmain.go
 /output
 *.local.yml
 dumped_hertz_remote_config.json
-		  .trae
+.trae
+.qoder/
+
+# Build outputs
+git-manage-desktop
+git-manage-service
+server
+/build/
+
+# Database
 data/git_sync.db
-docs/.vuepress/dist
+
+# Embedded frontend build
+pkg/embed/
+
+# Frontend build output
 /public
+
+# Docs
+docs/.vuepress/dist
+docs-site/node_modules/
+
+# Kitex/Hz generated (optional, uncomment if needed)
+# biz/model/
+# kitex_info.yaml
